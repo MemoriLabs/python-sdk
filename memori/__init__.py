@@ -41,14 +41,14 @@ class Memori:
         if parent_id is not None:
             parent_id = str(parent_id)
 
-        if len(parent_id) > 100:
-            raise RuntimeError("parent_id cannot be greater than 100 characters")
+            if len(parent_id) > 100:
+                raise RuntimeError("parent_id cannot be greater than 100 characters")
 
         if process_id is not None:
             process_id = str(process_id)
 
-        if len(process_id) > 100:
-            raise RuntimeError("process_id cannot be greater than 100 characters")
+            if len(process_id) > 100:
+                raise RuntimeError("process_id cannot be greater than 100 characters")
 
         self.config.parent_id = parent_id
         self.config.process_id = process_id
