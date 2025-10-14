@@ -1,5 +1,16 @@
+r"""
+ __  __                           _
+|  \/  | ___ _ __ ___   ___  _ __(_)
+| |\/| |/ _ \ '_ ` _ \ / _ \| '__| |
+| |  | |  __/ | | | | | (_) | |  | |
+|_|  |_|\___|_| |_| |_|\___/|_|  |_|
+                  perfectam memoriam
+                         by GibsonAI
+                       trymemori.com
+"""
+
 from memori.storage.adaptors.sqlalchemy._adaptor import (
-    Adaptor as SqlAlchemyStorageAdaptor
+    Adaptor as SqlAlchemyStorageAdaptor,
 )
 
 

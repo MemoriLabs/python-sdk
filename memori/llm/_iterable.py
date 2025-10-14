@@ -1,11 +1,22 @@
+r"""
+ __  __                           _
+|  \/  | ___ _ __ ___   ___  _ __(_)
+| |\/| |/ _ \ '_ ` _ \ / _ \| '__| |
+| |  | |  __/ | | | | | (_) | |  | |
+|_|  |_|\___|_| |_| |_|\___/|_|  |_|
+                  perfectam memoriam
+                         by GibsonAI
+                       trymemori.com
+"""
+
 import copy
 import json
 import time
 
 from memori._config import Config
-from memori.llm._base import BaseInvoke
 from memori._network import Collector
 from memori._utils import bytes_to_json
+from memori.llm._base import BaseInvoke
 
 
 class Iterable:

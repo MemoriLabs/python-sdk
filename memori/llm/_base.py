@@ -1,3 +1,14 @@
+r"""
+ __  __                           _
+|  \/  | ___ _ __ ___   ___  _ __(_)
+| |\/| |/ _ \ '_ ` _ \ / _ \| '__| |
+| |  | |  __/ | | | | | (_) | |  | |
+|_|  |_|\___|_| |_| |_|\___/|_|  |_|
+                  perfectam memoriam
+                         by GibsonAI
+                       trymemori.com
+"""
+
 import copy
 import json
 import time
@@ -5,14 +16,14 @@ import time
 from google.protobuf import json_format
 
 from memori._config import Config
+from memori._network import Collector
+from memori._utils import merge_chunk
 from memori.llm._constants import (
     LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
     LANGCHAIN_CLIENT_PROVIDER,
     LANGCHAIN_OPENAI_CLIENT_TITLE,
     OPENAI_CLIENT_TITLE,
 )
-from memori._network import Collector
-from memori._utils import merge_chunk
 
 
 class BaseClient:
