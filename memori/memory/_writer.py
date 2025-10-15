@@ -111,9 +111,35 @@ class Writer:
                     ),
                 )
 
-            self.config.conn.flush()
+        responses = self.parse_response(payload)
+        if len(responses) > 0:
+            for response in responses:
+                self.config.conn.execute(
+                    """
+                    insert into memori_conversation_message(
+                        uuid,
+                        conversation_id,
+                        role,
+                        type,
+                        content
+                    ) values (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s
+                    )
+                    """,
+                    (
+                        uuid4(),
+                        self.config.cache.conversation_id,
+                        response["role"],
+                        response["type"],
+                        response["text"],
+                    ),
+                )
 
-        self.config.conn.commit()
+        self.config.conn.flush()
 
         return self
 

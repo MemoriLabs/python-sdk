@@ -51,32 +51,6 @@ def test_parse_query_google():
     ) == [{"content": "abc def", "role": "user"}, {"content": "ghi", "role": "system"}]
 
 
-def test_execute(config):
-    Writer(config).execute(
-        {"conversation": {"query": {"messages": [{"content": "abc", "role": "user"}]}}}
-    )
-
-    assert config.cache.session_id is not None
-    assert config.cache.conversation_id is not None
-
-    assert (
-        (
-            config.conn.execute(
-                """
-            select role,
-                   content
-              from memori_conversation_message
-             where conversation_id = %s
-            """,
-                (config.cache.conversation_id,),
-            )
-            .mappings()
-            .fetchall()
-        )
-        == [{"role": "user", "content": "abc"}]
-    )
-
-
 def test_parse_response_anthropic_unstreamed():
     assert Writer(Config()).parse_response(
         {
@@ -196,3 +170,43 @@ def test_parse_response_openai_unstreamed():
         {"role": "assistant", "text": "abc", "type": "text"},
         {"role": "assistant", "text": "def", "type": "text"},
     ]
+
+
+def test_execute(config):
+    Writer(config).execute(
+        {
+            "conversation": {
+                "query": {"messages": [{"content": "abc", "role": "user"}]},
+                "response": {
+                    "choices": [
+                        {"message": {"content": "def", "role": "assistant"}},
+                        {"message": {"content": "ghi", "role": "assistant"}},
+                    ]
+                },
+            }
+        }
+    )
+
+    assert config.cache.session_id is not None
+    assert config.cache.conversation_id is not None
+
+    assert (
+        (
+            config.conn.execute(
+                """
+            select role,
+                   content
+              from memori_conversation_message
+             where conversation_id = %s
+            """,
+                (config.cache.conversation_id,),
+            )
+            .mappings()
+            .fetchall()
+        )
+        == [
+            {"role": "user", "content": "abc"},
+            {"role": "assistant", "content": "def"},
+            {"role": "assistant", "content": "ghi"},
+        ]
+    )
