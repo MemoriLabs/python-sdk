@@ -11,7 +11,7 @@ for table_name in [
     "memori_session",
     "memori_schema_version",
 ]:
-    session.execute(f"drop table if exists {table_name}")
+    session.connection().exec_driver_sql(f"drop table if exists {table_name}")
 
 # Executes all migrations.
 Memori(conn=session).storage.build()
@@ -20,7 +20,7 @@ print("-" * 50)
 Memori(conn=session).storage.build()
 print("-" * 50)
 
-session.execute(
+session.connection().exec_driver_sql(
     """
     drop table memori_schema_version
     """
@@ -28,3 +28,10 @@ session.execute(
 
 # Executes all migrations again.
 Memori(conn=session).storage.build()
+
+session.connection().exec_driver_sql(
+    """
+    delete from memori_schema_version
+    """
+)
+session.commit()

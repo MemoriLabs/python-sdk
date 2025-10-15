@@ -25,9 +25,10 @@ class Writer:
                 insert ignore into memori_session(
                     uuid
                 ) values (
-                    :uuid
-                )""",
-                {"uuid": self.config.session_id},
+                    %s
+                )
+                """,
+                (self.config.session_id,)
             )
             self.config.conn.flush()
 
@@ -36,13 +37,13 @@ class Writer:
                     """
                     select id
                       from memori_session
-                     where uuid = :uuid
+                     where uuid = %s
                     """,
-                    {"uuid": self.config.session_id},
+                    (self.config.session_id,)
                 )
                 .mappings()
-                .first()
-                .get("ID", None)
+                .fetchone()
+                .get("id", None)
             )
 
             if self.config.cache.session_id is None:
@@ -57,11 +58,11 @@ class Writer:
                     uuid,
                     session_id
                 ) values (
-                    :uuid,
-                    :session_id
+                    %s,
+                    %s
                 )
                 """,
-                {"uuid": uuid, "session_id": self.config.cache.session_id},
+                (uuid, self.config.cache.session_id,)
             )
             self.config.conn.flush()
 
@@ -70,13 +71,13 @@ class Writer:
                     """
                     select id
                       from memori_conversation
-                     where session_id = :session_id
+                     where session_id = %s
                     """,
-                    {"session_id": self.config.cache.session_id},
+                    (self.config.cache.session_id,)
                 )
                 .mappings()
-                .first()
-                .get("ID", None)
+                .fetchone()
+                .get("id", None)
             )
 
             if self.config.cache.conversation_id is None:
@@ -87,24 +88,24 @@ class Writer:
             for message in messages:
                 self.config.conn.execute(
                     """
-                    memori_conversation_message(
+                    insert into memori_conversation_message(
                         uuid,
                         conversation_id,
                         role,
                         content
                     ) values (
-                        :uuid,
-                        :conversation_id,
-                        :role,
-                        :content
+                        %s,
+                        %s,
+                        %s,
+                        %s
                     )
                     """,
-                    {
-                        "uuid": uuid4(),
-                        "conversation_id": self.config.cache.conversation_id,
-                        "role": message["role"],
-                        "content": message["content"],
-                    },
+                    (
+                        uuid4(),
+                        self.config.cache.conversation_id,
+                        message["role"],
+                        message["content"],
+                    ),
                 )
 
             self.config.conn.flush()

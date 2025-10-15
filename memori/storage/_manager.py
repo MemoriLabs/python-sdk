@@ -41,9 +41,9 @@ class Manager:
             result = (
                 self.config.conn.execute(
                     """
-                select num
-                  from memori_schema_version
-                """
+                    select num
+                      from memori_schema_version
+                    """
                 )
                 .mappings()
                 .first()
@@ -86,9 +86,13 @@ class Manager:
 
             self.config.conn.execute(
                 """
-                insert into memori_schema_version(num) values (:num)
+                insert into memori_schema_version(
+                    num
+                ) values (
+                    %s
+                )
                 """,
-                {"num": num - 1},
+                (num - 1,)
             )
             self.config.conn.commit()
 

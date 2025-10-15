@@ -17,8 +17,8 @@ class Adaptor(BaseStorageAdaptor):
         self.conn.commit()
         return self
 
-    def execute(self, operation, binds={}):
-        return self.conn.execute(operation, binds)
+    def execute(self, operation, binds=()):
+        return self.conn.connection().exec_driver_sql(operation, binds)
 
     def flush(self):
         self.conn.flush()
