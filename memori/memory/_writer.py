@@ -81,3 +81,89 @@ class Writer:
 
             if self.config.cache.conversation_id is None:
                 raise RuntimeError("conversation ID is unexpectedly None")
+
+        messages = self.parse_query(payload)
+        if len(messages) > 0:
+            for message in messages:
+                self.config.conn.execute(
+                    """
+                    memori_conversation_message(
+                        uuid,
+                        conversation_id,
+                        role,
+                        content
+                    ) values (
+                        :uuid,
+                        :conversation_id,
+                        :role,
+                        :content
+                    )
+                    """,
+                    {
+                        "uuid": uuid4(),
+                        "conversation_id": self.config.cache.conversation_id,
+                        "role": message["role"],
+                        "content": message["content"],
+                    },
+                )
+
+            self.config.conn.commit()
+
+    def parse_query(self, payload):
+        messages = payload["query"].get("messages", None)
+        if messages is not None:
+            # Anthropic / OpenAI
+            # [
+            #   {
+            #       "content": "...",
+            #       "role": "..."
+            #   }
+            # ]
+            return messages
+
+        contents = payload["query"].get("contents", None)
+        if contents is not None:
+            if contents[0].get("parts", None) is not None:
+                # Google
+                # [
+                #   {
+                #       "parts": [
+                #           {
+                #               "text": "..."
+                #           }
+                #       ],
+                #       "role": "..."
+                #   }
+                # ]
+
+                messages = []
+                for entry in contents:
+                    parts = entry.get("parts", None)
+                    content = []
+                    if parts is not None:
+                        for part in parts:
+                            text = part.get("text", None)
+                            if text is not None and len(text) > 0:
+                                content.append(text)
+
+                    if len(content) > 0:
+                        messages.append(
+                            {"content": " ".join(content), "role": entry["role"]}
+                        )
+
+                return messages
+
+        body = payload["query"].get("body", None)
+        if body is not None:
+            messages = body.get("messages", None)
+            if messages is not None:
+                # Bedrock
+                # [
+                #   {
+                #       "content": "...",
+                #       "role": "..."
+                #   }
+                # ]
+                return messages
+
+        raise NotImplementedError
