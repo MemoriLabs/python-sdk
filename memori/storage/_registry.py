@@ -9,9 +9,11 @@ r"""
                        trymemori.com
 """
 
+from memori.storage._base import BaseStorageAdaptor
 from memori.storage.adaptors.sqlalchemy._adaptor import (
     Adaptor as SqlAlchemyStorageAdaptor,
 )
+from memori.storage.drivers.mysql._driver import Driver as MysqlStorageDriver
 
 
 class Registry:
@@ -19,4 +21,10 @@ class Registry:
         if type(conn).__module__ == "sqlalchemy.orm.session":
             return SqlAlchemyStorageAdaptor(conn)
 
-        raise RuntimeError("could not determine storage system")
+        raise RuntimeError("could not determine storage system for adaptor")
+
+    def driver(self, conn: BaseStorageAdaptor):
+        if conn.get_dialect() == "mysql":
+            return MysqlStorageDriver(conn)
+
+        raise RuntimeError("could not determine storage system for driver")

@@ -28,7 +28,8 @@ class Memori:
     def __init__(self, conn=None):
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)
-        self.config.conn = self.adapt_storage(conn)
+        self.config.conn = self.storage_adaptor(conn)
+        self.config.driver = self.storage_driver()
         self.config.session_id = uuid4()
 
         self.anthropic = LlmProviderAnthropic(self)
@@ -38,12 +39,6 @@ class Memori:
         self.pydantic_ai = LlmProviderPydanticAi(self)
 
         self.storage = StorageManager(self.config)
-
-    def adapt_storage(self, conn):
-        if conn is None:
-            return None
-
-        return StorageRegistry().adaptor(conn)
 
     def attribution(self, parent_id=None, process_id=None):
         if parent_id is not None:
@@ -75,3 +70,15 @@ class Memori:
     def set_session(self, id):
         self.config.session_id = id
         return self
+
+    def storage_adaptor(self, conn):
+        if conn is None:
+            return None
+
+        return StorageRegistry().adaptor(conn)
+
+    def storage_driver(self):
+        if self.config.conn is None:
+            return None
+
+        return StorageRegistry().driver(self.config.conn)

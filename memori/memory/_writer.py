@@ -9,8 +9,6 @@ r"""
                        trymemori.com
 """
 
-from uuid import uuid4 as uuid4
-
 from memori._config import Config
 
 
@@ -20,123 +18,37 @@ class Writer:
 
     def execute(self, payload):
         if self.config.cache.session_id is None:
-            self.config.conn.execute(
-                """
-                insert ignore into memori_session(
-                    uuid
-                ) values (
-                    %s
-                )
-                """,
-                (self.config.session_id,),
+            self.config.cache.session_id = self.config.driver.session.create(
+                self.config.session_id
             )
-            self.config.conn.flush()
-
-            self.config.cache.session_id = (
-                self.config.conn.execute(
-                    """
-                    select id
-                      from memori_session
-                     where uuid = %s
-                    """,
-                    (self.config.session_id,),
-                )
-                .mappings()
-                .fetchone()
-                .get("id", None)
-            )
-
             if self.config.cache.session_id is None:
                 raise RuntimeError("session ID is unexpectedly None")
 
         if self.config.cache.conversation_id is None:
-            uuid = uuid4()
-
-            self.config.conn.execute(
-                """
-                insert ignore into memori_conversation(
-                    uuid,
-                    session_id
-                ) values (
-                    %s,
-                    %s
-                )
-                """,
-                (
-                    uuid,
-                    self.config.cache.session_id,
-                ),
+            self.config.cache.conversation_id = self.config.driver.conversation.create(
+                self.config.cache.session_id
             )
-            self.config.conn.flush()
-
-            self.config.cache.conversation_id = (
-                self.config.conn.execute(
-                    """
-                    select id
-                      from memori_conversation
-                     where session_id = %s
-                    """,
-                    (self.config.cache.session_id,),
-                )
-                .mappings()
-                .fetchone()
-                .get("id", None)
-            )
-
             if self.config.cache.conversation_id is None:
                 raise RuntimeError("conversation ID is unexpectedly None")
 
         messages = self.parse_query(payload)
         if len(messages) > 0:
             for message in messages:
-                self.config.conn.execute(
-                    """
-                    insert into memori_conversation_message(
-                        uuid,
-                        conversation_id,
-                        role,
-                        content
-                    ) values (
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    """,
-                    (
-                        uuid4(),
-                        self.config.cache.conversation_id,
-                        message["role"],
-                        message["content"],
-                    ),
+                self.config.driver.conversation.message.create(
+                    self.config.cache.conversation_id,
+                    message["role"],
+                    None,
+                    message["content"],
                 )
 
         responses = self.parse_response(payload)
         if len(responses) > 0:
             for response in responses:
-                self.config.conn.execute(
-                    """
-                    insert into memori_conversation_message(
-                        uuid,
-                        conversation_id,
-                        role,
-                        type,
-                        content
-                    ) values (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    """,
-                    (
-                        uuid4(),
-                        self.config.cache.conversation_id,
-                        response["role"],
-                        response["type"],
-                        response["text"],
-                    ),
+                self.config.driver.conversation.message.create(
+                    self.config.cache.conversation_id,
+                    response["role"],
+                    response["type"],
+                    response["text"],
                 )
 
         self.config.conn.flush()
