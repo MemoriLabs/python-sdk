@@ -28,7 +28,7 @@ class Writer:
                     %s
                 )
                 """,
-                (self.config.session_id,)
+                (self.config.session_id,),
             )
             self.config.conn.flush()
 
@@ -39,7 +39,7 @@ class Writer:
                       from memori_session
                      where uuid = %s
                     """,
-                    (self.config.session_id,)
+                    (self.config.session_id,),
                 )
                 .mappings()
                 .fetchone()
@@ -62,7 +62,10 @@ class Writer:
                     %s
                 )
                 """,
-                (uuid, self.config.cache.session_id,)
+                (
+                    uuid,
+                    self.config.cache.session_id,
+                ),
             )
             self.config.conn.flush()
 
@@ -73,7 +76,7 @@ class Writer:
                       from memori_conversation
                      where session_id = %s
                     """,
-                    (self.config.cache.session_id,)
+                    (self.config.cache.session_id,),
                 )
                 .mappings()
                 .fetchone()
@@ -115,7 +118,7 @@ class Writer:
         return self
 
     def parse_query(self, payload):
-        messages = payload["query"].get("messages", None)
+        messages = payload["conversation"]["query"].get("messages", None)
         if messages is not None:
             # Anthropic / OpenAI
             # [
@@ -126,7 +129,7 @@ class Writer:
             # ]
             return messages
 
-        contents = payload["query"].get("contents", None)
+        contents = payload["conversation"]["query"].get("contents", None)
         if contents is not None:
             if contents[0].get("parts", None) is not None:
                 # Google
@@ -140,7 +143,6 @@ class Writer:
                 #       "role": "..."
                 #   }
                 # ]
-
                 messages = []
                 for entry in contents:
                     parts = entry.get("parts", None)
@@ -158,7 +160,7 @@ class Writer:
 
                 return messages
 
-        body = payload["query"].get("body", None)
+        body = payload["conversation"]["query"].get("body", None)
         if body is not None:
             messages = body.get("messages", None)
             if messages is not None:
@@ -170,5 +172,221 @@ class Writer:
                 #   }
                 # ]
                 return messages
+
+        raise NotImplementedError
+
+    def parse_response(self, payload):
+        if isinstance(payload["conversation"]["response"], list):
+            if "chunk" in payload["conversation"]["response"][0]:
+                # Bedrock (streaming)
+                # [
+                #   {
+                #       "chunk": {
+                #           "bytes": {
+                #               "delta": {
+                #                   "text": "...",
+                #                   "type": "..."
+                #               }
+                #           }
+                #       }
+                #   }
+                # ]
+                response = []
+                text = []
+                role = None
+                for entry in payload["conversation"]["response"]:
+                    chunk = entry.get("chunk", None)
+                    if chunk is not None:
+                        bytes_ = chunk.get("bytes", None)
+                        if bytes_ is not None:
+                            message = bytes_.get("message", None)
+                            if message is not None:
+                                role = message["role"]
+                            else:
+                                delta = bytes_.get("delta", None)
+                                if delta is not None:
+                                    text_content = delta.get("text", None)
+                                    if (
+                                        text_content is not None
+                                        and len(text_content) > 0
+                                    ):
+                                        text.append(text_content)
+
+                if len(text) > 0:
+                    response.append(
+                        {"role": role, "text": "".join(text), "type": "text"}
+                    )
+
+                return response
+            elif "candidates" in payload["conversation"]["response"][0]:
+                # Google (streamed)
+                #   [
+                #       {
+                #           "candidates": [
+                #               {
+                #                   "content": {
+                #                       "parts": [
+                #                           {
+                #                               "text": "..."
+                #                           }
+                #                       ],
+                #                       "role": "model"
+                #                   }
+                #               }
+                #           ]
+                #       }
+                #   ]
+                response = []
+                text = []
+                role = None
+                for entry in payload["conversation"]["response"]:
+                    candidates = entry.get("candidates", None)
+                    if candidates is not None:
+                        for candidate in candidates:
+                            content = candidate.get("content", None)
+                            if content is not None:
+                                parts = content.get("parts", None)
+                                if parts is not None:
+                                    for part in parts:
+                                        text_content = part.get("text", None)
+                                        if (
+                                            text_content is not None
+                                            and len(text_content) > 0
+                                        ):
+                                            text.append(text_content)
+
+                                if role is None:
+                                    role = content.get("role", None)
+
+                if len(text) > 0:
+                    response.append(
+                        {"role": role, "text": "".join(text), "type": "text"}
+                    )
+
+                return response
+        else:
+            content = payload["conversation"]["response"].get("content", None)
+            if content is not None:
+                # Anthropic (unstreamed)
+                # [
+                #   {
+                #       "citations": None,
+                #       "text": "...",
+                #       "type": "..."
+                #   }
+                # ]
+                response = []
+                for entry in content:
+                    response.append(
+                        {"role": "model", "text": entry["text"], "type": entry["type"]}
+                    )
+
+                return response
+
+            candidates = payload["conversation"]["response"].get("candidates", None)
+            if candidates is not None:
+                # Google (unstreamed)
+                # [
+                #   {
+                #       "avgLogprobs": ...,
+                #       "content": {
+                #           "parts": [
+                #               {
+                #                   "text": "..."
+                #               }
+                #           ],
+                #           "role": "model"
+                #       },
+                #       "finishReason": "..."
+                #   }
+                # ]
+                response = []
+                for candidate in candidates:
+                    content = candidate.get("content", None)
+                    if content is not None:
+                        parts = content.get("parts", None)
+                        if parts is not None:
+                            text = []
+                            for part in parts:
+                                text_content = part.get("text", None)
+                                if text_content is not None:
+                                    text.append(text_content)
+
+                            if len(text) > 0:
+                                response.append(
+                                    {
+                                        "role": content["role"],
+                                        "text": "".join(text),
+                                        "type": "text",
+                                    }
+                                )
+
+                return response
+
+            choices = payload["conversation"]["response"].get("choices", None)
+            if choices is not None:
+                response = []
+                if payload["conversation"]["query"].get("stream", None) is True:
+                    # OpenAI (streamed)
+                    # [
+                    #   {
+                    #       "delta": {
+                    #           "content": "...",
+                    #           "function_call": ...,
+                    #           "refusal": ...,
+                    #           "role": "...",
+                    #           "tool_calls": ...
+                    #       }
+                    #   }
+                    # ]
+                    content = []
+                    role = None
+                    for choice in choices:
+                        delta = choice.get("delta", None)
+                        if delta is not None:
+                            text_content = delta.get("content", None)
+                            if text_content is not None and len(text_content) > 0:
+                                content.append(text_content)
+
+                                if role is None:
+                                    role = delta["role"]
+
+                    if len(content) > 0:
+                        response.append(
+                            {"role": role, "text": "".join(content), "type": "text"}
+                        )
+                else:
+                    # OpenAI (unstreamed)
+                    # [
+                    #   {
+                    #       "finish_reason": "...",
+                    #       "index": ...,
+                    #       "logprobs": ...,
+                    #       "message": {
+                    #           "annotations": ...,
+                    #           "audio": ...,
+                    #           "content": "...",
+                    #           "functional_calls": ...,
+                    #           "parsed": ...,
+                    #           "refusal": ...,
+                    #           "role": "...",
+                    #           "tool_calls": ...
+                    #       }
+                    #   }
+                    # ]
+                    for choice in choices:
+                        message = choice.get("message", None)
+                        if message is not None:
+                            content = message.get("content", None)
+                            if content is not None:
+                                response.append(
+                                    {
+                                        "role": message["role"],
+                                        "text": content,
+                                        "type": "text",
+                                    }
+                                )
+
+                return response
 
         raise NotImplementedError
