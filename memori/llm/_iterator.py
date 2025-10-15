@@ -29,7 +29,7 @@ class AsyncIterator(BaseIterator):
 
             return chunk
         except StopAsyncIteration:
-            MemoryManager(self.config).fire_and_forget(
+            MemoryManager(self.config).execute(
                 self.invoke._format_payload(
                     self.invoke._client_provider,
                     self.invoke._client_title,
@@ -63,7 +63,7 @@ class Iterator(BaseIterator):
 
             return chunk
         except StopIteration:
-            MemoryManager(self.config).fire_and_forget(
+            MemoryManager(self.config).execute(
                 self.invoke._format_payload(
                     self.invoke._client_provider,
                     self.invoke._client_title,

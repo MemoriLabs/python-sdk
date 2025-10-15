@@ -54,7 +54,7 @@ class Invoke(BaseInvoke):
 
             return raw_response
         else:
-            MemoryManager(self.config).fire_and_forget(
+            MemoryManager(self.config).execute(
                 self._format_payload(
                     self._client_provider,
                     self._client_title,
@@ -77,7 +77,7 @@ class InvokeAsync(BaseInvoke):
 
         raw_response = await self._method(**kwargs)
 
-        MemoryManager(self.config).fire_and_forget(
+        MemoryManager(self.config).execute(
             self._format_payload(
                 self._client_provider,
                 self._client_title,
@@ -108,7 +108,7 @@ class InvokeAsyncIterator(BaseInvoke):
                 .configure_request(kwargs, start)
             )
         else:
-            MemoryManager(self.config).fire_and_forget(
+            MemoryManager(self.config).execute(
                 self._format_payload(
                     self._client_provider,
                     self._client_title,
@@ -136,7 +136,7 @@ class InvokeAsyncStream(BaseInvoke):
             raw_response = merge_chunk(raw_response, chunk.__dict__)
             yield chunk
 
-        MemoryManager(self.config).fire_and_forget(
+        MemoryManager(self.config).execute(
             self._format_payload(
                 self._client_provider,
                 self._client_title,
@@ -157,7 +157,7 @@ class InvokeStream(BaseInvoke):
 
         raw_response = await self._method(**kwargs)
 
-        MemoryManager(self.config).fire_and_forget(
+        MemoryManager(self.config).execute(
             self._format_payload(
                 self._client_provider,
                 self._client_title,

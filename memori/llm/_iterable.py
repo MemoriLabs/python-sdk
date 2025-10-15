@@ -49,7 +49,7 @@ class Iterable:
 
                 yield raw_event
         finally:
-            MemoryManager(self.config).fire_and_forget(
+            MemoryManager(self.config).execute(
                 self.invoke._format_payload(
                     self.invoke._client_provider,
                     self.invoke._client_title,

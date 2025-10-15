@@ -43,7 +43,7 @@ class StreamingBody:
     def read(self, *args, **kwargs):
         data = self.source_streaming_body.read(*args, **kwargs)
 
-        MemoryManager(self.config).fire_and_forget(
+        MemoryManager(self.config).execute(
             self.invoke._format_payload(
                 self.invoke._client_provider,
                 self.invoke._client_title,
