@@ -19,7 +19,7 @@ from memori.llm._providers import LangChain as LlmProviderLangChain
 from memori.llm._providers import OpenAi as LlmProviderOpenAi
 from memori.llm._providers import PydanticAi as LlmProviderPydanticAi
 from memori.storage._manager import Manager as StorageManager
-from memori.storage._router import Router as StorageRouter
+from memori.storage._registry import Registry as StorageRegistry
 
 __all__ = ["Memori"]
 
@@ -28,7 +28,7 @@ class Memori:
     def __init__(self, conn=None):
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)
-        self.config.conn = self.configure_storage(conn)
+        self.config.conn = self.adapt_storage(conn)
         self.config.session_id = uuid4()
 
         self.anthropic = LlmProviderAnthropic(self)
@@ -38,6 +38,12 @@ class Memori:
         self.pydantic_ai = LlmProviderPydanticAi(self)
 
         self.storage = StorageManager(self.config)
+
+    def adapt_storage(self, conn):
+        if conn is None:
+            return None
+
+        return StorageRegistry().adaptor(conn)
 
     def attribution(self, parent_id=None, process_id=None):
         if parent_id is not None:
@@ -56,12 +62,6 @@ class Memori:
         self.config.process_id = process_id
 
         return self
-
-    def configure_storage(self, conn):
-        if conn is None:
-            return None
-
-        return StorageRouter().configure(conn)
 
     def metadata(self, data):
         self.config.metadata = data

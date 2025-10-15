@@ -50,6 +50,7 @@ migrations = {
                     constraint fk_memori_conv_session
                    foreign key (session_id)
                     references memori_session (id)
+                     on delete cascade
                 )
             """,
         },
@@ -73,6 +74,7 @@ migrations = {
                     constraint fk_memori_conv_msg_conv
                    foreign key (conversation_id)
                     references memori_conversation (id)
+                     on delete cascade
                 )
             """,
         },

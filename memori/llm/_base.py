@@ -130,8 +130,8 @@ class BaseInvoke:
                 },
                 "sdk": {"client": "python", "version": self.config.version},
             },
+            "session": {"uuid": str(self.config.session_id)},
             "time": {"end": end_time, "start": start_time},
-            "tx": {"uuid": str(self.config.tx_uuid)},
         }
 
         return payload

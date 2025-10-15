@@ -14,8 +14,8 @@ from memori.storage.adaptors.sqlalchemy._adaptor import (
 )
 
 
-class Router:
-    def configure(self, conn):
+class Registry:
+    def adaptor(self, conn):
         if type(conn).__module__ == "sqlalchemy.orm.session":
             return SqlAlchemyStorageAdaptor(conn)
 
