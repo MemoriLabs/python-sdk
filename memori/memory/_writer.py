@@ -29,7 +29,7 @@ class Writer:
                 )""",
                 {"uuid": self.config.session_id},
             )
-            self.config.conn.commit()
+            self.config.conn.flush()
 
             self.config.cache.session_id = (
                 self.config.conn.execute(
@@ -63,7 +63,7 @@ class Writer:
                 """,
                 {"uuid": uuid, "session_id": self.config.cache.session_id},
             )
-            self.config.conn.commit()
+            self.config.conn.flush()
 
             self.config.cache.conversation_id = (
                 self.config.conn.execute(
@@ -107,7 +107,11 @@ class Writer:
                     },
                 )
 
-            self.config.conn.commit()
+            self.config.conn.flush()
+
+        self.config.conn.commit()
+
+        return self
 
     def parse_query(self, payload):
         messages = payload["query"].get("messages", None)

@@ -20,6 +20,10 @@ class Adaptor(BaseStorageAdaptor):
     def execute(self, operation, binds={}):
         return self.conn.execute(operation, binds)
 
+    def flush(self):
+        self.conn.flush()
+        return self
+
     def get_dialect(self):
         return self.conn.bind.dialect.name
 
