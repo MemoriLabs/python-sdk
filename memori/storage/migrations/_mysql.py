@@ -60,6 +60,8 @@ migrations = {
                     id bigint not null auto_increment,
                     uuid varchar(36) not null,
                     conversation_id bigint not null,
+                    role varchar(255) not null,
+                    content text not null,
                     date_created datetime not null default current_timestamp,
                     date_updated datetime default null on update current_timestamp,
                     --
