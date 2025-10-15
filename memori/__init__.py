@@ -13,7 +13,6 @@ import os
 from uuid import uuid4
 
 from memori._config import Config
-from memori._network import Collector
 from memori.llm._providers import Anthropic as LlmProviderAnthropic
 from memori.llm._providers import Google as LlmProviderGoogle
 from memori.llm._providers import LangChain as LlmProviderLangChain

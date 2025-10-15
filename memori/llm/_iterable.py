@@ -14,9 +14,9 @@ import json
 import time
 
 from memori._config import Config
-from memori._network import Collector
 from memori._utils import bytes_to_json
 from memori.llm._base import BaseInvoke
+from memori.memory._manager import Manager as MemoryManager
 
 
 class Iterable:
@@ -49,7 +49,7 @@ class Iterable:
 
                 yield raw_event
         finally:
-            Collector(self.config).fire_and_forget(
+            MemoryManager(self.config).fire_and_forget(
                 self.invoke._format_payload(
                     self.invoke._client_provider,
                     self.invoke._client_title,

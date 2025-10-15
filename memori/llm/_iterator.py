@@ -11,8 +11,8 @@ r"""
 
 import time
 
-from memori._network import Collector
 from memori.llm._base import BaseInvoke, BaseIterator
+from memori.memory._manager import Manager as MemoryManager
 
 
 class AsyncIterator(BaseIterator):
@@ -29,7 +29,7 @@ class AsyncIterator(BaseIterator):
 
             return chunk
         except StopAsyncIteration:
-            Collector(self.config).fire_and_forget(
+            MemoryManager(self.config).fire_and_forget(
                 self.invoke._format_payload(
                     self.invoke._client_provider,
                     self.invoke._client_title,
@@ -63,7 +63,7 @@ class Iterator(BaseIterator):
 
             return chunk
         except StopIteration:
-            Collector(self.config).fire_and_forget(
+            MemoryManager(self.config).fire_and_forget(
                 self.invoke._format_payload(
                     self.invoke._client_provider,
                     self.invoke._client_title,

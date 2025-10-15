@@ -16,7 +16,6 @@ import time
 from google.protobuf import json_format
 
 from memori._config import Config
-from memori._network import Collector
 from memori._utils import merge_chunk
 from memori.llm._constants import (
     LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,

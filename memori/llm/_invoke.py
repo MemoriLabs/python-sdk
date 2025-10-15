@@ -15,13 +15,13 @@ from collections.abc import AsyncIterator, Iterator
 from botocore.eventstream import EventStream
 from grpc.experimental.aio import UnaryStreamCall
 
-from memori._network import Collector
 from memori._utils import merge_chunk
 from memori.llm._base import BaseInvoke
 from memori.llm._iterable import Iterable as MemoriIterable
 from memori.llm._iterator import AsyncIterator as MemoriAsyncIterator
 from memori.llm._iterator import Iterator as MemoriIterator
 from memori.llm._streaming import StreamingBody as MemoriStreamingBody
+from memori.memory._manager import Manager as MemoryManager
 
 
 class Invoke(BaseInvoke):
@@ -54,7 +54,7 @@ class Invoke(BaseInvoke):
 
             return raw_response
         else:
-            Collector(self.config).fire_and_forget(
+            MemoryManager(self.config).fire_and_forget(
                 self._format_payload(
                     self._client_provider,
                     self._client_title,
@@ -77,7 +77,7 @@ class InvokeAsync(BaseInvoke):
 
         raw_response = await self._method(**kwargs)
 
-        Collector(self.config).fire_and_forget(
+        MemoryManager(self.config).fire_and_forget(
             self._format_payload(
                 self._client_provider,
                 self._client_title,
@@ -108,7 +108,7 @@ class InvokeAsyncIterator(BaseInvoke):
                 .configure_request(kwargs, start)
             )
         else:
-            Collector(self.config).fire_and_forget(
+            MemoryManager(self.config).fire_and_forget(
                 self._format_payload(
                     self._client_provider,
                     self._client_title,
@@ -136,7 +136,7 @@ class InvokeAsyncStream(BaseInvoke):
             raw_response = merge_chunk(raw_response, chunk.__dict__)
             yield chunk
 
-        Collector(self.config).fire_and_forget(
+        MemoryManager(self.config).fire_and_forget(
             self._format_payload(
                 self._client_provider,
                 self._client_title,
@@ -157,7 +157,7 @@ class InvokeStream(BaseInvoke):
 
         raw_response = await self._method(**kwargs)
 
-        Collector(self.config).fire_and_forget(
+        MemoryManager(self.config).fire_and_forget(
             self._format_payload(
                 self._client_provider,
                 self._client_title,

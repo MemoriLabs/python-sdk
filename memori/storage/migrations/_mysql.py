@@ -44,6 +44,7 @@ migrations = {
                     date_updated datetime default null on update current_timestamp,
                     --
                     primary key (id),
+                    unique key (session_id),
                     unique key (uuid),
                     --
                     constraint fk_memori_conv_session
@@ -63,6 +64,7 @@ migrations = {
                     date_updated datetime default null on update current_timestamp,
                     --
                     primary key (id),
+                    unique key (conversation_id, id),
                     unique key (uuid),
                     --
                     constraint fk_memori_conv_msg_conv
