@@ -14,6 +14,8 @@ from uuid import uuid4
 from memori.storage._base import (
     BaseConversation,
     BaseConversationMessage,
+    BaseSchema,
+    BaseSchemaVersion,
     BaseSession,
     BaseStorageAdaptor,
 )
@@ -116,7 +118,48 @@ class Session(BaseSession):
         )
 
 
+class Schema(BaseSchema):
+    def __init__(self, conn: BaseStorageAdaptor):
+        super().__init__(conn)
+        self.version = SchemaVersion(conn)
+
+
+class SchemaVersion(BaseSchemaVersion):
+    def create(self, num: int):
+        self.conn.execute(
+            """
+            insert into memori_schema_version(
+                num
+            ) values (
+                %s
+            )
+            """,
+            (num,),
+        )
+
+    def delete(self):
+        self.conn.execute(
+            """
+            delete from memori_schema_version
+            """
+        )
+
+    def read(self):
+        return (
+            self.conn.execute(
+                """
+                select num
+                  from memori_schema_version
+                """
+            )
+            .mappings()
+            .fetchone()
+            .get("num", None)
+        )
+
+
 class Driver:
     def __init__(self, conn: BaseStorageAdaptor):
         self.conversation = Conversation(conn)
+        self.schema = Schema(conn)
         self.session = Session(conn)

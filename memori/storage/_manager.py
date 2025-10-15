@@ -38,23 +38,9 @@ class Manager:
             return self
 
         try:
-            result = (
-                self.config.conn.execute(
-                    """
-                    select num
-                      from memori_schema_version
-                    """
-                )
-                .mappings()
-                .first()
-            )
+            num = self.config.driver.schema.version.read()
         except:
-            result = None
-
-        if result is None:
             num = 0
-        else:
-            num = result["num"]
 
         self.cli.notice(f"Currently at revision #{num}.")
 
@@ -78,22 +64,9 @@ class Manager:
                     self.config.conn.execute(migration["operation"])
                     self.config.conn.commit()
 
-            self.config.conn.execute(
-                """
-                delete from memori_schema_version
-                """
-            )
+            self.config.driver.schema.version.delete()
+            self.config.driver.schema.version.create(num - 1)
 
-            self.config.conn.execute(
-                """
-                insert into memori_schema_version(
-                    num
-                ) values (
-                    %s
-                )
-                """,
-                (num - 1,)
-            )
             self.config.conn.commit()
 
         self.cli.notice("Build executed successfully!")

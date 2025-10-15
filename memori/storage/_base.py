@@ -52,3 +52,22 @@ class BaseSession:
 
     def create(self, uuid: str):
         raise NotImplementedError
+
+
+class BaseSchema:
+    def __init__(self, conn: BaseStorageAdaptor):
+        self.conn = conn
+
+
+class BaseSchemaVersion:
+    def __init__(self, conn: BaseStorageAdaptor):
+        self.conn = conn
+
+    def create(self, num: int):
+        raise NotImplementedError
+
+    def delete(self):
+        raise NotImplementedError
+
+    def read(self):
+        raise NotImplementedError
