@@ -18,7 +18,8 @@ version = "3.0.0"
 dependencies = [
     "botocore",
     "grpcio",
-    "protobuf"
+    "protobuf",
+    "pyfiglet"
 ]
 
 [tool.setuptools.packages.find]

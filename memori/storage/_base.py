@@ -20,5 +20,8 @@ class BaseStorageAdaptor:
     def execute(self, operation):
         raise NotImplementedError
 
+    def get_dialect(self):
+        raise NotImplementedError
+
     def rollback(self):
         raise NotImplementedError

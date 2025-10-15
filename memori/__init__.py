@@ -19,6 +19,7 @@ from memori.llm._providers import Google as LlmProviderGoogle
 from memori.llm._providers import LangChain as LlmProviderLangChain
 from memori.llm._providers import OpenAi as LlmProviderOpenAi
 from memori.llm._providers import PydanticAi as LlmProviderPydanticAi
+from memori.storage._manager import Manager as StorageManager
 from memori.storage._router import Router as StorageRouter
 
 __all__ = ["Memori"]
@@ -36,6 +37,8 @@ class Memori:
         self.langchain = LlmProviderLangChain(self)
         self.openai = LlmProviderOpenAi(self)
         self.pydantic_ai = LlmProviderPydanticAi(self)
+
+        self.storage = StorageManager(self.config)
 
     def attribution(self, parent_id=None, process_id=None):
         if parent_id is not None:
@@ -67,6 +70,7 @@ class Memori:
 
     def new_session(self):
         self.config.session_id = uuid4()
+        self.config.reset_cache()
         return self
 
     def set_session(self, id):

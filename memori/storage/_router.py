@@ -16,7 +16,7 @@ from memori.storage.adaptors.sqlalchemy._adaptor import (
 
 class Router:
     def configure(self, conn):
-        if type(session).__module__ == "sqlalchemy.orm.session":
+        if type(conn).__module__ == "sqlalchemy.orm.session":
             return SqlAlchemyStorageAdaptor(conn)
 
         raise RuntimeError("could not determine storage system")
