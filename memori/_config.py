@@ -9,6 +9,8 @@ r"""
                        trymemori.com
 """
 
+import os
+
 
 class Cache:
     def __init__(self):
@@ -29,6 +31,9 @@ class Config:
         self.secs_post_timeout = 5
         self.session_id = None
         self.version = "3.0.0"
+
+    def is_test_mode(self):
+        return os.environ.get("MEMORI_TEST_MODE", None) is not None
 
     def reset_cache(self):
         self.cache = Cache()

@@ -95,7 +95,7 @@ class Collector:
         self.config = config
 
     def fire_and_forget(self, payload):
-        if os.environ.get("MEMORI_TEST_MODE") is None:
+        if not self.config.is_test_mode():
             try:
                 requests.post(
                     f"{self.__base}/rec",
@@ -120,7 +120,6 @@ class Collector:
                     else:
                         pass
         else:
-            json.dumps(payload)
             pprint.pprint(payload)
 
         return self

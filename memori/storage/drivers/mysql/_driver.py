@@ -14,6 +14,7 @@ from uuid import uuid4
 from memori.storage._base import (
     BaseConversation,
     BaseConversationMessage,
+    BaseConversationMessages,
     BaseParent,
     BaseProcess,
     BaseSchema,
@@ -27,6 +28,7 @@ class Conversation(BaseConversation):
     def __init__(self, conn: BaseStorageAdaptor):
         super().__init__(conn)
         self.message = ConversationMessage(conn)
+        self.messages = ConversationMessages(conn)
 
     def create(self, session_id):
         uuid = uuid4()
@@ -89,6 +91,29 @@ class ConversationMessage(BaseConversationMessage):
                 content,
             ),
         )
+
+
+class ConversationMessages(BaseConversationMessages):
+    def read(self, conversation_id: int):
+        results = (
+            self.conn.execute(
+                """
+                select role,
+                       content
+                  from memori_conversation_message
+                 where conversation_id = %s
+                """,
+                (conversation_id,),
+            )
+            .mappings()
+            .fetchall()
+        )
+
+        messages = []
+        for result in results:
+            messages.append({"content": result["content"], "role": result["role"]})
+
+        return messages
 
 
 class Parent(BaseParent):

@@ -46,6 +46,14 @@ class BaseConversationMessage:
         raise NotImplementedError
 
 
+class BaseConversationMessages:
+    def __init__(self, conn: BaseStorageAdaptor):
+        self.conn = conn
+
+    def read(self, conversation_id: int):
+        raise NotImplementedError
+
+
 class BaseParent:
     def __init__(self, conn: BaseStorageAdaptor):
         self.conn = conn

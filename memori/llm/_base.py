@@ -11,6 +11,7 @@ r"""
 
 import copy
 import json
+import pprint
 import time
 
 from google.protobuf import json_format
@@ -18,7 +19,11 @@ from google.protobuf import json_format
 from memori._config import Config
 from memori._utils import merge_chunk
 from memori.llm._constants import (
+    ATHROPIC_CLIENT_TITLE,
+    GOOGLE_CLIENT_TITLE,
     LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
+    LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+    LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
     LANGCHAIN_CLIENT_PROVIDER,
     LANGCHAIN_OPENAI_CLIENT_TITLE,
     OPENAI_CLIENT_TITLE,
@@ -112,7 +117,10 @@ class BaseInvoke:
         response_json = self.response_to_json(response)
 
         payload = {
-            "attribution": self.config.attribution,
+            "attribution": {
+                "parent": {"id": self.config.parent_id},
+                "process": {"id": self.config.process_id},
+            },
             "conversation": {
                 "client": {
                     "provider": client_provider,
@@ -165,6 +173,34 @@ class BaseInvoke:
 
         return raw_response
 
+    def inject_conversation_messages(self, kwargs):
+        if self.config.cache.conversation_id is None:
+            return kwargs
+
+        messages = self.config.driver.conversation.messages.read(
+            self.config.cache.conversation_id
+        )
+        if len(messages) == 0:
+            return kwargs
+
+        if self.llm_is_openai() or self.llm_is_anthropic() or self.llm_is_bedrock():
+            kwargs["messages"] = messages + kwargs["messages"]
+        elif self.llm_is_google():
+            contents = []
+            for message in messages:
+                contents.append(
+                    {"parts": [{"text": message["content"]}], "role": message["role"]}
+                )
+
+            kwargs["messages"] = contents + kwargs["contents"]
+        else:
+            raise NotImplementedError
+
+        if self.config.is_test_mode():
+            pprint.pprint(kwargs)
+
+        return kwargs
+
     def list_to_json(self, list_):
         result = []
         for entry in list_:
@@ -179,6 +215,25 @@ class BaseInvoke:
                     result.append(entry)
 
         return result
+
+    def llm_is_anthropic(self):
+        return self._client_title == ATHROPIC_CLIENT_TITLE
+
+    def llm_is_bedrock(self):
+        return (
+            self._client_provider == LANGCHAIN_CLIENT_PROVIDER
+            and self._client_title == LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
+        )
+
+    def llm_is_google(self):
+        return self._client_title == GOOGLE_CLIENT_TITLE or (
+            self._client_provider == LANGCHAIN_CLIENT_PROVIDER
+            and self._client_title
+            in [
+                LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+                LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
+            ]
+        )
 
     def llm_is_openai(self):
         return self._client_title == OPENAI_CLIENT_TITLE or (

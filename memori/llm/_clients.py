@@ -16,10 +16,13 @@ from memori.llm._constants import (
     ATHROPIC_CLIENT_TITLE,
     GOOGLE_CLIENT_TITLE,
     LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
+    LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+    LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
     LANGCHAIN_CLIENT_PROVIDER,
     LANGCHAIN_OPENAI_CLIENT_TITLE,
     OPENAI_CLIENT_TITLE,
     PYDANTIC_AI_CLIENT_PROVIDER,
+    PYDANTIC_AI_OPENAI_CLIENT_TITLE,
 )
 from memori.llm._invoke import (
     Invoke,
@@ -136,7 +139,11 @@ class LangChain(BaseClient):
                 )
                 chatgooglegenai.client.generate_content = (
                     Invoke(self.config, chatgooglegenai.client._generate_content)
-                    .set_client(LANGCHAIN_CLIENT_PROVIDER, "chatgooglegenai", None)
+                    .set_client(
+                        LANGCHAIN_CLIENT_PROVIDER,
+                        LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+                        None,
+                    )
                     .uses_protobuf()
                     .invoke
                 )
@@ -150,7 +157,11 @@ class LangChain(BaseClient):
                             self.config,
                             chatgooglegenai.async_client._stream_generate_content,
                         )
-                        .set_client(LANGCHAIN_CLIENT_PROVIDER, "chatgooglegenai", None)
+                        .set_client(
+                            LANGCHAIN_CLIENT_PROVIDER,
+                            LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+                            None,
+                        )
                         .uses_protobuf()
                         .invoke
                     )
@@ -289,7 +300,11 @@ class LangChain(BaseClient):
                         self.config,
                         chatvertexai.prediction_client.actual_generate_content,
                     )
-                    .set_client(LANGCHAIN_CLIENT_PROVIDER, "chatvertexai", None)
+                    .set_client(
+                        LANGCHAIN_CLIENT_PROVIDER,
+                        LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
+                        None,
+                    )
                     .uses_protobuf()
                     .invoke
                 )
@@ -391,7 +406,11 @@ class PydanticAi(BaseClient):
                     self.config,
                     client.chat.completions.actual_chat_completions_create,
                 )
-                .set_client(PYDANTIC_AI_CLIENT_PROVIDER, "openai", client._version)
+                .set_client(
+                    PYDANTIC_AI_CLIENT_PROVIDER,
+                    PYDANTIC_AI_OPENAI_CLIENT_TITLE,
+                    client._version,
+                )
                 .invoke
             )
 

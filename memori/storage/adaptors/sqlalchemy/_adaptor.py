@@ -25,7 +25,7 @@ class Adaptor(BaseStorageAdaptor):
         return self
 
     def get_dialect(self):
-        return self.conn.bind.dialect.name
+        return self.conn.get_bind().dialect.name
 
     def rollback(self):
         self.conn.rollback()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from database import TestDBSession
+from database.core import TestDBSession
 from memori import Memori
 
 session = TestDBSession()

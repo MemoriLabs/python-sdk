@@ -28,7 +28,9 @@ class Invoke(BaseInvoke):
     def invoke(self, **kwargs):
         start = time.time()
 
-        kwargs = self.configure_for_streaming_usage(kwargs)
+        kwargs = self.inject_conversation_messages(
+            self.configure_for_streaming_usage(kwargs)
+        )
 
         raw_response = self._method(**kwargs)
 

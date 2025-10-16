@@ -8,6 +8,8 @@ from memori.llm._constants import (
     ATHROPIC_CLIENT_TITLE,
     GOOGLE_CLIENT_TITLE,
     LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
+    LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+    LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
     LANGCHAIN_CLIENT_PROVIDER,
     LANGCHAIN_OPENAI_CLIENT_TITLE,
     OPENAI_CLIENT_TITLE,
@@ -182,6 +184,88 @@ def test_llm_is_openai():
     invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
     invoke._client_title = "abc"
     assert invoke.llm_is_openai() is False
+
+
+def test_llm_is_anthropic():
+    invoke = BaseInvoke(Config(), "abc")
+    assert invoke.llm_is_anthropic() is False
+
+    invoke._client_title = ATHROPIC_CLIENT_TITLE
+    assert invoke.llm_is_anthropic() is True
+
+    invoke._client_title = GOOGLE_CLIENT_TITLE
+    assert invoke.llm_is_anthropic() is False
+
+    invoke._client_title = OPENAI_CLIENT_TITLE
+    assert invoke.llm_is_anthropic() is False
+
+
+def test_llm_is_google():
+    invoke = BaseInvoke(Config(), "abc")
+    assert invoke.llm_is_google() is False
+
+    invoke._client_title = ATHROPIC_CLIENT_TITLE
+    assert invoke.llm_is_google() is False
+
+    invoke._client_title = GOOGLE_CLIENT_TITLE
+    assert invoke.llm_is_google() is True
+
+    invoke._client_title = OPENAI_CLIENT_TITLE
+    assert invoke.llm_is_google() is False
+
+    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
+    invoke._client_title = LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE
+    assert invoke.llm_is_google() is True
+
+    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
+    invoke._client_title = LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE
+    assert invoke.llm_is_google() is True
+
+    invoke._client_provider = "abc"
+    invoke._client_title = LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE
+    assert invoke.llm_is_google() is False
+
+    invoke._client_provider = "abc"
+    invoke._client_title = LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE
+    assert invoke.llm_is_google() is False
+
+    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
+    invoke._client_title = "abc"
+    assert invoke.llm_is_google() is False
+
+
+def test_llm_is_bedrock():
+    invoke = BaseInvoke(Config(), "abc")
+    assert invoke.llm_is_bedrock() is False
+
+    invoke._client_title = ATHROPIC_CLIENT_TITLE
+    assert invoke.llm_is_bedrock() is False
+
+    invoke._client_title = GOOGLE_CLIENT_TITLE
+    assert invoke.llm_is_bedrock() is False
+
+    invoke._client_title = OPENAI_CLIENT_TITLE
+    assert invoke.llm_is_bedrock() is False
+
+    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
+    invoke._client_title = LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
+    assert invoke.llm_is_bedrock() is True
+
+    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
+    invoke._client_title = LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE
+    assert invoke.llm_is_bedrock() is False
+
+    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
+    invoke._client_title = LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE
+    assert invoke.llm_is_bedrock() is False
+
+    invoke._client_provider = "abc"
+    invoke._client_title = LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
+    assert invoke.llm_is_bedrock() is False
+
+    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
+    invoke._client_title = "abc"
+    assert invoke.llm_is_bedrock() is False
 
 
 def test_provider_is_langchain():
