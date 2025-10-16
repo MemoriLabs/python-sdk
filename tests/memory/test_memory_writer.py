@@ -59,13 +59,14 @@ def test_parse_response_anthropic_unstreamed():
                     "content": [
                         {"text": "abc", "type": "text"},
                         {"text": "def", "type": "text"},
-                    ]
+                    ],
+                    "role": "assistant",
                 }
             }
         }
     ) == [
-        {"role": "model", "text": "abc", "type": "text"},
-        {"role": "model", "text": "def", "type": "text"},
+        {"role": "assistant", "text": "abc", "type": "text"},
+        {"role": "assistant", "text": "def", "type": "text"},
     ]
 
 
