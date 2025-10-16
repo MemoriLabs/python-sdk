@@ -8,11 +8,11 @@ from openai import OpenAI
 
 from memori import Memori
 
-if os.environ.get("MEMORI_TEST_MODE", None) != "1":
-    raise RuntimeError("MEMORI_TEST_MODE is not set")
-
 if os.environ.get("OPENAI_API_KEY", None) is None:
     raise RuntimeError("OPENAI_API_KEY is not set")
+
+os.environ["MEMORI_TEST_MODE"] = "1"
+os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 session = TestDBSession()
 client = OpenAI()
@@ -24,19 +24,17 @@ mem.openai.register(client)
 
 mem.attribution(parent_id="123", process_id="456")
 
-response = client.chat.completions.create(
+print("-" * 25)
+
+query = "What color is the planet Mars?"
+print(f"me: {query}")
+
+print("-" * 25)
+print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
+
+client.chat.completions.create(
     model="gpt-4o-mini",
-    messages=[{"role": "user", "content": "What color is the planet Mars?"}],
+    messages=[{"role": "user", "content": query}],
 )
 
-response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {
-            "role": "user",
-            "content": "That planet we're talking about, in order from the sun which one is it?",
-        }
-    ],
-)
-
-print(response)
+print("-" * 25)
