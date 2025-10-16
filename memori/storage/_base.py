@@ -10,7 +10,7 @@ r"""
 """
 
 
-class BaseStorageAdaptor:
+class BaseStorageAdapter:
     def __init__(self, conn):
         self.conn = conn
 
@@ -31,7 +31,7 @@ class BaseStorageAdaptor:
 
 
 class BaseConversation:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, session_id: int):
@@ -39,7 +39,7 @@ class BaseConversation:
 
 
 class BaseConversationMessage:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, conversation_id: int, role: str, type: str, content: str):
@@ -47,7 +47,7 @@ class BaseConversationMessage:
 
 
 class BaseConversationMessages:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def read(self, conversation_id: int):
@@ -55,7 +55,7 @@ class BaseConversationMessages:
 
 
 class BaseParent:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, external_id: str):
@@ -63,7 +63,7 @@ class BaseParent:
 
 
 class BaseProcess:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, external_id: str):
@@ -71,7 +71,7 @@ class BaseProcess:
 
 
 class BaseSession:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, uuid: str, parent_id: int, process_id: int):
@@ -79,12 +79,12 @@ class BaseSession:
 
 
 class BaseSchema:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
 
 class BaseSchemaVersion:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, num: int):

@@ -20,12 +20,12 @@ from memori.storage._base import (
     BaseSchema,
     BaseSchemaVersion,
     BaseSession,
-    BaseStorageAdaptor,
+    BaseStorageAdapter,
 )
 
 
 class Conversation(BaseConversation):
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         super().__init__(conn)
         self.message = ConversationMessage(conn)
         self.messages = ConversationMessages(conn)
@@ -212,7 +212,7 @@ class Session(BaseSession):
 
 
 class Schema(BaseSchema):
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         super().__init__(conn)
         self.version = SchemaVersion(conn)
 
@@ -252,7 +252,7 @@ class SchemaVersion(BaseSchemaVersion):
 
 
 class Driver:
-    def __init__(self, conn: BaseStorageAdaptor):
+    def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
         self.parent = Parent(conn)
         self.process = Process(conn)

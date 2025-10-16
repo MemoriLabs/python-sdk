@@ -28,7 +28,7 @@ class Memori:
     def __init__(self, conn=None):
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)
-        self.config.conn = self.storage_adaptor(conn)
+        self.config.conn = self.storage_adapter(conn)
         self.config.driver = self.storage_driver()
         self.config.session_id = uuid4()
 
@@ -71,11 +71,11 @@ class Memori:
         self.config.session_id = id
         return self
 
-    def storage_adaptor(self, conn):
+    def storage_adapter(self, conn):
         if conn is None:
             return None
 
-        return StorageRegistry().adaptor(conn)
+        return StorageRegistry().adapter(conn)
 
     def storage_driver(self):
         if self.config.conn is None:

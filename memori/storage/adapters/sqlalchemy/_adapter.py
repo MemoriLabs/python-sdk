@@ -9,10 +9,10 @@ r"""
                        trymemori.com
 """
 
-from memori.storage._base import BaseStorageAdaptor
+from memori.storage._base import BaseStorageAdapter
 
 
-class Adaptor(BaseStorageAdaptor):
+class Adapter(BaseStorageAdapter):
     def commit(self):
         self.conn.commit()
         return self
