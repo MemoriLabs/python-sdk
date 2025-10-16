@@ -234,7 +234,13 @@ class Writer:
                 response = []
                 for entry in content:
                     response.append(
-                        {"role": "model", "text": entry["text"], "type": entry["type"]}
+                        {
+                            "role": payload["conversation"]["response"].get(
+                                "role", None
+                            ),
+                            "text": entry["text"],
+                            "type": entry["type"],
+                        }
                     )
 
                 return response

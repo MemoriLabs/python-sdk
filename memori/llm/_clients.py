@@ -50,7 +50,17 @@ class Anthropic(BaseClient):
                     .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
                     .invoke
                 )
+                client.messages.create = (
+                    InvokeAsync(self.config, client._messages_create)
+                    .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
+                    .invoke
+                )
             except RuntimeError:
+                client.beta.messages.create = (
+                    Invoke(self.config, client.beta._messages_create)
+                    .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
+                    .invoke
+                )
                 client.messages.create = (
                     Invoke(self.config, client._messages_create)
                     .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
