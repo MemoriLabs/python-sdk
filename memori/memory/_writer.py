@@ -17,9 +17,27 @@ class Writer:
         self.config = config
 
     def execute(self, payload):
+        if self.config.parent_id is not None:
+            if self.config.cache.parent_id is None:
+                self.config.cache.parent_id = self.config.driver.parent.create(
+                    self.config.parent_id
+                )
+                if self.config.cache.parent_id is None:
+                    raise RuntimeError("parent ID is unexpectedly None")
+
+        if self.config.process_id is not None:
+            if self.config.cache.process_id is None:
+                self.config.cache.process_id = self.config.driver.process.create(
+                    self.config.process_id
+                )
+                if self.config.cache.process_id is None:
+                    raise RuntimeError("process ID is unexpectedly None")
+
         if self.config.cache.session_id is None:
             self.config.cache.session_id = self.config.driver.session.create(
-                self.config.session_id
+                self.config.session_id,
+                self.config.cache.parent_id,
+                self.config.cache.process_id,
             )
             if self.config.cache.session_id is None:
                 raise RuntimeError("session ID is unexpectedly None")

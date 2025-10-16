@@ -20,16 +20,61 @@ migrations = {
             """,
         },
         {
+            "description": "create table memori_parent",
+            "operation": """
+                create table if not exists memori_parent(
+                    id bigint not null auto_increment,
+                    uuid varchar(36) not null,
+                    external_id varchar(100) not null,
+                    date_created datetime not null default current_timestamp,
+                    date_updated datetime default null on update current_timestamp,
+                    --
+                    primary key (id),
+                    unique key (external_id),
+                    unique key (uuid)
+                )
+            """,
+        },
+        {
+            "description": "create table memori_process",
+            "operation": """
+                create table if not exists memori_process(
+                    id bigint not null auto_increment,
+                    uuid varchar(36) not null,
+                    external_id varchar(100) not null,
+                    date_created datetime not null default current_timestamp,
+                    date_updated datetime default null on update current_timestamp,
+                    --
+                    primary key (id),
+                    unique key (external_id),
+                    unique key (uuid)
+                )
+            """,
+        },
+        {
             "description": "create table memori_session",
             "operation": """
                 create table if not exists memori_session(
                     id bigint not null auto_increment,
                     uuid varchar(36) not null,
+                    parent_id bigint default null,
+                    process_id bigint default null,
                     date_created datetime not null default current_timestamp,
                     date_updated datetime default null on update current_timestamp,
                     --
                     primary key (id),
-                    unique key (uuid)
+                    unique key (parent_id, id),
+                    unique key (process_id, id),
+                    unique key (uuid),
+                    --
+                    constraint fk_memori_sess_parent
+                   foreign key (parent_id)
+                    references memori_parent (id)
+                     on delete cascade,
+                    constraint fk_memori_sess_process
+                   foreign key (process_id)
+                    references memori_process (id)
+                     on delete cascade
                 )
             """,
         },

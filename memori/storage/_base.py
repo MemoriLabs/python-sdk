@@ -46,11 +46,27 @@ class BaseConversationMessage:
         raise NotImplementedError
 
 
+class BaseParent:
+    def __init__(self, conn: BaseStorageAdaptor):
+        self.conn = conn
+
+    def create(self, external_id: str):
+        raise NotImplementedError
+
+
+class BaseProcess:
+    def __init__(self, conn: BaseStorageAdaptor):
+        self.conn = conn
+
+    def create(self, external_id: str):
+        raise NotImplementedError
+
+
 class BaseSession:
     def __init__(self, conn: BaseStorageAdaptor):
         self.conn = conn
 
-    def create(self, uuid: str):
+    def create(self, uuid: str, parent_id: int, process_id: int):
         raise NotImplementedError
 
 

@@ -9,6 +9,8 @@ for table_name in [
     "memori_conversation_message",
     "memori_conversation",
     "memori_session",
+    "memori_parent",
+    "memori_process",
     "memori_schema_version",
 ]:
     session.connection().exec_driver_sql(f"drop table if exists {table_name}")

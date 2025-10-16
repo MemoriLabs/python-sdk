@@ -14,6 +14,8 @@ from uuid import uuid4
 from memori.storage._base import (
     BaseConversation,
     BaseConversationMessage,
+    BaseParent,
+    BaseProcess,
     BaseSchema,
     BaseSchemaVersion,
     BaseSession,
@@ -89,17 +91,83 @@ class ConversationMessage(BaseConversationMessage):
         )
 
 
-class Session(BaseSession):
-    def create(self, uuid):
+class Parent(BaseParent):
+    def create(self, external_id: str):
         self.conn.execute(
             """
-            insert ignore into memori_session(
-                uuid
+            insert ignore into memori_parent(
+                uuid,
+                external_id
             ) values (
+                %s,
                 %s
             )
             """,
-            (uuid,),
+            (uuid4(), external_id),
+        )
+        self.conn.flush()
+
+        return (
+            self.conn.execute(
+                """
+                select id
+                  from memori_parent
+                 where external_id = %s
+                """,
+                (external_id,),
+            )
+            .mappings()
+            .fetchone()
+            .get("id", None)
+        )
+
+
+class Process(BaseProcess):
+    def create(self, external_id: str):
+        self.conn.execute(
+            """
+            insert ignore into memori_process(
+                uuid,
+                external_id
+            ) values (
+                %s,
+                %s
+            )
+            """,
+            (uuid4(), external_id),
+        )
+        self.conn.flush()
+
+        return (
+            self.conn.execute(
+                """
+                select id
+                  from memori_process
+                 where external_id = %s
+                """,
+                (external_id,),
+            )
+            .mappings()
+            .fetchone()
+            .get("id", None)
+        )
+
+
+class Session(BaseSession):
+    def create(self, uuid: str, parent_id: int, process_id: int):
+        self.conn.execute(
+            """
+            insert ignore into memori_session(
+                uuid,
+                parent_id,
+                process_id
+            ) values (
+                %s,
+                %s,
+                %s
+            )
+            """,
+            (uuid, parent_id, process_id),
         )
         self.conn.flush()
 
@@ -161,5 +229,7 @@ class SchemaVersion(BaseSchemaVersion):
 class Driver:
     def __init__(self, conn: BaseStorageAdaptor):
         self.conversation = Conversation(conn)
+        self.parent = Parent(conn)
+        self.process = Process(conn)
         self.schema = Schema(conn)
         self.session = Session(conn)

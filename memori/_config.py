@@ -13,6 +13,8 @@ r"""
 class Cache:
     def __init__(self):
         self.conversation_id = None
+        self.parent_id = None
+        self.process_id = None
         self.session_id = None
 
 
