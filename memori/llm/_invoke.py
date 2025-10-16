@@ -75,7 +75,9 @@ class InvokeAsync(BaseInvoke):
     async def invoke(self, **kwargs):
         start = time.time()
 
-        kwargs = self.configure_for_streaming_usage(kwargs)
+        kwargs = self.inject_conversation_messages(
+            self.configure_for_streaming_usage(kwargs)
+        )
 
         raw_response = await self._method(**kwargs)
 
@@ -98,7 +100,9 @@ class InvokeAsyncIterator(BaseInvoke):
     async def invoke(self, **kwargs):
         start = time.time()
 
-        kwargs = self.configure_for_streaming_usage(kwargs)
+        kwargs = self.inject_conversation_messages(
+            self.configure_for_streaming_usage(kwargs)
+        )
 
         raw_response = await self._method(**kwargs)
         if isinstance(raw_response, AsyncIterator) or isinstance(
@@ -129,7 +133,9 @@ class InvokeAsyncStream(BaseInvoke):
     async def invoke(self, **kwargs):
         start = time.time()
 
-        kwargs = self.configure_for_streaming_usage(kwargs)
+        kwargs = self.inject_conversation_messages(
+            self.configure_for_streaming_usage(kwargs)
+        )
 
         stream = await self._method(**kwargs)
 
@@ -155,7 +161,9 @@ class InvokeStream(BaseInvoke):
     async def invoke(self, **kwargs):
         start = time.time()
 
-        kwargs = self.configure_for_streaming_usage(kwargs)
+        kwargs = self.inject_conversation_messages(
+            self.configure_for_streaming_usage(kwargs)
+        )
 
         raw_response = await self._method(**kwargs)
 
