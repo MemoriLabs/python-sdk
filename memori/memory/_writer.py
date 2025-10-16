@@ -300,12 +300,12 @@ class Writer:
                     for choice in choices:
                         delta = choice.get("delta", None)
                         if delta is not None:
+                            if role is None:
+                                role = delta.get("role", None)
+
                             text_content = delta.get("content", None)
                             if text_content is not None and len(text_content) > 0:
                                 content.append(text_content)
-
-                                if role is None:
-                                    role = delta["role"]
 
                     if len(content) > 0:
                         response.append(
