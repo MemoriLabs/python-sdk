@@ -294,6 +294,14 @@ class BaseIterator:
         return self
 
 
+class BaseLlmAdaptor:
+    def get_formatted_query(self, payload):
+        raise NotImplementedError
+
+    def get_formatted_response(self, payload):
+        raise NotImplementedError
+
+
 class BaseProvider:
     def __init__(self, parent):
         self.client = None

@@ -1,182 +1,15 @@
 import pytest
 
 from memori._config import Config
+from memori.llm._constants import OPENAI_CLIENT_TITLE
 from memori.memory._writer import Writer
-
-
-def test_parse_query_anthropic_openai():
-    assert Writer(Config()).parse_query(
-        {
-            "conversation": {
-                "query": {
-                    "messages": [
-                        {"content": "abc", "role": "user"},
-                        {"content": "def", "role": "system"},
-                    ]
-                }
-            }
-        }
-    ) == [{"content": "abc", "role": "user"}, {"content": "def", "role": "system"}]
-
-
-def test_parse_query_bedrock():
-    assert Writer(Config()).parse_query(
-        {
-            "conversation": {
-                "query": {
-                    "body": {
-                        "messages": [
-                            {"content": "abc", "role": "user"},
-                            {"content": "def", "role": "system"},
-                        ]
-                    }
-                }
-            }
-        }
-    ) == [{"content": "abc", "role": "user"}, {"content": "def", "role": "system"}]
-
-
-def test_parse_query_google():
-    assert Writer(Config()).parse_query(
-        {
-            "conversation": {
-                "query": {
-                    "contents": [
-                        {"parts": [{"text": "abc"}, {"text": "def"}], "role": "user"},
-                        {"parts": [{"text": "ghi"}], "role": "system"},
-                    ]
-                }
-            }
-        }
-    ) == [{"content": "abc def", "role": "user"}, {"content": "ghi", "role": "system"}]
-
-
-def test_parse_response_anthropic_unstreamed():
-    assert Writer(Config()).parse_response(
-        {
-            "conversation": {
-                "response": {
-                    "content": [
-                        {"text": "abc", "type": "text"},
-                        {"text": "def", "type": "text"},
-                    ],
-                    "role": "assistant",
-                }
-            }
-        }
-    ) == [
-        {"role": "assistant", "text": "abc", "type": "text"},
-        {"role": "assistant", "text": "def", "type": "text"},
-    ]
-
-
-def test_parse_response_bedrock_streamed():
-    assert Writer(Config()).parse_response(
-        {
-            "conversation": {
-                "response": [
-                    {"chunk": {"bytes": {"message": {"role": "assistant"}}}},
-                    {"chunk": {"bytes": {"delta": {"text": "abc"}}}},
-                    {"chunk": {"bytes": {"delta": {"text": "def"}}}},
-                ]
-            }
-        }
-    ) == [{"role": "assistant", "text": "abcdef", "type": "text"}]
-
-
-def test_parse_response_google_streamed():
-    assert Writer(Config()).parse_response(
-        {
-            "conversation": {
-                "response": [
-                    {
-                        "candidates": [
-                            {
-                                "content": {
-                                    "parts": [{"text": "abc"}, {"text": "def"}],
-                                    "role": "model",
-                                }
-                            },
-                        ]
-                    },
-                    {
-                        "candidates": [
-                            {"content": {"parts": [{"text": "ghi"}], "role": "model"}}
-                        ]
-                    },
-                ]
-            }
-        }
-    ) == [{"role": "model", "text": "abcdefghi", "type": "text"}]
-
-
-def test_parse_response_google_unstreamed():
-    assert Writer(Config()).parse_response(
-        {
-            "conversation": {
-                "response": {
-                    "candidates": [
-                        {"content": {"parts": [{"text": "abc"}], "role": "model"}},
-                        {"content": {"parts": [{"text": "def"}], "role": "model"}},
-                    ]
-                }
-            }
-        }
-    ) == [
-        {"role": "model", "text": "abc", "type": "text"},
-        {"role": "model", "text": "def", "type": "text"},
-    ]
-
-
-def test_parse_response_openai_streamed():
-    assert Writer(Config()).parse_response(
-        {
-            "conversation": {
-                "query": {"stream": True},
-                "response": {
-                    "choices": [
-                        {
-                            "delta": {
-                                "content": "abc",
-                                "role": "assistant",
-                            }
-                        },
-                        {
-                            "delta": {
-                                "content": "def",
-                                "role": "assistant",
-                            }
-                        },
-                    ]
-                },
-            }
-        }
-    ) == [{"role": "assistant", "text": "abcdef", "type": "text"}]
-
-
-def test_parse_response_openai_unstreamed():
-    assert Writer(Config()).parse_response(
-        {
-            "conversation": {
-                "query": {},
-                "response": {
-                    "choices": [
-                        {"message": {"content": "abc", "role": "assistant"}},
-                        {"message": {"content": "def", "role": "assistant"}},
-                    ]
-                },
-            }
-        }
-    ) == [
-        {"role": "assistant", "text": "abc", "type": "text"},
-        {"role": "assistant", "text": "def", "type": "text"},
-    ]
 
 
 def test_execute(config):
     Writer(config).execute(
         {
             "conversation": {
+                "client": {"provider": None, "title": OPENAI_CLIENT_TITLE},
                 "query": {"messages": [{"content": "abc", "role": "user"}]},
                 "response": {
                     "choices": [
@@ -220,6 +53,7 @@ def test_execute_with_parent_and_process(config):
     Writer(config).execute(
         {
             "conversation": {
+                "client": {"provider": None, "title": OPENAI_CLIENT_TITLE},
                 "query": {"messages": [{"content": "abc", "role": "user"}]},
                 "response": {
                     "choices": [
