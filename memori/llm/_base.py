@@ -28,6 +28,14 @@ from memori.llm._constants import (
     LANGCHAIN_OPENAI_CLIENT_TITLE,
     OPENAI_CLIENT_TITLE,
 )
+from memori.llm._utils import (
+    client_is_bedrock,
+    llm_is_anthropic,
+    llm_is_bedrock,
+    llm_is_google,
+    llm_is_openai,
+    provider_is_langchain,
+)
 
 
 class BaseClient:
@@ -45,14 +53,8 @@ class BaseInvoke:
         self._client_version = None
         self._uses_protobuf = False
 
-    def client_is_bedrock(self):
-        return (
-            self._client_provider == LANGCHAIN_CLIENT_PROVIDER
-            and self._client_title == LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
-        )
-
     def configure_for_streaming_usage(self, kwargs):
-        if self.llm_is_openai():
+        if llm_is_openai(self._client_provider, self._client_title):
             if kwargs.get("stream", None) == True:
                 stream_options = kwargs.get("stream_options", None)
                 if stream_options is None or not isinstance(
@@ -86,7 +88,7 @@ class BaseInvoke:
             )
         else:
             formatted_kwargs = copy.deepcopy(kwargs)
-            if self.provider_is_langchain():
+            if provider_is_langchain(self._client_provider):
                 if "response_format" in formatted_kwargs and isinstance(
                     formatted_kwargs["response_format"], object
                 ):
@@ -183,9 +185,13 @@ class BaseInvoke:
         if len(messages) == 0:
             return kwargs
 
-        if self.llm_is_openai() or self.llm_is_anthropic() or self.llm_is_bedrock():
+        if (
+            llm_is_openai(self._client_provider, self._client_title)
+            or llm_is_anthropic(self._client_provider, self._client_title)
+            or llm_is_bedrock(self._client_provider, self._client_title)
+        ):
             kwargs["messages"] = messages + kwargs["messages"]
-        elif self.llm_is_google():
+        elif llm_is_google(self._client_provider, self._client_title):
             contents = []
             for message in messages:
                 contents.append(
@@ -215,34 +221,6 @@ class BaseInvoke:
                     result.append(entry)
 
         return result
-
-    def llm_is_anthropic(self):
-        return self._client_title == ATHROPIC_CLIENT_TITLE
-
-    def llm_is_bedrock(self):
-        return (
-            self._client_provider == LANGCHAIN_CLIENT_PROVIDER
-            and self._client_title == LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
-        )
-
-    def llm_is_google(self):
-        return self._client_title == GOOGLE_CLIENT_TITLE or (
-            self._client_provider == LANGCHAIN_CLIENT_PROVIDER
-            and self._client_title
-            in [
-                LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
-                LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
-            ]
-        )
-
-    def llm_is_openai(self):
-        return self._client_title == OPENAI_CLIENT_TITLE or (
-            self._client_provider == LANGCHAIN_CLIENT_PROVIDER
-            and self._client_title == LANGCHAIN_OPENAI_CLIENT_TITLE
-        )
-
-    def provider_is_langchain(self):
-        return self._client_provider == LANGCHAIN_CLIENT_PROVIDER
 
     def response_to_json(self, response):
         data = response

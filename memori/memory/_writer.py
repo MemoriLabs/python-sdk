@@ -100,6 +100,27 @@ class Writer:
                 #   }
                 # ]
                 messages = []
+
+                system_instruction = payload["conversation"]["query"].get(
+                    "systemInstruction", None
+                )
+                if system_instruction is not None:
+                    parts = system_instruction.get("parts", None)
+                    content = []
+                    if parts is not None:
+                        for part in parts:
+                            text = part.get("text", None)
+                            if text is not None and len(text) > 0:
+                                content.append(text)
+
+                    if len(content) > 0:
+                        message.append(
+                            {
+                                "content": " ".join(content),
+                                "role": system_instruction.get("role", None),
+                            }
+                        )
+
                 for entry in contents:
                     parts = entry.get("parts", None)
                     content = []

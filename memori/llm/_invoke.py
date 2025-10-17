@@ -21,6 +21,7 @@ from memori.llm._iterable import Iterable as MemoriIterable
 from memori.llm._iterator import AsyncIterator as MemoriAsyncIterator
 from memori.llm._iterator import Iterator as MemoriIterator
 from memori.llm._streaming import StreamingBody as MemoriStreamingBody
+from memori.llm._utils import client_is_bedrock
 from memori.memory._manager import Manager as MemoryManager
 
 
@@ -40,7 +41,7 @@ class Invoke(BaseInvoke):
                 .configure_invoke(self)
                 .configure_request(kwargs, start)
             )
-        elif self.client_is_bedrock():
+        elif client_is_bedrock(self._client_provider, self._client_title):
             if isinstance(raw_response["body"], EventStream):
                 raw_response["body"] = (
                     MemoriIterable(self.config, raw_response["body"])
