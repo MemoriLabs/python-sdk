@@ -16,6 +16,7 @@ classifiers = [
 ]
 version = "3.0.0"
 dependencies = [
+    "aiohttp",
     "botocore",
     "grpcio",
     "protobuf",

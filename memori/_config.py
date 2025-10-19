@@ -10,6 +10,7 @@ r"""
 """
 
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Cache:
@@ -28,8 +29,11 @@ class Config:
         self.parent_id = None
         self.process_id = None
         self.raise_final_request_attempt = True
-        self.secs_post_timeout = 5
+        self.request_backoff_factor = 1
+        self.request_num_backoff = 5
+        self.request_secs_timeout = 5
         self.session_id = None
+        self.thread_pool_executor = ThreadPoolExecutor(max_workers=15)
         self.version = "3.0.0"
 
     def is_test_mode(self):

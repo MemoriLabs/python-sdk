@@ -100,7 +100,7 @@ class Collector:
                 requests.post(
                     f"{self.__base}/rec",
                     json=payload,
-                    timeout=self.config.secs_post_timeout,
+                    timeout=self.config.request_secs_timeout,
                 )
             except Exception as e:
                 payload["meta"]["fnfg"] = {
@@ -112,7 +112,7 @@ class Collector:
                     requests.post(
                         f"{self.__base}/rec",
                         json=json.loads(json.dumps(payload, default=str)),
-                        timeout=self.config.secs_post_timeout,
+                        timeout=self.config.request_secs_timeout,
                     )
                 except:
                     if self.config.raise_final_request_attempt is True:
