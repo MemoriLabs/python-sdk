@@ -50,7 +50,7 @@ class Writer:
             if self.config.cache.conversation_id is None:
                 raise RuntimeError("conversation ID is unexpectedly None")
 
-        llm = LlmRegistry().llm(
+        llm = LlmRegistry().adapter(
             payload["conversation"]["client"]["provider"],
             payload["conversation"]["client"]["title"],
         )

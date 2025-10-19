@@ -24,6 +24,7 @@ class Cache:
 class Config:
     def __init__(self):
         self.api_key = None
+        self.augmentation = None
         self.cache = Cache()
         self.metadata = None
         self.parent_id = None

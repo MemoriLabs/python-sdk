@@ -22,7 +22,7 @@ from memori.llm.adapters.openai._adapter import Adapter as OpenAiLlmAdapter
 
 
 class Registry:
-    def llm(self, provider, title):
+    def adapter(self, provider, title):
         if llm_is_openai(provider, title):
             return OpenAiLlmAdapter()
         elif llm_is_anthropic(provider, title):

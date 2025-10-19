@@ -13,19 +13,23 @@ from memori.llm.adapters.openai._adapter import Adapter as OpenAiLlmAdapter
 
 
 def test_llm_anthropic():
-    assert isinstance(Registry().llm(None, ATHROPIC_CLIENT_TITLE), AnthropicLlmAdapter)
+    assert isinstance(
+        Registry().adapter(None, ATHROPIC_CLIENT_TITLE), AnthropicLlmAdapter
+    )
 
 
 def test_llm_bedrock():
     assert isinstance(
-        Registry().llm(LANGCHAIN_CLIENT_PROVIDER, LANGCHAIN_CHATBEDROCK_CLIENT_TITLE),
+        Registry().adapter(
+            LANGCHAIN_CLIENT_PROVIDER, LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
+        ),
         BedrockLlmAdapter,
     )
 
 
 def test_llm_google():
-    assert isinstance(Registry().llm(None, GOOGLE_CLIENT_TITLE), GoogleLlmAdapter)
+    assert isinstance(Registry().adapter(None, GOOGLE_CLIENT_TITLE), GoogleLlmAdapter)
 
 
 def test_llm_openai():
-    assert isinstance(Registry().llm(None, OPENAI_CLIENT_TITLE), OpenAiLlmAdapter)
+    assert isinstance(Registry().adapter(None, OPENAI_CLIENT_TITLE), OpenAiLlmAdapter)

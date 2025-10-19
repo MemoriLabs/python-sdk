@@ -18,6 +18,7 @@ from memori.llm._providers import Google as LlmProviderGoogle
 from memori.llm._providers import LangChain as LlmProviderLangChain
 from memori.llm._providers import OpenAi as LlmProviderOpenAi
 from memori.llm._providers import PydanticAi as LlmProviderPydanticAi
+from memori.memory.augmentation._registry import Registry as AugmentationRegistry
 from memori.storage._manager import Manager as StorageManager
 from memori.storage._registry import Registry as StorageRegistry
 
@@ -28,6 +29,7 @@ class Memori:
     def __init__(self, conn=None):
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)
+        self.config.augmentation = self.augmentation_adapter()
         self.config.conn = self.storage_adapter(conn)
         self.config.driver = self.storage_driver()
         self.config.session_id = uuid4()
@@ -57,6 +59,9 @@ class Memori:
         self.config.process_id = process_id
 
         return self
+
+    def augmentation_adapter(self):
+        return AugmentationRegistry().adapter(self.config)
 
     def metadata(self, data):
         self.config.metadata = data
