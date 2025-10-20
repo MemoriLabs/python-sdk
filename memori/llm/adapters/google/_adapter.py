@@ -46,12 +46,7 @@ class Adapter(BaseLlmAdaptor):
                         content.append(text)
 
             if len(content) > 0:
-                message.append(
-                    {
-                        "content": " ".join(content),
-                        "role": system_instruction.get("role", None),
-                    }
-                )
+                messages.append({"content": " ".join(content), "role": "system"})
 
         try:
             contents = payload["conversation"]["query"].get("contents", None)

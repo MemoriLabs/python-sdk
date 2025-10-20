@@ -198,7 +198,12 @@ class BaseInvoke:
                     {"parts": [{"text": message["content"]}], "role": message["role"]}
                 )
 
-            kwargs["messages"] = contents + kwargs["contents"]
+            formatted_kwargs = json.loads(
+                json_format.MessageToJson(kwargs["request"].__dict__["_pb"])
+            )
+            formatted_kwargs["contents"] = contents + formatted_kwargs["contents"]
+
+            json_format.ParseDict(formatted_kwargs, kwargs["request"].__dict__["_pb"])
         else:
             raise NotImplementedError
 
