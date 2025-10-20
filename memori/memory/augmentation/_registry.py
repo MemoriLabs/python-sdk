@@ -16,6 +16,9 @@ from memori._config import Config
 
 class Registry:
     def adapter(self, config: Config):
+        if config.is_test_mode():
+            return None
+
         if os.environ.get("MEMORI_API_KEY", None) is not None:
             return MemoriAugmentation(config)
 
