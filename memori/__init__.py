@@ -20,7 +20,7 @@ from memori.llm._providers import OpenAi as LlmProviderOpenAi
 from memori.llm._providers import PydanticAi as LlmProviderPydanticAi
 from memori.memory.augmentation._registry import Registry as AugmentationRegistry
 from memori.storage._manager import Manager as StorageManager
-from memori.storage._registry import Registry as StorageRegistry
+from memori.storage import Registry as StorageRegistry
 
 __all__ = ["Memori"]
 

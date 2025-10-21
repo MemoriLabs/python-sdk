@@ -7,12 +7,12 @@ name = "memorisdk"
 authors = [{ name="Memori", email="noc@gibsonai.com" }]
 description = "Memori Python SDK"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 classifiers = [
   "Operating System :: OS Independent",
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
-  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.12",
 ]
 version = "3.0.0"
 dependencies = [
@@ -42,3 +42,12 @@ target-version = ['py312']
 
 [tool.isort]
 profile = "black"
+
+[dependency-groups]
+dev = [
+    "openai>=2.6.0",
+    "pymysql>=1.1.2",
+    "pytest>=8.4.2",
+    "requests>=2.32.5",
+    "sqlalchemy>=2.0.44",
+]

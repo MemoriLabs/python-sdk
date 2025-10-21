@@ -1,4 +1,4 @@
-from memori.storage._registry import Registry
+from memori.storage import Registry
 from memori.storage.adapters.sqlalchemy._adapter import (
     Adapter as SqlAlchemyStorageAdapter,
 )

@@ -10,8 +10,12 @@ r"""
 """
 
 from memori.storage._base import BaseStorageAdapter
+from memori.storage._registry import Registry
 
 
+@Registry.register_adapter(
+    lambda conn: type(conn).__module__ == "sqlalchemy.orm.session"
+)
 class Adapter(BaseStorageAdapter):
     def commit(self):
         self.conn.commit()

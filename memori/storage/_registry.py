@@ -9,22 +9,43 @@ r"""
                        memorilabs.ai
 """
 
+from typing import Any, Callable, Dict, Type
+
 from memori.storage._base import BaseStorageAdapter
-from memori.storage.adapters.sqlalchemy._adapter import (
-    Adapter as SqlAlchemyStorageAdapter,
-)
-from memori.storage.drivers.mysql._driver import Driver as MysqlStorageDriver
 
 
-class Registry:
-    def adapter(self, conn):
-        if type(conn).__module__ == "sqlalchemy.orm.session":
-            return SqlAlchemyStorageAdapter(conn)
-
-        raise RuntimeError("could not determine storage system for adapter")
-
+class Registry:    
+    _adapters: Dict[Callable[[Any], bool], Type[BaseStorageAdapter]] = {}
+    _drivers: Dict[str, Type] = {}
+    
+    @classmethod
+    def register_adapter(cls, matcher: Callable[[Any], bool]):
+        def decorator(adapter_class: Type[BaseStorageAdapter]):
+            cls._adapters[matcher] = adapter_class
+            return adapter_class
+        return decorator
+    
+    @classmethod
+    def register_driver(cls, dialect: str):
+        def decorator(driver_class: Type):
+            cls._drivers[dialect] = driver_class
+            return driver_class
+        return decorator
+    
+    def adapter(self, conn: Any) -> BaseStorageAdapter:
+        for matcher, adapter_class in self._adapters.items():
+            if matcher(conn):
+                return adapter_class(conn)
+        
+        raise ValueError(
+            f"No adapter registered for connection type: {type(conn).__module__}"
+        )
+    
     def driver(self, conn: BaseStorageAdapter):
-        if conn.get_dialect() == "mysql":
-            return MysqlStorageDriver(conn)
-
-        raise RuntimeError("could not determine storage system for driver")
+        dialect = conn.get_dialect()
+        if dialect not in self._drivers:
+            raise ValueError(
+                f"No driver registered for dialect: {dialect}. "
+                f"Available dialects: {list(self._drivers.keys())}"
+            )
+        return self._drivers[dialect](conn)

@@ -22,6 +22,7 @@ from memori.storage._base import (
     BaseSession,
     BaseStorageAdapter,
 )
+from memori.storage._registry import Registry
 
 
 class Conversation(BaseConversation):
@@ -251,6 +252,7 @@ class SchemaVersion(BaseSchemaVersion):
         )
 
 
+@Registry.register_driver("mysql")
 class Driver:
     def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
