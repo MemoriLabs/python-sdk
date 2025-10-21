@@ -6,7 +6,7 @@ r"""
 |_|  |_|\___|_| |_| |_|\___/|_|  |_|
                   perfectam memoriam
                          by GibsonAI
-                       trymemori.com
+                       memorilabs.ai
 """
 
 from uuid import uuid4

@@ -32,8 +32,8 @@ exclude = ["tests*"]
 memori = ["data/*"]
 
 [project.urls]
-Homepage = "https://trymemori.com/"
-Documentation = "https://developers.trymemori.com/"
+Homepage = "https://memorilabs.ai/"
+Documentation = "https://developers.memorilabs.ai/"
 Repository = "https://github.com/GibsonAI/"
 
 [tool.black]
