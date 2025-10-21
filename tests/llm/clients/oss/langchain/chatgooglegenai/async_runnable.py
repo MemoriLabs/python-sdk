@@ -40,6 +40,7 @@ async def main():
 
     print("-" * 25)
 
+    print("llm: ", end="")
     async for chunk in chain.astream({"question": query}):
         print(chunk, end="", flush=True)
 
@@ -51,8 +52,12 @@ async def main():
     print("-" * 25)
     print("CONVERSATION INJECTION OCCURRED HERE!\n")
 
+    response = ""
     async for chunk in chain.astream({"question": query}):
-        print(chunk, end="", flush=True)
+        response += chunk
+
+    print("-" * 25)
+    print(f"llm: {response}", end="")
 
     print("-" * 25)
 

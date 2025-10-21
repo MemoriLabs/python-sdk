@@ -45,9 +45,13 @@ async def main():
     print("-" * 25)
     print("CONVERSATION INJECTION OCCURRED HERE!\n")
 
+    response = ""
     generator = client.astream([HumanMessage(content=query)])
     async for chunk in generator:
-        print(chunk.text, end="")
+        response += chunk.text
+
+    print("-" * 25)
+    print(f"llm: {response}", end="")
 
     print("-" * 25)
 
