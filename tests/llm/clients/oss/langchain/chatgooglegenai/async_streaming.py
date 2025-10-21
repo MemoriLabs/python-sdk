@@ -4,8 +4,7 @@ import asyncio
 import os
 
 from database.core import TestDBSession
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from memori import Memori
@@ -14,18 +13,11 @@ if os.environ.get("GOOGLE_API_KEY", None) is None:
     raise RuntimeError("GOOGLE_API_KEY is not set")
 
 os.environ["MEMORI_TEST_MODE"] = "1"
-os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 
 async def main():
     session = TestDBSession()
     client = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("human", "{question}"),
-        ]
-    )
-    chain = prompt | client | StrOutputParser()
 
     mem = Memori(conn=session).langchain.register(chatgooglegenai=client)
 
@@ -40,10 +32,22 @@ async def main():
     print(f"me: {query}")
 
     print("-" * 25)
-    print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    async for chunk in chain.astream({"question": query}):
-        print(chunk, end="", flush=True)
+    generator = client.astream([HumanMessage(content=query)])
+    async for chunk in generator:
+        print(chunk.text, end="")
+
+    print("-" * 25)
+
+    query = "That planet we're talking about, in order from the sun which one is it?"
+    print(f"me: {query}")
+
+    print("-" * 25)
+    print("CONVERSATION INJECTION OCCURRED HERE!\n")
+
+    generator = client.astream([HumanMessage(content=query)])
+    async for chunk in generator:
+        print(chunk.text, end="")
 
     print("-" * 25)
 

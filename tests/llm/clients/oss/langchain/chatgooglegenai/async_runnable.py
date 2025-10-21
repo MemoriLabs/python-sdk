@@ -2,12 +2,10 @@
 
 import asyncio
 import os
-from typing import TypedDict
 
 from database.core import TestDBSession
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnableLambda
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from memori import Memori
@@ -18,7 +16,6 @@ if os.environ.get("GOOGLE_API_KEY", None) is None:
 os.environ["MEMORI_TEST_MODE"] = "1"
 
 
-# Run the structured chain with streaming
 async def main():
     session = TestDBSession()
     client = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
