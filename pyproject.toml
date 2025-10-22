@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "memorisdk"
-authors = [{ name="Memori", email="noc@gibsonai.com" }]
+authors = [{ name="Memori", email="noc@memorilabs.ai" }]
 description = "Memori Python SDK"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,9 +28,6 @@ where = ["."]
 include = ["*"]
 exclude = ["tests*"]
 
-[tool.setuptools.package-data]
-memori = ["data/*"]
-
 [project.urls]
 Homepage = "https://memorilabs.ai/"
 Documentation = "https://developers.memorilabs.ai/"
@@ -46,6 +43,7 @@ profile = "black"
 [dependency-groups]
 dev = [
     "openai>=2.6.0",
+    "psycopg2-binary>=2.9.0",
     "pymysql>=1.1.2",
     "pytest>=8.4.2",
     "requests>=2.32.5",

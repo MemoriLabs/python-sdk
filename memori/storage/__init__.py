@@ -14,6 +14,7 @@ from memori.storage._registry import Registry
 # Import adapters and drivers to trigger their self-registration decorators
 from memori.storage.adapters.sqlalchemy import _adapter  # noqa: F401
 from memori.storage.drivers.mysql import _driver  # noqa: F401
+from memori.storage.drivers.postgresql import _driver  # noqa: F401
 
 __all__ = ["Registry"]
 

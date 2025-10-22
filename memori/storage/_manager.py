@@ -12,6 +12,7 @@ r"""
 from memori._cli import Cli
 from memori._config import Config
 from memori.storage.migrations._mysql import migrations as mysql_migrations
+from memori.storage.migrations._postgresql import migrations as postgresql_migrations
 
 
 class Manager:
@@ -24,7 +25,7 @@ class Manager:
             return self
 
         dialect = self.config.conn.get_dialect()
-        if dialect in ["mysql"]:
+        if dialect in ["mysql", "postgresql"]:
             self.build_for_rdbms()
         else:
             raise NotImplementedError
@@ -40,12 +41,17 @@ class Manager:
         try:
             num = self.config.driver.schema.version.read()
         except:
+            # PostgreSQL requires rollback after failed statement
+            if self.config.conn.get_dialect() == "postgresql":
+                self.config.conn.rollback()
             num = 0
 
         self.cli.notice(f"Currently at revision #{num}.")
 
         if self.config.conn.get_dialect() == "mysql":
             migrations = mysql_migrations
+        elif self.config.conn.get_dialect() == "postgresql":
+            migrations = postgresql_migrations
         else:
             raise NotImplementedError
 

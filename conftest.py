@@ -1,8 +1,8 @@
 import pytest
 from core.settings import settings
-from database.core import TestDBSession
+from database.core import TestDBSession, PostgresTestDBSession
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from memori import Memori
 
@@ -16,6 +16,17 @@ def config(session):
 @pytest.fixture
 def session():
     session = TestDBSession()
+
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+@pytest.fixture
+def postgres_session():
+    """Provides a PostgreSQL session for testing."""
+    session = PostgresTestDBSession()
 
     try:
         yield session
