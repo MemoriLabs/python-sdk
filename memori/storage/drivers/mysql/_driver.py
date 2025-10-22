@@ -23,6 +23,7 @@ from memori.storage._base import (
     BaseStorageAdapter,
 )
 from memori.storage._registry import Registry
+from memori.storage.migrations._mysql import migrations
 
 
 class Conversation(BaseConversation):
@@ -254,6 +255,16 @@ class SchemaVersion(BaseSchemaVersion):
 
 @Registry.register_driver("mysql")
 class Driver:
+    """MySQL storage driver.
+    
+    Attributes:
+        migrations: Database schema migrations for MySQL.
+        requires_rollback_on_error: MySQL does not abort transactions on query 
+            errors, so no rollback is needed to continue executing queries.
+    """
+    migrations = migrations
+    requires_rollback_on_error = False
+    
     def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
         self.parent = Parent(conn)
