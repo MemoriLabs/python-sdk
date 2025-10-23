@@ -261,15 +261,16 @@ class SchemaVersion(BaseSchemaVersion):
 @Registry.register_driver("cockroachdb")
 class Driver:
     """PostgreSQL storage driver (also supports CockroachDB).
-    
+
     Attributes:
         migrations: Database schema migrations for PostgreSQL-compatible databases.
-        requires_rollback_on_error: PostgreSQL aborts transactions when a query 
+        requires_rollback_on_error: PostgreSQL aborts transactions when a query
             fails and requires an explicit ROLLBACK before executing new queries.
     """
+
     migrations = migrations
     requires_rollback_on_error = True
-    
+
     def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
         self.parent = Parent(conn)

@@ -26,10 +26,10 @@ def test_storage_driver_mariadb(mocker):
     mariadb_session = mocker.Mock()
     mariadb_session.get_bind.return_value.dialect.name = "mariadb"
     type(mariadb_session).__module__ = "sqlalchemy.orm.session"
-    
+
     adapter = Registry().adapter(mariadb_session)
     driver = Registry().driver(adapter)
-    
+
     assert isinstance(driver, MysqlStorageDriver)
 
 
@@ -37,8 +37,8 @@ def test_storage_driver_cockroachdb(mocker):
     cockroachdb_session = mocker.Mock()
     cockroachdb_session.get_bind.return_value.dialect.name = "cockroachdb"
     type(cockroachdb_session).__module__ = "sqlalchemy.orm.session"
-    
+
     adapter = Registry().adapter(cockroachdb_session)
     driver = Registry().driver(adapter)
-    
+
     assert isinstance(driver, PostgresqlStorageDriver)

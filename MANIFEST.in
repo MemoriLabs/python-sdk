@@ -1,0 +1,27 @@
+# Include essential files
+include README.md
+
+# Exclude all development and Docker files
+exclude Dockerfile
+exclude docker-compose.yml
+exclude .dockerignore
+exclude Makefile
+exclude .env.example
+exclude conftest.py
+exclude CONTRIBUTING.md
+
+# Exclude test directories
+prune tests
+
+# Exclude documentation build artifacts
+prune docs
+
+# Exclude version control
+prune .git
+exclude .gitignore
+
+# Exclude IDE and editor files
+global-exclude .DS_Store
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__

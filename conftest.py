@@ -1,34 +1,58 @@
 import pytest
-from core.settings import settings
-from database.core import TestDBSession, PostgresTestDBSession
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-
-from memori import Memori
+from memori._config import Config
 
 
 @pytest.fixture
-def config(session):
-    mem = Memori(conn=session)
-    yield mem.config
+def mock_mysql_session(mocker):
+    session = mocker.MagicMock()
+    session.get_bind.return_value.dialect.name = "mysql"
+    type(session).__module__ = "sqlalchemy.orm.session"
+
+    mock_result = mocker.MagicMock()
+    mock_result.mappings.return_value.fetchone.return_value = {"1": 1}
+    mock_result.mappings.return_value.fetchall.return_value = []
+    session.connection.return_value.exec_driver_sql.return_value = mock_result
+
+    return session
 
 
 @pytest.fixture
-def session():
-    session = TestDBSession()
+def mock_postgres_session(mocker):
+    session = mocker.MagicMock()
+    session.get_bind.return_value.dialect.name = "postgresql"
+    type(session).__module__ = "sqlalchemy.orm.session"
 
-    try:
-        yield session
-    finally:
-        session.close()
+    mock_result = mocker.MagicMock()
+    mock_result.mappings.return_value.fetchone.return_value = {"one": 1}
+    mock_result.mappings.return_value.fetchall.return_value = []
+    session.connection.return_value.exec_driver_sql.return_value = mock_result
+
+    return session
 
 
 @pytest.fixture
-def postgres_session():
-    """Provides a PostgreSQL session for testing."""
-    session = PostgresTestDBSession()
+def session(mock_mysql_session):
+    return mock_mysql_session
 
-    try:
-        yield session
-    finally:
-        session.close()
+
+@pytest.fixture
+def postgres_session(mock_postgres_session):
+    return mock_postgres_session
+
+
+@pytest.fixture
+def config(mocker, session):
+    config = Config()
+
+    mock_conn = mocker.MagicMock()
+    mock_conn.get_dialect.return_value = "mysql"
+
+    mock_result = mocker.MagicMock()
+    mock_result.mappings.return_value.fetchall.return_value = []
+    mock_result.mappings.return_value.fetchone.return_value = {}
+    mock_conn.execute.return_value = mock_result
+
+    config.conn = mock_conn
+    config.driver = mocker.MagicMock()
+
+    return config

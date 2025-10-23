@@ -19,21 +19,21 @@ class Manager:
         self.cli = Cli(config)
         self.config = config
         self.registry = Registry()
-    
+
     def _get_supported_dialects(self):
         return list(self.registry._drivers.keys())
-    
+
     def _get_dialect_family(self, dialect):
         if dialect in self.registry._drivers:
             driver_class = self.registry._drivers[dialect]
             return driver_class.migrations
-        
+
         return None
-    
+
     def _requires_rollback(self, dialect):
         if dialect in self.registry._drivers:
             driver_class = self.registry._drivers[dialect]
-            return getattr(driver_class, 'requires_rollback_on_error', False)
+            return getattr(driver_class, "requires_rollback_on_error", False)
         return False
 
     def build(self):
@@ -42,7 +42,7 @@ class Manager:
 
         dialect = self.config.conn.get_dialect()
         supported_dialects = self._get_supported_dialects()
-        
+
         if dialect in supported_dialects:
             self.build_for_rdbms()
         else:
@@ -60,7 +60,7 @@ class Manager:
             return self
 
         dialect = self.config.conn.get_dialect()
-        
+
         try:
             num = self.config.driver.schema.version.read()
         except:

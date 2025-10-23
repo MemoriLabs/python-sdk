@@ -257,15 +257,16 @@ class SchemaVersion(BaseSchemaVersion):
 @Registry.register_driver("mariadb")
 class Driver:
     """MySQL storage driver (also supports MariaDB).
-    
+
     Attributes:
         migrations: Database schema migrations for MySQL.
-        requires_rollback_on_error: MySQL does not abort transactions on query 
+        requires_rollback_on_error: MySQL does not abort transactions on query
             errors, so no rollback is needed to continue executing queries.
     """
+
     migrations = migrations
     requires_rollback_on_error = False
-    
+
     def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
         self.parent = Parent(conn)
