@@ -1,5 +1,3 @@
-from unittest.mock import Mock
-
 from memori.storage import Registry
 from memori.storage.adapters.sqlalchemy._adapter import (
     Adapter as SqlAlchemyStorageAdapter,
@@ -24,8 +22,8 @@ def test_storage_driver_postgresql(postgres_session):
     )
 
 
-def test_storage_driver_mariadb():
-    mariadb_session = Mock()
+def test_storage_driver_mariadb(mocker):
+    mariadb_session = mocker.Mock()
     mariadb_session.get_bind.return_value.dialect.name = "mariadb"
     type(mariadb_session).__module__ = "sqlalchemy.orm.session"
     
@@ -35,8 +33,8 @@ def test_storage_driver_mariadb():
     assert isinstance(driver, MysqlStorageDriver)
 
 
-def test_storage_driver_cockroachdb():
-    cockroachdb_session = Mock()
+def test_storage_driver_cockroachdb(mocker):
+    cockroachdb_session = mocker.Mock()
     cockroachdb_session.get_bind.return_value.dialect.name = "cockroachdb"
     type(cockroachdb_session).__module__ = "sqlalchemy.orm.session"
     
