@@ -254,8 +254,9 @@ class SchemaVersion(BaseSchemaVersion):
 
 
 @Registry.register_driver("mysql")
+@Registry.register_driver("mariadb")
 class Driver:
-    """MySQL storage driver.
+    """MySQL storage driver (also supports MariaDB).
     
     Attributes:
         migrations: Database schema migrations for MySQL.

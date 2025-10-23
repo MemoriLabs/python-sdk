@@ -30,7 +30,7 @@ psql -d memori_test -c "GRANT ALL ON SCHEMA public TO memori;"
 ## Verify Setup
 
 ```bash
-uv run python tests/build/postgresql.py
+uv run tests/build/postgresql.py
 ```
 
 Should output:
