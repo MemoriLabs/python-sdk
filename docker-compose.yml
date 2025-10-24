@@ -22,7 +22,7 @@ services:
       postgres:
         condition: service_healthy
       mongodb:
-        condition: service_started
+        condition: service_healthy
       mysql:
         condition: service_healthy
     networks:
@@ -56,6 +56,11 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - memori-network
 

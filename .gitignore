@@ -30,6 +30,10 @@ env/
 # Environment variables
 .env
 
+# SQLite databases
+*.db
+*.db-journal
+
 # UV
 uv.lock
 

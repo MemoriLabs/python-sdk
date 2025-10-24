@@ -17,5 +17,6 @@ from memori.storage.adapters.mongodb import _adapter  # noqa: F401
 from memori.storage.drivers.mysql import _driver  # noqa: F401
 from memori.storage.drivers.postgresql import _driver  # noqa: F401
 from memori.storage.drivers.mongodb import _driver  # noqa: F401
+from memori.storage.drivers.sqlite import _driver  # noqa: F401
 
 __all__ = ["Registry"]

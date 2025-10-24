@@ -12,6 +12,7 @@ from tests.database.core import (
     PostgresTestDBSession,
     MySQLTestDBSession,
     MongoTestDBSession,
+    SQLiteTestDBSession,
 )
 
 if os.environ.get("OPENAI_API_KEY", None) is None:
@@ -28,12 +29,17 @@ async def run(db_backend: str = "default"):
         session = MySQLTestDBSession()
     elif db_backend == "postgres":
         session = PostgresTestDBSession()
+    elif db_backend == "sqlite":
+        session = SQLiteTestDBSession()
     else:
         session = TestDBSession()
     
     client = AsyncOpenAI()
 
     mem = Memori(conn=session).openai.register(client)
+    
+    # Initialize database schema
+    mem.storage.build()
 
     # Multiple registrations should not cause an issue.
     mem.openai.register(client)
@@ -77,7 +83,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test OpenAI async client with various database backends")
     parser.add_argument(
         "--db",
-        choices=["default", "postgres", "mysql", "mongodb"],
+        choices=["default", "postgres", "mysql", "mongodb", "sqlite"],
         default="default",
         help="Database backend to use (default: uses DATABASE_URL env var)"
     )

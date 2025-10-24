@@ -1,6 +1,7 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool, StaticPool
 from pymongo import MongoClient
 
 # Default test session - uses DATABASE_URL environment variable
@@ -56,6 +57,31 @@ MySQLTestDBSession = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=mysql_test_db_core
+)
+
+# SQLite-specific session
+sqlite_test_uri = os.environ.get(
+    "SQLITE_DATABASE_URL",
+    "sqlite:///memori_test.db"
+)
+
+sqlite_test_db_core = create_engine(
+    sqlite_test_uri,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool if ":memory:" in sqlite_test_uri else NullPool
+)
+
+@event.listens_for(sqlite_test_db_core, "connect")
+def set_sqlite_pragma(dbapi_conn, connection_record):
+    cursor = dbapi_conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.close()
+
+SQLiteTestDBSession = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=sqlite_test_db_core
 )
 
 # MongoDB-specific session

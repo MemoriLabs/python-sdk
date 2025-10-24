@@ -31,6 +31,9 @@ init-mysql: ## Initialize MySQL schema
 init-mongodb: ## Initialize MongoDB schema
 	docker compose exec -e PYTHONPATH=/app dev python tests/build/mongodb.py
 
+init-sqlite: ## Initialize SQLite schema
+	docker compose exec -e PYTHONPATH=/app dev python tests/build/sqlite.py
+
 dev-build: ## Rebuild the development container
 	docker compose build --no-cache
 
