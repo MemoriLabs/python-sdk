@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://memori.gibsonai.com/docs">Learn more</a>
+  <a href="https://memorilabs.ai/">Learn more</a>
   ·
   <a href="https://www.gibsonai.com/discord">Join Discord</a>
 </p>
@@ -32,3 +32,33 @@
 </p>
 
 ---
+
+# Getting Started
+
+Install Memori:
+
+    pip install memori
+
+# Example with OpenAI
+
+    from openai import OpenAI
+    from memori import Memori
+
+    client = OpenAI(...)
+    mem = Memori().openai.register(client)
+
+# Attribution
+
+    mem.attribution(parent_id="12345", process_id="my-ai-bot")
+
+# Session Management
+
+    mem.new_session()
+
+    or
+
+    session_id = mem.config.session_id
+
+    ...
+
+    mem.set_session(session_id)
