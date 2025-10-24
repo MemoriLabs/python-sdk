@@ -75,7 +75,7 @@ mem.set_session(session_id)
 
 ## Bring Your Own Database (BYODB)
 
-1. Run this command once, via CI/CD or anytime you update the Memori SDK.
+1. Run this command once, via CI/CD or anytime you update Memori.
 
     ```python
     Memori(conn=session).storage.build()
