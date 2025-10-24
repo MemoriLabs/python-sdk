@@ -1,0 +1,40 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: memori-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: memori
+      MONGO_INITDB_DATABASE: memori
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - memori-network
+
+  # Optional: MongoDB Express for database management UI
+  mongo-express:
+    image: mongo-express:1.0.0
+    container_name: memori-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: memori
+      ME_CONFIG_MONGODB_URL: mongodb://admin:memori@mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      - mongodb
+    networks:
+      - memori-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  memori-network:
+    driver: bridge
