@@ -63,6 +63,8 @@ class Manager:
 
         try:
             num = self.config.driver.schema.version.read()
+            if num is None:
+                num = 0
         except:
             if self._requires_rollback(dialect):
                 self.config.conn.rollback()

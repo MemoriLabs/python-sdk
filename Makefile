@@ -1,4 +1,4 @@
-.PHONY: help dev-up dev-down dev-shell dev-build test lint format clean
+.PHONY: help dev-up dev-down dev-shell dev-build dev-clean test lint format clean
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -22,8 +22,23 @@ dev-shell: ## Open a shell in the development container
 init-db: ## Initialize database schema for integration tests
 	docker compose exec -e PYTHONPATH=/app dev python tests/database/init_db.py
 
+init-postgres: ## Initialize PostgreSQL schema
+	docker compose exec -e PYTHONPATH=/app dev python tests/build/postgresql.py
+
+init-mysql: ## Initialize MySQL schema
+	docker compose exec -e PYTHONPATH=/app dev python tests/build/mysql.py
+
+init-mongodb: ## Initialize MongoDB schema
+	docker compose exec -e PYTHONPATH=/app dev python tests/build/mongodb.py
+
 dev-build: ## Rebuild the development container
 	docker compose build --no-cache
+
+dev-clean: ## Complete teardown: stop containers, remove images, prune build cache
+	docker compose down -v
+	docker builder prune -f
+	docker compose rm -f
+	@echo "✓ Docker environment cleaned (containers, volumes, and build cache removed)"
 
 test: ## Run tests in the container
 	docker compose exec dev pytest

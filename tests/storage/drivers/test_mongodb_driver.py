@@ -33,14 +33,13 @@ def test_parent_create(mock_conn):
     mock_conn.execute.side_effect = [
         None,  # find_one returns None (no existing record)
         Mock(inserted_id=123),  # insert_one returns mock result
-        Mock(get=Mock(return_value=123))  # find_one returns mock result with _id
     ]
     
     parent = Parent(mock_conn)
     result = parent.create("external-parent-id")
     
     assert result == 123
-    assert mock_conn.execute.call_count == 3  # find_one, insert_one, find_one
+    assert mock_conn.execute.call_count == 2  # find_one, insert_one
     
     # Verify find_one query for existing record
     find_call = mock_conn.execute.call_args_list[0]
@@ -77,7 +76,6 @@ def test_parent_generates_uuid(mock_conn):
     mock_conn.execute.side_effect = [
         None,  # find_one returns None
         Mock(inserted_id=123),  # insert_one returns mock result
-        Mock(get=Mock(return_value=123))  # find_one returns mock result with _id
     ]
     
     parent = Parent(mock_conn)
@@ -97,14 +95,13 @@ def test_process_create(mock_conn):
     mock_conn.execute.side_effect = [
         None,  # find_one returns None
         Mock(inserted_id=456),  # insert_one returns mock result
-        Mock(get=Mock(return_value=456))  # find_one returns mock result with _id
     ]
     
     process = Process(mock_conn)
     result = process.create("external-process-id")
     
     assert result == 456
-    assert mock_conn.execute.call_count == 3
+    assert mock_conn.execute.call_count == 2
     
     # Verify find_one query
     find_call = mock_conn.execute.call_args_list[0]
@@ -125,7 +122,6 @@ def test_session_create(mock_conn):
     mock_conn.execute.side_effect = [
         None,  # find_one returns None
         Mock(inserted_id=789),  # insert_one returns mock result
-        Mock(get=Mock(return_value=789))  # find_one returns mock result with _id
     ]
     
     session = Session(mock_conn)
@@ -133,7 +129,7 @@ def test_session_create(mock_conn):
     result = session.create(session_uuid, parent_id=123, process_id=456)
     
     assert result == 789
-    assert mock_conn.execute.call_count == 3
+    assert mock_conn.execute.call_count == 2
     
     # Verify find_one query
     find_call = mock_conn.execute.call_args_list[0]
@@ -354,7 +350,6 @@ def test_mongodb_operations_with_datetime(mock_conn):
     mock_conn.execute.side_effect = [
         None,  # find_one returns None
         Mock(inserted_id=123),  # insert_one returns mock result
-        Mock(get=Mock(return_value=123))  # find_one returns mock result with _id
     ]
     
     parent = Parent(mock_conn)
@@ -393,7 +388,6 @@ def test_mongodb_session_with_datetime(mock_conn):
     mock_conn.execute.side_effect = [
         None,  # find_one returns None
         Mock(inserted_id=789),  # insert_one returns mock result
-        Mock(get=Mock(return_value=789))  # find_one returns mock result with _id
     ]
     
     session = Session(mock_conn)

@@ -15,13 +15,16 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://memori:memori@postgres:5432/memori_test
-      - MONGODB_URL=mongodb://admin:memori@mongodb:27017/memori
+      - MONGODB_URL=mongodb://memori:memori@mongodb:27017/memori_test?authSource=admin
+      - MYSQL_DATABASE_URL=mysql+pymysql://memori:memori@mysql:3306/memori_test
     command: /bin/bash
     depends_on:
       postgres:
         condition: service_healthy
       mongodb:
         condition: service_started
+      mysql:
+        condition: service_healthy
     networks:
       - memori-network
 
@@ -45,55 +48,58 @@ services:
 
   mongodb:
     image: mongo:7.0
-    container_name: memori-mongodb
-    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: memori
+      MONGO_INITDB_ROOT_PASSWORD: memori
+      MONGO_INITDB_DATABASE: memori_test
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: memori
-      MONGO_INITDB_DATABASE: memori
     volumes:
       - mongodb_data:/data/db
-      - ./scripts/mongo-init:/docker-entrypoint-initdb.d
     networks:
       - memori-network
 
   # Optional: MongoDB Express for database management UI
   mongo-express:
     image: mongo-express:1.0.0
-    container_name: memori-mongo-express
     restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: memori
       ME_CONFIG_MONGODB_ADMINPASSWORD: memori
-      ME_CONFIG_MONGODB_URL: mongodb://admin:memori@mongodb:27017/
-      ME_CONFIG_BASICAUTH: false
+      ME_CONFIG_MONGODB_URL: mongodb://memori:memori@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass
     depends_on:
       - mongodb
     networks:
       - memori-network
 
-  # MySQL for testing (optional - uncomment if needed)
-  # mysql:
-  #   image: mysql:8
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: memori
-  #     MYSQL_DATABASE: memori_test
-  #     MYSQL_USER: memori
-  #     MYSQL_PASSWORD: memori
-  #   ports:
-  #     - "3306:3306"
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   networks:
-  #     - memori-network
+  # MySQL for testing
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: memori
+      MYSQL_DATABASE: memori_test
+      MYSQL_USER: memori
+      MYSQL_PASSWORD: memori
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "memori", "-pmemori"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - memori-network
 
 volumes:
   postgres_data:
   mongodb_data:
+  mysql_data:
 
 networks:
   memori-network:

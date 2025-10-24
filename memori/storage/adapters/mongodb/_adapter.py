@@ -19,17 +19,36 @@ from memori.storage._registry import Registry
 class Adapter(BaseStorageAdapter):
     """MongoDB storage adapter for MongoDB database connections."""
     
-    def execute(self, collection_name, operation, *args, **kwargs):
-        """Execute MongoDB operations on a collection.
+    def execute(self, collection_name_or_code, operation=None, *args, **kwargs):
+        """Execute MongoDB operations.
         
         Args:
-            collection_name: Name of the MongoDB collection
-            operation: MongoDB operation (find_one, insert_one, find, etc.)
+            collection_name_or_code: Collection name or MongoDB shell code string
+            operation: MongoDB operation (find_one, insert_one, etc.) - optional
             *args: Positional arguments for the operation
             **kwargs: Keyword arguments for the operation
         """
-        collection = self.conn[collection_name]
+        # If operation is None, this is a migration string (schema DDL)
+        # MongoDB creates collections automatically, so migrations are no-ops
+        if operation is None:
+            return None
+        
+        # Normal method-style call for data operations
+        db = self.conn.get_database()
+        collection = db[collection_name_or_code]
         return getattr(collection, operation)(*args, **kwargs)
+
+    def commit(self):
+        """MongoDB doesn't require explicit commits for single operations."""
+        pass
+
+    def flush(self):
+        """MongoDB doesn't require explicit flushes for single operations."""
+        pass
+
+    def rollback(self):
+        """MongoDB doesn't require explicit rollbacks for single operations."""
+        pass
 
     def get_dialect(self):
         return "mongodb"

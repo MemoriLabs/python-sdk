@@ -1,10 +1,13 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from pymongo import MongoClient
 
+# Default test session - uses DATABASE_URL environment variable
+# Falls back to PostgreSQL for backward compatibility
 test_db_uri = os.environ.get(
     "DATABASE_URL",
-    "postgresql://memori:memori@localhost:5432/memori_test"
+    "postgresql://memori:memori@postgres:5432/memori_test"
 )
 
 test_db_core = create_engine(
@@ -19,8 +22,9 @@ TestDBSession = sessionmaker(
     bind=test_db_core
 )
 
+# PostgreSQL-specific session
 postgres_test_uri = os.environ.get(
-    "DATABASE_URL",
+    "POSTGRES_DATABASE_URL",
     "postgresql://memori:memori@postgres:5432/memori_test"
 )
 
@@ -36,9 +40,10 @@ PostgresTestDBSession = sessionmaker(
     bind=postgres_test_db_core
 )
 
+# MySQL-specific session
 mysql_test_uri = os.environ.get(
     "MYSQL_DATABASE_URL",
-    "mysql+pymysql://memori:memori@localhost:3306/memori_test"
+    "mysql+pymysql://memori:memori@mysql:3306/memori_test"
 )
 
 mysql_test_db_core = create_engine(
@@ -52,3 +57,11 @@ MySQLTestDBSession = sessionmaker(
     autoflush=False,
     bind=mysql_test_db_core
 )
+
+# MongoDB-specific session
+mongodb_test_uri = os.environ.get(
+    "MONGODB_URL",
+    "mongodb://memori:memori@mongodb:27017/memori_test?authSource=admin"
+)
+
+MongoTestDBSession = MongoClient(mongodb_test_uri)

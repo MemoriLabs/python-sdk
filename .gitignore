@@ -7,7 +7,7 @@ __pycache__
 *.egg
 *.egg-info
 dist/
-build/
+/build/
 *.swp
 
 # Testing
@@ -36,4 +36,4 @@ uv.lock
 # Python packaging
 *.egg-info/
 dist/
-build/
+/build/

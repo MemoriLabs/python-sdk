@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 
+import argparse
 import asyncio
 import os
 
 from openai import AsyncOpenAI
 
 from memori import Memori
-from tests.database.core import TestDBSession
+from tests.database.core import (
+    TestDBSession,
+    PostgresTestDBSession,
+    MySQLTestDBSession,
+    MongoTestDBSession,
+)
 
 if os.environ.get("OPENAI_API_KEY", None) is None:
     raise RuntimeError("OPENAI_API_KEY is not set")
@@ -14,8 +20,17 @@ if os.environ.get("OPENAI_API_KEY", None) is None:
 os.environ["MEMORI_TEST_MODE"] = "1"
 
 
-async def run():
-    session = TestDBSession()
+async def run(db_backend: str = "default"):
+    # Select database session based on backend
+    if db_backend == "mongodb":
+        session = MongoTestDBSession
+    elif db_backend == "mysql":
+        session = MySQLTestDBSession()
+    elif db_backend == "postgres":
+        session = PostgresTestDBSession()
+    else:
+        session = TestDBSession()
+    
     client = AsyncOpenAI()
 
     mem = Memori(conn=session).openai.register(client)
@@ -59,4 +74,13 @@ async def run():
 
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    parser = argparse.ArgumentParser(description="Test OpenAI async client with various database backends")
+    parser.add_argument(
+        "--db",
+        choices=["default", "postgres", "mysql", "mongodb"],
+        default="default",
+        help="Database backend to use (default: uses DATABASE_URL env var)"
+    )
+    args = parser.parse_args()
+    
+    asyncio.run(run(args.db))

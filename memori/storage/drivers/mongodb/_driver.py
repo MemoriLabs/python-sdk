@@ -121,20 +121,13 @@ class Parent(BaseParent):
             "date_updated": None
         }
         
-        self.conn.execute(
+        result = self.conn.execute(
             "memori_parent",
             "insert_one",
             parent_doc
         )
         
-        # Return the ID of the created or existing parent
-        result = self.conn.execute(
-            "memori_parent",
-            "find_one",
-            {"external_id": external_id}
-        )
-        
-        return result.get("_id")
+        return result.inserted_id
 
 
 class Process(BaseProcess):
@@ -157,20 +150,13 @@ class Process(BaseProcess):
             "date_updated": None
         }
         
-        self.conn.execute(
+        result = self.conn.execute(
             "memori_process",
             "insert_one",
             process_doc
         )
         
-        # Return the ID of the created or existing process
-        result = self.conn.execute(
-            "memori_process",
-            "find_one",
-            {"external_id": external_id}
-        )
-        
-        return result.get("_id")
+        return result.inserted_id
 
 
 class Session(BaseSession):
@@ -194,20 +180,13 @@ class Session(BaseSession):
             "date_updated": None
         }
         
-        self.conn.execute(
+        result = self.conn.execute(
             "memori_session",
             "insert_one",
             session_doc
         )
         
-        # Return the ID of the created or existing session
-        result = self.conn.execute(
-            "memori_session",
-            "find_one",
-            {"uuid": str(uuid)}
-        )
-        
-        return result.get("_id")
+        return result.inserted_id
 
 
 class Schema(BaseSchema):
@@ -243,7 +222,10 @@ class SchemaVersion(BaseSchemaVersion):
             {"num": 1, "_id": 0}
         )
         
-        return result.get("num") if result else None
+        if not result:
+            return None
+        
+        return result.get("num")
 
 
 @Registry.register_driver("mongodb")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from database.core import PostgresTestDBSession
+from tests.database.core import PostgresTestDBSession
 from memori import Memori
 
 session = PostgresTestDBSession()

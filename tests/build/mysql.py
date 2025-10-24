@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from database.core import TestDBSession
+from tests.database.core import MySQLTestDBSession
 from memori import Memori
 
-session = TestDBSession()
+session = MySQLTestDBSession()
 
 for table_name in [
     "memori_conversation_message",
