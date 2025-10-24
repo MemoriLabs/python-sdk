@@ -62,3 +62,9 @@ or
     ...
 
     mem.set_session(session_id)
+
+## Bring Your Own Database (BYODB)
+
+1. Build the data structures.
+
+    Memori(conn=session).storage.build()
