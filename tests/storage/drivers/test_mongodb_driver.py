@@ -1,6 +1,7 @@
 from uuid import UUID
-from unittest.mock import Mock, MagicMock
+import pytest
 from datetime import datetime
+from unittest.mock import Mock
 
 from memori.storage.drivers.mongodb._driver import (
     Conversation,
@@ -40,7 +41,6 @@ def test_parent_create(mock_conn):
     
     assert result == 123
     assert mock_conn.execute.call_count == 3  # find_one, insert_one, find_one
-    assert mock_conn.flush.call_count == 1
     
     # Verify find_one query for existing record
     find_call = mock_conn.execute.call_args_list[0]
@@ -70,7 +70,6 @@ def test_parent_create_existing_record(mock_conn):
     
     assert result == 456
     assert mock_conn.execute.call_count == 1  # Only find_one
-    assert mock_conn.flush.call_count == 0  # No flush needed
 
 
 def test_parent_generates_uuid(mock_conn):
@@ -106,7 +105,6 @@ def test_process_create(mock_conn):
     
     assert result == 456
     assert mock_conn.execute.call_count == 3
-    assert mock_conn.flush.call_count == 1
     
     # Verify find_one query
     find_call = mock_conn.execute.call_args_list[0]
@@ -136,7 +134,6 @@ def test_session_create(mock_conn):
     
     assert result == 789
     assert mock_conn.execute.call_count == 3
-    assert mock_conn.flush.call_count == 1
     
     # Verify find_one query
     find_call = mock_conn.execute.call_args_list[0]
@@ -175,7 +172,6 @@ def test_conversation_create(mock_conn):
     
     assert result == 101
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
     
     # Verify find_one query
     find_call = mock_conn.execute.call_args_list[0]
@@ -203,7 +199,6 @@ def test_conversation_create_existing_record(mock_conn):
     
     assert result == 999
     assert mock_conn.execute.call_count == 1  # Only find_one
-    assert mock_conn.flush.call_count == 0  # No flush needed
 
 
 def test_conversation_message_create(mock_conn):

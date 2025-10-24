@@ -59,7 +59,6 @@ class Conversation(BaseConversation):
             "insert_one",
             conversation_doc
         )
-        self.conn.flush()
         
         return result.inserted_id
 
@@ -127,7 +126,6 @@ class Parent(BaseParent):
             "insert_one",
             parent_doc
         )
-        self.conn.flush()
         
         # Return the ID of the created or existing parent
         result = self.conn.execute(
@@ -164,7 +162,6 @@ class Process(BaseProcess):
             "insert_one",
             process_doc
         )
-        self.conn.flush()
         
         # Return the ID of the created or existing process
         result = self.conn.execute(
@@ -202,7 +199,6 @@ class Session(BaseSession):
             "insert_one",
             session_doc
         )
-        self.conn.flush()
         
         # Return the ID of the created or existing session
         result = self.conn.execute(

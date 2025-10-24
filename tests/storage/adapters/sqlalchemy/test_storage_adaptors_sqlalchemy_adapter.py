@@ -56,13 +56,6 @@ def test_rollback_postgres(postgres_session):
 
 
 # MongoDB tests
-def test_mongodb_adapter_commit(mongodb_conn):
-    """Test MongoDB adapter commit method."""
-    adapter = MongoAdapter(mongodb_conn)
-    result = adapter.commit()
-    assert result is adapter  # Should return self
-
-
 def test_mongodb_adapter_execute(mongodb_conn):
     """Test MongoDB adapter execute method."""
     adapter = MongoAdapter(mongodb_conn)
@@ -76,24 +69,10 @@ def test_mongodb_adapter_execute(mongodb_conn):
     # The mock should return the mocked result
 
 
-def test_mongodb_adapter_flush(mongodb_conn):
-    """Test MongoDB adapter flush method."""
-    adapter = MongoAdapter(mongodb_conn)
-    result = adapter.flush()
-    assert result is adapter  # Should return self
-
-
 def test_mongodb_adapter_get_dialect(mongodb_conn):
     """Test MongoDB adapter get_dialect method."""
     adapter = MongoAdapter(mongodb_conn)
     assert adapter.get_dialect() == "mongodb"
-
-
-def test_mongodb_adapter_rollback(mongodb_conn):
-    """Test MongoDB adapter rollback method."""
-    adapter = MongoAdapter(mongodb_conn)
-    result = adapter.rollback()
-    assert result is adapter  # Should return self
 
 
 def test_mongodb_adapter_execute_with_args(mongodb_conn):

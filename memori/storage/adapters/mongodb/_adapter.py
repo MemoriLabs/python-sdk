@@ -19,11 +19,6 @@ from memori.storage._registry import Registry
 class Adapter(BaseStorageAdapter):
     """MongoDB storage adapter for MongoDB database connections."""
     
-    def commit(self):
-        # MongoDB doesn't have explicit commits like SQL databases
-        # Transactions are handled differently in MongoDB
-        return self
-
     def execute(self, collection_name, operation, *args, **kwargs):
         """Execute MongoDB operations on a collection.
         
@@ -36,14 +31,5 @@ class Adapter(BaseStorageAdapter):
         collection = self.conn[collection_name]
         return getattr(collection, operation)(*args, **kwargs)
 
-    def flush(self):
-        # MongoDB operations are immediate, no explicit flush needed
-        return self
-
     def get_dialect(self):
         return "mongodb"
-
-    def rollback(self):
-        # MongoDB doesn't have explicit rollbacks like SQL databases
-        # Error handling is done differently
-        return self
