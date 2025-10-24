@@ -33,13 +33,13 @@
 
 ---
 
-# Getting Started
+## Getting Started
 
 Install Memori:
 
     pip install memori
 
-# Example with OpenAI
+## Example with OpenAI
 
     from openai import OpenAI
     from memori import Memori
@@ -47,15 +47,15 @@ Install Memori:
     client = OpenAI(...)
     mem = Memori().openai.register(client)
 
-# Attribution
+## Attribution
 
     mem.attribution(parent_id="12345", process_id="my-ai-bot")
 
-# Session Management
+## Session Management
 
     mem.new_session()
 
-    or
+or
 
     session_id = mem.config.session_id
 
