@@ -351,7 +351,7 @@ def test_driver_registry_registration():
     from memori.storage._registry import Registry
     
     registry = Registry()
-    assert "mongodb" in KeyError
+    assert "mongodb" in registry._drivers
 
 
 def test_mongodb_operations_with_datetime(mock_conn):
