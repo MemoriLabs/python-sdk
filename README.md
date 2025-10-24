@@ -114,4 +114,17 @@ response = client.chat.completions.create(
 
 # The planet Mars is red.
 print(response.choices[0].message.content)
+
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {
+            "role", "user",
+            "content": "That planet we are talking about, in order from the sun, which one is it?"
+        }
+    ]
+)
+
+# Mars is the 4th planet from the sun.
+print(response.choices[0].message.content)
 ```
