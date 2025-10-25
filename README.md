@@ -173,3 +173,5 @@ Memori's Advanced Augmentation enhances memories at each of these levels with:
 - events
 
 Memori knows who your user is, what tasks your agent handles and creates unparalleled context between the two. Augmentation occurs in the background incurring no latency.
+
+[Sign up for Memori Advanced Augmentation](https://memorilabs.ai/sign-up). It's free!
