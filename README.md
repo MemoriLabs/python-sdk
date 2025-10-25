@@ -129,3 +129,25 @@ response = client.chat.completions.create(
 # Mars is the 4th planet from the sun.
 print(response.choices[0].message.content)
 ```
+
+## Supported LLM
+
+- OpenAI
+- Gemini
+- Anthropic
+- Bedrock
+
+## Supported Frameworks
+
+- LangChain
+- Pydantic AI
+
+## Supported Datastores
+
+- CockroachDB
+- MongoDB
+- MySQL
+- Neon
+- PostgreSQL
+- SQLite
+- Supabase
