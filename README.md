@@ -137,6 +137,8 @@ print(response.choices[0].message.content)
 - Anthropic
 - Bedrock
 
+_(unstreamed, streamed, synchronous and asynchronous)_
+
 ## Supported Frameworks
 
 - LangChain
