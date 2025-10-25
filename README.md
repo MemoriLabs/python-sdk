@@ -174,7 +174,13 @@ Memori's Advanced Augmentation enhances memories at each of these levels with:
 
 Memori knows who your user is, what tasks your agent handles and creates unparalleled context between the two. Augmentation occurs in the background incurring no latency.
 
-[Sign up for Memori Advanced Augmentation](https://memorilabs.ai/sign-up/github). It's free!
+[Sign up for Memori Advanced Augmentation](https://memorilabs.ai/sign-up/github) or execute the following code:
+
+```python
+from memori import Memori
+
+Memori().sign_up('your_email_address@domain.com')
+```
 
 Once you've obtained an API key, simply set the following environment variable:
 
