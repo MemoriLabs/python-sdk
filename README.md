@@ -162,3 +162,14 @@ Memories are tracked at several different levels:
 - parent: think person, place, or thing; like a user
 - process: think your agent, LLM interaction or program
 - session: the current interactions between the parent, process and the LLM
+
+Memori's advanced augmentation enhances memories at each of these levels with:
+
+- attributes
+- facts
+- preferences
+- skills
+- rules
+- events
+
+Matching these enhancements against those of the process, Memori delivers unparalleled context.
