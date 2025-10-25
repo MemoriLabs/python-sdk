@@ -154,3 +154,11 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 - PostgreSQL
 - SQLite
 - Supabase
+
+## Advanced Augmentation
+
+Memories are tracked at several different levels:
+
+- parent: think person, place, or thing; like a user
+- process: think your agent, LLM interaction or program
+- session: the current interactions between the parent, process and the LLM
