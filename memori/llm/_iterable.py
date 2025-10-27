@@ -16,6 +16,7 @@ import time
 from memori._config import Config
 from memori._utils import bytes_to_json
 from memori.llm._base import BaseInvoke
+from memori.llm._utils import client_is_bedrock
 from memori.memory._manager import Manager as MemoryManager
 
 
@@ -36,7 +37,7 @@ class Iterable:
         self._kwargs = kwargs
         self._time_start = time_start
 
-        if self.invoke.client_is_bedrock():
+        if client_is_bedrock(self.invoke._client_provider, self.invoke._client_title):
             self._kwargs = bytes_to_json(self._kwargs)
 
         return self
