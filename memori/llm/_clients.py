@@ -12,6 +12,7 @@ r"""
 import asyncio
 
 from memori.llm._base import BaseClient
+from memori.llm._registry import Registry
 from memori.llm._constants import (
     ATHROPIC_CLIENT_TITLE,
     GOOGLE_CLIENT_TITLE,
@@ -33,6 +34,7 @@ from memori.llm._invoke import (
 )
 
 
+@Registry.register_client(lambda client: hasattr(client, "messages"))
 class Anthropic(BaseClient):
     def register(self, client):
         if not hasattr(client, "messages"):
@@ -72,6 +74,7 @@ class Anthropic(BaseClient):
         return self
 
 
+@Registry.register_client(lambda client: hasattr(client, "models"))
 class Google(BaseClient):
     def register(self, client):
         if not hasattr(client, "models"):
@@ -324,6 +327,7 @@ class LangChain(BaseClient):
         return self
 
 
+@Registry.register_client(lambda client: hasattr(client, "chat") and hasattr(client, "_version"))
 class OpenAi(BaseClient):
     def register(self, client, _provider=None, stream=False):
         if not hasattr(client, "chat"):
@@ -401,6 +405,11 @@ class OpenAi(BaseClient):
         return self
 
 
+@Registry.register_client(
+    lambda client: hasattr(client, "chat")
+    and hasattr(client.chat, "completions")
+    and not hasattr(client, "_version")
+)
 class PydanticAi(BaseClient):
     def register(self, client):
         if not hasattr(client, "chat"):

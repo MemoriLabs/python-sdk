@@ -9,27 +9,43 @@ r"""
                        memorilabs.ai
 """
 
-from memori.llm._utils import (
-    llm_is_anthropic,
-    llm_is_bedrock,
-    llm_is_google,
-    llm_is_openai,
-)
-from memori.llm.adapters.anthropic._adapter import Adapter as AnthropicLlmAdapter
-from memori.llm.adapters.bedrock._adapter import Adapter as BedrockLlmAdapter
-from memori.llm.adapters.google._adapter import Adapter as GoogleLlmAdapter
-from memori.llm.adapters.openai._adapter import Adapter as OpenAiLlmAdapter
+from typing import Any, Callable, Dict, Type
+
+from memori.llm._base import BaseClient, BaseLlmAdaptor
 
 
 class Registry:
-    def adapter(self, provider, title):
-        if llm_is_openai(provider, title):
-            return OpenAiLlmAdapter()
-        elif llm_is_anthropic(provider, title):
-            return AnthropicLlmAdapter()
-        elif llm_is_google(provider, title):
-            return GoogleLlmAdapter()
-        if llm_is_bedrock(provider, title):
-            return BedrockLlmAdapter()
+    _clients: Dict[Callable[[Any], bool], Type[BaseClient]] = {}
+    _adapters: Dict[Callable[[str, str], bool], Type[BaseLlmAdaptor]] = {}
+
+    @classmethod
+    def register_client(cls, matcher: Callable[[Any], bool]):
+        def decorator(client_class: Type[BaseClient]):
+            cls._clients[matcher] = client_class
+            return client_class
+
+        return decorator
+
+    @classmethod
+    def register_adapter(cls, matcher: Callable[[str, str], bool]):
+        def decorator(adapter_class: Type[BaseLlmAdaptor]):
+            cls._adapters[matcher] = adapter_class
+            return adapter_class
+
+        return decorator
+
+    def client(self, client_obj: Any, config) -> BaseClient:
+        for matcher, client_class in self._clients.items():
+            if matcher(client_obj):
+                return client_class(config)
+
+        raise ValueError(
+            f"No client registered for type: {type(client_obj).__name__}"
+        )
+
+    def adapter(self, provider: str, title: str) -> BaseLlmAdaptor:
+        for matcher, adapter_class in self._adapters.items():
+            if matcher(provider, title):
+                return adapter_class()
 
         raise RuntimeError("could not determine LLM for adapter")
