@@ -12,6 +12,7 @@ if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None) is None:
     raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS is not set")
 
 os.environ["MEMORI_TEST_MODE"] = "1"
+os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 session = TestDBSession()
 client = ChatVertexAI(
@@ -33,21 +34,8 @@ query = "What color is the planet Mars?"
 print(f"me: {query}")
 
 print("-" * 25)
+print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-response = client.invoke(query)
-print(f"llm: {response.content}")
-
-print("-" * 25)
-
-query = "That planet we're talking about, in order from the sun which one is it?"
-print(f"me: {query}")
-
-print("-" * 25)
-print("CONVERSATION INJECTION OCCURRED HERE!\n")
-
-response = client.invoke(query)
-
-print("-" * 25)
-print(f"llm: {response.content}")
+client.invoke(query)
 
 print("-" * 25)
