@@ -18,6 +18,9 @@ class Writer:
         self.config = config
 
     def execute(self, payload):
+        if self.config.driver is None:
+            return self
+
         if self.config.parent_id is not None:
             if self.config.cache.parent_id is None:
                 self.config.cache.parent_id = self.config.driver.parent.create(

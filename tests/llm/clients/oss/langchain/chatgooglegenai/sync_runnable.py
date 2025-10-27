@@ -3,21 +3,21 @@
 import asyncio
 import os
 
-from database.core import TestDBSession
+from tests.database.core import TestDBSession
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from memori import Memori
 
-if os.environ.get("GOOGLE_API_KEY", None) is None:
-    raise RuntimeError("GOOGLE_API_KEY is not set")
+if os.environ.get("GEMINI_API_KEY", None) is None:
+    raise RuntimeError("GEMINI_API_KEY is not set")
 
 os.environ["MEMORI_TEST_MODE"] = "1"
 
 
 session = TestDBSession()
-client = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+client = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=os.environ["GEMINI_API_KEY"])
 prompt = ChatPromptTemplate.from_messages(
     [
         ("human", "{question}"),

@@ -2,7 +2,7 @@
 
 import os
 
-from database.core import TestDBSession
+from tests.database.core import TestDBSession
 from openai import OpenAI
 
 from memori import Memori

@@ -3,7 +3,7 @@
 import asyncio
 import os
 
-from database.core import TestDBSession
+from tests.database.core import TestDBSession
 from openai import AsyncOpenAI
 
 from memori import Memori

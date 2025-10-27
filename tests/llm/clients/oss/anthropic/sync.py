@@ -3,7 +3,7 @@
 import os
 
 import anthropic
-from database.core import TestDBSession
+from tests.database.core import TestDBSession
 
 from memori import Memori
 
