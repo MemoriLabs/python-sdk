@@ -41,31 +41,24 @@ class MappingResult:
         return [dict(zip(columns, row)) for row in rows]
 
 
-def is_dbapi_connection(conn):
-    if not (
-        hasattr(conn, "cursor")
-        and hasattr(conn, "commit")
-        and hasattr(conn, "rollback")
-        and callable(getattr(conn, "cursor", None))
-        and callable(getattr(conn, "commit", None))
-        and callable(getattr(conn, "rollback", None))
-    ):
+def is_django_connection(conn):
+    if not hasattr(conn, "__class__"):
         return False
     
-    if hasattr(conn, "__class__"):
-        module_name = conn.__class__.__module__
-        if module_name.startswith("django.db"):
-            return False
-        class_name = conn.__class__.__name__
-        if class_name in ("Session", "scoped_session", "AsyncSession"):
-            return False
-        if hasattr(conn, "get_bind"):
-            return False
+    module_name = conn.__class__.__module__
+    if not module_name.startswith("django.db"):
+        return False
+    
+    if not (
+        hasattr(conn, "cursor")
+        and callable(getattr(conn, "cursor", None))
+    ):
+        return False
     
     return True
 
 
-@Registry.register_adapter(is_dbapi_connection)
+@Registry.register_adapter(is_django_connection)
 class Adapter(BaseStorageAdapter):
     def commit(self):
         self.conn.commit()
@@ -84,16 +77,16 @@ class Adapter(BaseStorageAdapter):
         return self
 
     def get_dialect(self):
-        module_name = type(self.conn).__module__
+        vendor = self.conn.vendor
         dialect_mapping = {
-            "postgresql": ["psycopg"],
-            "mysql": ["mysql", "MySQLdb", "pymysql"],
-            "sqlite": ["sqlite"],
+            "postgresql": "postgresql",
+            "mysql": "mysql",
+            "sqlite": "sqlite",
+            "oracle": "oracle",
         }
-        for dialect, identifiers in dialect_mapping.items():
-            if any(identifier in module_name for identifier in identifiers):
-                return dialect
-        raise ValueError(f"Unable to determine dialect from connection module: {module_name}")
+        if vendor in dialect_mapping:
+            return dialect_mapping[vendor]
+        raise ValueError(f"Unable to determine dialect from Django vendor: {vendor}")
 
     def rollback(self):
         self.conn.rollback()

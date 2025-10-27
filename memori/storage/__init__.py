@@ -15,6 +15,7 @@ from memori.storage._registry import Registry
 from memori.storage.adapters.sqlalchemy import _adapter  # noqa: F401
 from memori.storage.adapters.mongodb import _adapter  # noqa: F401
 from memori.storage.adapters.dbapi import _adapter  # noqa: F401
+from memori.storage.adapters.django import _adapter  # noqa: F401
 from memori.storage.drivers.mysql import _driver  # noqa: F401
 from memori.storage.drivers.postgresql import _driver  # noqa: F401
 from memori.storage.drivers.mongodb import _driver  # noqa: F401
