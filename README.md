@@ -147,6 +147,8 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 ## Supported Datastores
 
 - CockroachDB
+- DB API 2.0
+- Django
 - MariaDB
 - MongoDB
 - MySQL
