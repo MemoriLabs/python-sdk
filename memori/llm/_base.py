@@ -71,9 +71,13 @@ class BaseInvoke:
 
     def _format_kwargs(self, kwargs):
         if self._uses_protobuf:
-            formatted_kwargs = json.loads(
-                json_format.MessageToJson(kwargs["request"].__dict__["_pb"])
-            )
+            if "request" in kwargs:
+                formatted_kwargs = json.loads(
+                    json_format.MessageToJson(kwargs["request"].__dict__["_pb"])
+                )
+            else:
+                formatted_kwargs = copy.deepcopy(kwargs)
+                formatted_kwargs = self.dict_to_json(formatted_kwargs)
         else:
             formatted_kwargs = copy.deepcopy(kwargs)
             if provider_is_langchain(self._client_provider):
@@ -138,9 +142,15 @@ class BaseInvoke:
         formatted_response = copy.deepcopy(raw_response)
         if self._uses_protobuf:
             if not isinstance(formatted_response, list):
-                formatted_response = json.loads(
-                    json_format.MessageToJson(formatted_response.__dict__["_pb"])
-                )
+                if (
+                    hasattr(formatted_response, "__dict__")
+                    and "_pb" in formatted_response.__dict__
+                ):
+                    formatted_response = json.loads(
+                        json_format.MessageToJson(formatted_response.__dict__["_pb"])
+                    )
+                else:
+                    formatted_response = {}
 
         return formatted_response
 
@@ -186,12 +196,16 @@ class BaseInvoke:
                     {"parts": [{"text": message["content"]}], "role": message["role"]}
                 )
 
-            formatted_kwargs = json.loads(
-                json_format.MessageToJson(kwargs["request"].__dict__["_pb"])
-            )
-            formatted_kwargs["contents"] = contents + formatted_kwargs["contents"]
-
-            json_format.ParseDict(formatted_kwargs, kwargs["request"].__dict__["_pb"])
+            if "request" in kwargs:
+                formatted_kwargs = json.loads(
+                    json_format.MessageToJson(kwargs["request"].__dict__["_pb"])
+                )
+                formatted_kwargs["contents"] = contents + formatted_kwargs["contents"]
+                json_format.ParseDict(
+                    formatted_kwargs, kwargs["request"].__dict__["_pb"]
+                )
+            else:
+                kwargs["contents"] = contents + kwargs["contents"]
         else:
             raise NotImplementedError
 
@@ -269,11 +283,12 @@ class BaseIterator:
         if self.invoke._uses_protobuf is True:
             formatted_chunk = copy.deepcopy(chunk)
             if isinstance(self.raw_response, list):
-                self.raw_response.append(
-                    json.loads(
-                        json_format.MessageToJson(formatted_chunk.__dict__["_pb"])
+                if "_pb" in formatted_chunk.__dict__:
+                    self.raw_response.append(
+                        json.loads(
+                            json_format.MessageToJson(formatted_chunk.__dict__["_pb"])
+                        )
                     )
-                )
         else:
             if isinstance(self.raw_response, dict):
                 self.raw_response = merge_chunk(self.raw_response, chunk.__dict__)

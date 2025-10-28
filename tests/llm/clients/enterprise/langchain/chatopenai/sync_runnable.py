@@ -2,12 +2,12 @@
 
 import os
 
-from database.core import TestDBSession
-from langchain_community.chat_models import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
 
 from memori import Memori
+from tests.database.core import TestDBSession
 
 if os.environ.get("OPENAI_API_KEY", None) is None:
     raise RuntimeError("OPENAI_API_KEY is not set")

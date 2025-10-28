@@ -113,10 +113,12 @@ exclude_lines = [
 [dependency-groups]
 dev = [
     "anthropic>=0.71.0",
+    "google-genai>=1.46.0",
     "langchain-community>=0.3.0",
     "langchain-core>=1.0.1",
     "langchain-google-genai>=3.0.0",
     "langchain-google-vertexai>=2.0.0",
+    "langchain-openai>=1.0.1",
     "openai>=2.6.0",
     "pre-commit>=4.0.0",
     "psycopg2-binary>=2.9.0",

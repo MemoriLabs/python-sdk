@@ -2,10 +2,10 @@
 
 import os
 
-from database.core import TestDBSession
 from openai import OpenAI
 
 from memori import Memori
+from tests.database.core import TestDBSession
 
 if os.environ.get("OPENAI_API_KEY", None) is None:
     raise RuntimeError("OPENAI_API_KEY is not set")

@@ -7,6 +7,7 @@ services:
       - .:/app
       - /app/.venv
       - /app/__pycache__
+      - ./google-credentials.json:/app/google-credentials.json:ro
     working_dir: /app
     stdin_open: true
     tty: true
@@ -17,6 +18,7 @@ services:
       - DATABASE_URL=postgresql://memori:memori@postgres:5432/memori_test
       - MONGODB_URL=mongodb://memori:memori@mongodb:27017/memori_test?authSource=admin
       - MYSQL_DATABASE_URL=mysql+pymysql://memori:memori@mysql:3306/memori_test
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
     command: /bin/bash
     depends_on:
       postgres:

@@ -42,3 +42,4 @@ uv.lock
 *.egg-info/
 dist/
 /build/
+google-credentials.json

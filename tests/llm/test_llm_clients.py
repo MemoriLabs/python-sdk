@@ -277,25 +277,14 @@ class TestLangChain:
 
     def test_register_chatopenai(self, langchain_client, mocker):
         mock_chatopenai = mocker.MagicMock()
-        mock_chatopenai.root_client.beta.chat.completions.create = mocker.MagicMock()
-        mock_chatopenai.root_client.beta.chat.completions.parse = mocker.MagicMock()
-        mock_chatopenai.root_client.chat.completions.create = mocker.MagicMock()
-        mock_chatopenai.root_client.chat.completions.parse = mocker.MagicMock()
+        mock_chatopenai.http_client = None
+        mock_chatopenai.async_http_client = None
         mock_chatopenai.client._client.beta.chat.completions.create = mocker.MagicMock()
         mock_chatopenai.client._client.beta.chat.completions.parse = mocker.MagicMock()
         mock_chatopenai.client._client.chat.completions.create = mocker.MagicMock()
         mock_chatopenai.client._client.chat.completions.parse = mocker.MagicMock()
-        del mock_chatopenai.root_client._memori_installed
         del mock_chatopenai.client._client._memori_installed
 
-        mock_chatopenai.root_async_client.beta.chat.completions.create = (
-            mocker.MagicMock()
-        )
-        mock_chatopenai.root_async_client.beta.chat.completions.parse = (
-            mocker.MagicMock()
-        )
-        mock_chatopenai.root_async_client.chat.completions.create = mocker.MagicMock()
-        mock_chatopenai.root_async_client.chat.completions.parse = mocker.MagicMock()
         mock_chatopenai.async_client._client.beta.chat.completions.create = (
             mocker.MagicMock()
         )
@@ -306,14 +295,13 @@ class TestLangChain:
             mocker.MagicMock()
         )
         mock_chatopenai.async_client._client.chat.completions.parse = mocker.MagicMock()
-        del mock_chatopenai.root_async_client._memori_installed
         del mock_chatopenai.async_client._client._memori_installed
 
         result = langchain_client.register(chatopenai=mock_chatopenai)
 
         assert result is langchain_client
-        assert mock_chatopenai.root_client._memori_installed is True
         assert mock_chatopenai.client._client._memori_installed is True
+        assert mock_chatopenai.async_client._client._memori_installed is True
 
     def test_register_chatvertexai(self, langchain_client, mocker):
         mock_chatvertexai = mocker.MagicMock()
