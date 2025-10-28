@@ -2,10 +2,10 @@
 
 import os
 
-from database.core import TestDBSession
 from langchain_google_vertexai import ChatVertexAI
 
 from memori import Memori
+from tests.database.core import TestDBSession
 
 if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None) is None:
     raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS is not set")

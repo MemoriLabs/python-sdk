@@ -3,26 +3,25 @@
 import asyncio
 import os
 
-from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
+from google import genai
 
 from memori import Memori
 from tests.database.core import TestDBSession
 
-if os.environ.get("OPENAI_API_KEY", None) is None:
-    raise RuntimeError("OPENAI_API_KEY is not set")
+if os.environ.get("GEMINI_API_KEY", None) is None:
+    raise RuntimeError("GEMINI_API_KEY is not set")
 
 os.environ["MEMORI_TEST_MODE"] = "1"
 
 
 async def main():
     session = TestDBSession()
-    client = ChatOpenAI(model="gpt-4.1", streaming=True)
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
-    mem = Memori(conn=session).langchain.register(chatopenai=client)
+    mem = Memori(conn=session).google.register(client)
 
     # Multiple registrations should not cause an issue.
-    mem.langchain.register(chatopenai=client)
+    mem.google.register(client)
 
     mem.attribution(parent_id="123", process_id="456")
 
@@ -30,12 +29,14 @@ async def main():
 
     query = "What color is the planet Mars?"
     print(f"me: {query}")
+    response = await client.aio.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[{"role": "user", "parts": [{"text": query}]}],
+    )
 
     print("-" * 25)
 
-    generator = client.astream([HumanMessage(content=query)])
-    async for chunk in generator:
-        print(chunk.text, end="")
+    print(f"llm: {response.candidates[0].content.parts[0].text}")
 
     print("-" * 25)
 
@@ -45,13 +46,14 @@ async def main():
     print("-" * 25)
     print("CONVERSATION INJECTION OCCURRED HERE!\n")
 
-    response = ""
-    generator = client.astream([HumanMessage(content=query)])
-    async for chunk in generator:
-        response += chunk.text
+    response = await client.aio.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[{"role": "user", "parts": [{"text": query}]}],
+    )
 
     print("-" * 25)
-    print(f"llm: {response}", end="")
+
+    print(f"llm: {response.candidates[0].content.parts[0].text}")
 
     print("-" * 25)
 

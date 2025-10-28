@@ -3,9 +3,9 @@
 import os
 
 import anthropic
-from database.core import TestDBSession
 
 from memori import Memori
+from tests.database.core import TestDBSession
 
 if os.environ.get("ANTHROPIC_API_KEY", None) is None:
     raise RuntimeError("ANTHROPIC_API_KEY is not set")

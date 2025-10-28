@@ -82,12 +82,40 @@ class Google(BaseClient):
 
         if not hasattr(client, "_memori_installed"):
             client.models.actual_generate_content = client.models.generate_content
+            client_version = getattr(client, "_version", None)
             client.models.generate_content = (
                 Invoke(self.config, client.models.actual_generate_content)
-                .set_client(None, GOOGLE_CLIENT_TITLE, client._version)
+                .set_client(None, GOOGLE_CLIENT_TITLE, client_version)
                 .uses_protobuf()
                 .invoke
             )
+
+            # Register async client if available
+            if hasattr(client, "aio") and hasattr(client.aio, "models"):
+                client.aio.models.actual_generate_content = (
+                    client.aio.models.generate_content
+                )
+                client.aio.models.generate_content = (
+                    InvokeAsync(self.config, client.aio.models.actual_generate_content)
+                    .set_client(None, GOOGLE_CLIENT_TITLE, client_version)
+                    .uses_protobuf()
+                    .invoke
+                )
+
+                # Register streaming if available
+                if hasattr(client.aio.models, "generate_content_stream"):
+                    client.aio.models.actual_generate_content_stream = (
+                        client.aio.models.generate_content_stream
+                    )
+                    client.aio.models.generate_content_stream = (
+                        InvokeAsyncIterator(
+                            self.config,
+                            client.aio.models.actual_generate_content_stream,
+                        )
+                        .set_client(None, GOOGLE_CLIENT_TITLE, client_version)
+                        .uses_protobuf()
+                        .invoke
+                    )
 
             client._memori_installed = True
 
@@ -187,7 +215,10 @@ class LangChain(BaseClient):
             ):
                 raise RuntimeError("client provided is not instance of ChatOpenAI")
 
-            for client in [chatopenai.root_client, chatopenai.client._client]:
+            for client in filter(
+                None,
+                [getattr(chatopenai, "http_client", None), chatopenai.client._client],
+            ):
                 if not hasattr(client, "_memori_installed"):
                     client.beta._chat_completions_create = (
                         client.beta.chat.completions.create
@@ -239,10 +270,13 @@ class LangChain(BaseClient):
 
                     client._memori_installed = True
 
-            for client in [
-                chatopenai.root_async_client,
-                chatopenai.async_client._client,
-            ]:
+            for client in filter(
+                None,
+                [
+                    getattr(chatopenai, "async_http_client", None),
+                    chatopenai.async_client._client,
+                ],
+            ):
                 if not hasattr(client, "_memori_installed"):
                     client.beta._chat_completions_create = (
                         client.beta.chat.completions.create
