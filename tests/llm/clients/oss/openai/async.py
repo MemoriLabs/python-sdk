@@ -8,11 +8,11 @@ from openai import AsyncOpenAI
 
 from memori import Memori
 from tests.database.core import (
-    TestDBSession,
-    PostgresTestDBSession,
-    MySQLTestDBSession,
     MongoTestDBSession,
+    MySQLTestDBSession,
+    PostgresTestDBSession,
     SQLiteTestDBSession,
+    TestDBSession,
 )
 
 if os.environ.get("OPENAI_API_KEY", None) is None:
@@ -33,11 +33,11 @@ async def run(db_backend: str = "default"):
         session = SQLiteTestDBSession()
     else:
         session = TestDBSession()
-    
+
     client = AsyncOpenAI()
 
     mem = Memori(conn=session).openai.register(client)
-    
+
     # Initialize database schema
     mem.storage.build()
 
@@ -80,13 +80,15 @@ async def run(db_backend: str = "default"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test OpenAI async client with various database backends")
+    parser = argparse.ArgumentParser(
+        description="Test OpenAI async client with various database backends"
+    )
     parser.add_argument(
         "--db",
         choices=["default", "postgres", "mysql", "mongodb", "sqlite"],
         default="default",
-        help="Database backend to use (default: uses DATABASE_URL env var)"
+        help="Database backend to use (default: uses DATABASE_URL env var)",
     )
     args = parser.parse_args()
-    
+
     asyncio.run(run(args.db))

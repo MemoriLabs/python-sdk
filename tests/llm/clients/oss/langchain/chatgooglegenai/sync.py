@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
-import asyncio
 import os
 
-from tests.database.core import TestDBSession
-from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from memori import Memori
+from tests.database.core import TestDBSession
 
 if os.environ.get("GEMINI_API_KEY", None) is None:
     raise RuntimeError("GEMINI_API_KEY is not set")
@@ -15,7 +13,9 @@ if os.environ.get("GEMINI_API_KEY", None) is None:
 os.environ["MEMORI_TEST_MODE"] = "1"
 
 session = TestDBSession()
-client = ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=os.environ["GEMINI_API_KEY"])
+client = ChatGoogleGenerativeAI(
+    model="gemini-2.0-flash", google_api_key=os.environ["GEMINI_API_KEY"]
+)
 
 mem = Memori(conn=session).langchain.register(chatgooglegenai=client)
 

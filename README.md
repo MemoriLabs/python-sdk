@@ -17,6 +17,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/GibsonAI/memori/actions/workflows/ci.yml">
+    <img src="https://github.com/GibsonAI/memori/actions/workflows/ci.yml/badge.svg" alt="CI">
+  </a>
   <a href="https://badge.fury.io/py/memorisdk">
     <img src="https://badge.fury.io/py/memori.svg" alt="PyPI version">
   </a>
@@ -27,7 +30,7 @@
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
   </a>
   <a href="https://www.python.org/downloads/">
-    <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
+    <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python 3.10+">
   </a>
 </p>
 

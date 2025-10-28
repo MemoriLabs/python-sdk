@@ -34,7 +34,7 @@ async def run():
     print("-" * 25)
     print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    response = await client.messages.create(
+    await client.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=1024,
         messages=[{"role": "user", "content": query}],

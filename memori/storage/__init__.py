@@ -12,13 +12,15 @@ r"""
 from memori.storage._registry import Registry
 
 # Import adapters and drivers to trigger their self-registration decorators.
-from memori.storage.adapters.sqlalchemy import _adapter  # noqa: F401
-from memori.storage.adapters.mongodb import _adapter  # noqa: F401
-from memori.storage.adapters.dbapi import _adapter  # noqa: F401
-from memori.storage.adapters.django import _adapter  # noqa: F401
-from memori.storage.drivers.mysql import _driver  # noqa: F401
-from memori.storage.drivers.postgresql import _driver  # noqa: F401
-from memori.storage.drivers.mongodb import _driver  # noqa: F401
-from memori.storage.drivers.sqlite import _driver  # noqa: F401
+# Order matters: more specific matchers (sqlalchemy, django) before generic ones (mongodb, dbapi)
+from memori.storage.adapters import sqlalchemy, django, mongodb, dbapi  # noqa: F401
+from memori.storage.drivers import (
+    mongodb as mongodb_driver,  # noqa: F401
+)
+from memori.storage.drivers import (
+    mysql,  # noqa: F401
+    postgresql,  # noqa: F401
+    sqlite,  # noqa: F401
+)
 
 __all__ = ["Registry"]

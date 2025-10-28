@@ -58,7 +58,7 @@ class AsyncRequest:
         return self.send("POST", url, **kwargs)
 
     def put(self, url: str, **kwargs):
-        return self.put("PUT", url, **kwargs)
+        return self.send("PUT", url, **kwargs)
 
     def send(self, method: str, url: str, **kwargs):
         try:
@@ -92,7 +92,7 @@ class AsyncRequest:
 
                         return r
             except Exception as e:
-                if isinstance(e, aiohttp.ClientError):
+                if isinstance(e, aiohttp.ClientResponseError):
                     if e.status < 500 or e.status > 599:
                         raise
 

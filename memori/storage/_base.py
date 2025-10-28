@@ -17,7 +17,7 @@ class BaseStorageAdapter:
     def commit(self):
         raise NotImplementedError
 
-    def execute(self, operation):
+    def execute(self, operation, *args, **kwargs):
         raise NotImplementedError
 
     def flush(self):

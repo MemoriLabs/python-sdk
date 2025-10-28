@@ -34,7 +34,7 @@ async def run():
     print("-" * 25)
     print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    response = await client.chat.completions.create(
+    await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": query}],
     )

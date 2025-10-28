@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from tests.database.core import MongoTestDBSession
 from memori import Memori
+from tests.database.core import MongoTestDBSession
 
 # MongoTestDBSession is already a MongoClient instance
 client = MongoTestDBSession
@@ -35,4 +35,4 @@ Memori(conn=client).storage.build()
 
 # Clear schema version
 db["memori_schema_version"].delete_many({})
-client.admin.command('ping')
+client.admin.command("ping")

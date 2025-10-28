@@ -4,8 +4,8 @@ import asyncio
 import os
 
 from database.core import TestDBSession
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
 
 from memori import Memori
 
@@ -34,7 +34,7 @@ async def run():
     print("-" * 25)
     print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    response = await client.ainvoke([message])
+    await client.ainvoke([message])
 
     print("-" * 25)
 

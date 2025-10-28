@@ -4,8 +4,8 @@ import asyncio
 import os
 
 from database.core import TestDBSession
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
 
 from memori import Memori
 
@@ -35,8 +35,7 @@ async def main():
     print("-" * 25)
     print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    generator = client.astream([HumanMessage(content=query)])
-    async for chunk in generator:
+    async for _ in client.astream([HumanMessage(content=query)]):
         pass
 
     print("-" * 25)

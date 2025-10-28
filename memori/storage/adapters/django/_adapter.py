@@ -16,10 +16,10 @@ from memori.storage._registry import Registry
 class CursorWrapper:
     def __init__(self, cursor):
         self._cursor = cursor
-    
+
     def mappings(self):
         return MappingResult(self._cursor)
-    
+
     def __getattr__(self, name):
         return getattr(self._cursor, name)
 
@@ -27,34 +27,31 @@ class CursorWrapper:
 class MappingResult:
     def __init__(self, cursor):
         self._cursor = cursor
-    
+
     def fetchone(self):
         row = self._cursor.fetchone()
         if row is None:
             return None
         columns = [col[0] for col in self._cursor.description]
-        return dict(zip(columns, row))
-    
+        return dict(zip(columns, row, strict=True))
+
     def fetchall(self):
         rows = self._cursor.fetchall()
         columns = [col[0] for col in self._cursor.description]
-        return [dict(zip(columns, row)) for row in rows]
+        return [dict(zip(columns, row, strict=True)) for row in rows]
 
 
 def is_django_connection(conn):
     if not hasattr(conn, "__class__"):
         return False
-    
+
     module_name = conn.__class__.__module__
     if not module_name.startswith("django.db"):
         return False
-    
-    if not (
-        hasattr(conn, "cursor")
-        and callable(getattr(conn, "cursor", None))
-    ):
+
+    if not (hasattr(conn, "cursor") and callable(getattr(conn, "cursor", None))):
         return False
-    
+
     return True
 
 

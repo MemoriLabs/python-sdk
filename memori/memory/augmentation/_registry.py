@@ -20,6 +20,8 @@ class Registry:
             return None
 
         if os.environ.get("MEMORI_API_KEY", None) is not None:
-            return MemoriAugmentation(config)
+            # TODO: Implement MemoriAugmentation class
+            # return MemoriAugmentation(config)
+            return None
 
         return None

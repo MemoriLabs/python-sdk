@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import asyncio
 import os
-from typing import List
 
 from database.core import TestDBSession
 from langchain_core.prompts import ChatPromptTemplate

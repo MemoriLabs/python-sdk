@@ -14,14 +14,14 @@ from memori.storage._registry import Registry
 
 
 @Registry.register_adapter(
-    lambda conn: hasattr(conn, 'database') and hasattr(conn, 'list_collection_names')
+    lambda conn: hasattr(conn, "database") and hasattr(conn, "list_collection_names")
 )
 class Adapter(BaseStorageAdapter):
     """MongoDB storage adapter for MongoDB database connections."""
-    
+
     def execute(self, collection_name_or_code, operation=None, *args, **kwargs):
         """Execute MongoDB operations.
-        
+
         Args:
             collection_name_or_code: Collection name or MongoDB shell code string
             operation: MongoDB operation (find_one, insert_one, etc.) - optional
@@ -29,11 +29,11 @@ class Adapter(BaseStorageAdapter):
             **kwargs: Keyword arguments for the operation
         """
         db = self.conn.get_database()
-        
+
         if operation is None:
-            exec(collection_name_or_code.strip(), {'db': db})
+            exec(collection_name_or_code.strip(), {"db": db})
             return None
-        
+
         collection = db[collection_name_or_code]
         return getattr(collection, operation)(*args, **kwargs)
 

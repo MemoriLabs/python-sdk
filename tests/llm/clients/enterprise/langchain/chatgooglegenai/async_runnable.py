@@ -42,7 +42,7 @@ async def main():
     print("-" * 25)
     print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    async for chunk in chain.astream({"question": query}):
+    async for _ in chain.astream({"question": query}):
         pass
 
     print("-" * 25)

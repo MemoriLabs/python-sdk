@@ -35,8 +35,7 @@ async def main():
     print("-" * 25)
     print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    generator = client.astream([HumanMessage(content=query)])
-    async for chunk in generator:
+    async for _ in client.astream([HumanMessage(content=query)]):
         pass
 
     print("-" * 25)

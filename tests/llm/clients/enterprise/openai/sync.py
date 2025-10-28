@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import pprint
 
 from database.core import TestDBSession
 from openai import OpenAI

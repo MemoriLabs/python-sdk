@@ -23,7 +23,7 @@ def test_reset_cache():
 
     config.reset_cache()
 
-    config.cache.conversation_id is None
-    config.cache.parent_id is None
-    config.cache.process_id is None
-    config.cache.session_id is None
+    assert config.cache.conversation_id is None
+    assert config.cache.parent_id is None
+    assert config.cache.process_id is None
+    assert config.cache.session_id is None

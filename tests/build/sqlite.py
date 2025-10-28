@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from tests.database.core import SQLiteTestDBSession
 from memori import Memori
+from tests.database.core import SQLiteTestDBSession
 
 session = SQLiteTestDBSession()
 

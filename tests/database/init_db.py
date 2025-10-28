@@ -1,5 +1,5 @@
-from tests.database.core import TestDBSession
 from memori import Memori
+from tests.database.core import TestDBSession
 
 
 def init_db():

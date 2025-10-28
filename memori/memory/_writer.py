@@ -78,6 +78,7 @@ class Writer:
                     response["text"],
                 )
 
-        self.config.conn.flush()
+        if self.config.conn is not None:
+            self.config.conn.flush()
 
         return self

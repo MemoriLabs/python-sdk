@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import asyncio
 import os
 
 from database.core import TestDBSession
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from memori import Memori

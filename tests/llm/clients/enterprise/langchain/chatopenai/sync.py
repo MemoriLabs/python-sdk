@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import asyncio
 import os
 
 from database.core import TestDBSession
-from langchain_openai import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 
 from memori import Memori
 

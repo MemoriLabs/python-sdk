@@ -4,7 +4,6 @@ import asyncio
 import pprint
 
 from aiohttp.client_exceptions import ClientResponseError
-from requests.exceptions import HTTPError
 
 from memori._config import Config
 from memori._network import AsyncRequest

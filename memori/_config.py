@@ -11,6 +11,7 @@ r"""
 
 import os
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 
 class Cache:
@@ -22,6 +23,9 @@ class Cache:
 
 
 class Config:
+    conn: Any = None
+    driver: Any = None
+
     def __init__(self):
         self.api_key = None
         self.augmentation = None

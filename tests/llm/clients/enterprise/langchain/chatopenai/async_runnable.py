@@ -4,9 +4,9 @@ import asyncio
 import os
 
 from database.core import TestDBSession
+from langchain_community.chat_models import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 
 from memori import Memori
 
@@ -42,7 +42,7 @@ async def main():
     print("-" * 25)
     print("COLLECTOR PAYLOAD OCCURRED HERE!\n")
 
-    async for chunk in chain.astream({"question": query}):
+    async for _ in chain.astream({"question": query}):
         pass
 
     print("-" * 25)

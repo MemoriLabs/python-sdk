@@ -1,20 +1,13 @@
 import json
 
-from unit_test_objects import UnitTestX, UnitTestY
-
 from memori._config import Config
 from memori.llm._base import BaseInvoke
 from memori.llm._constants import (
-    ATHROPIC_CLIENT_TITLE,
-    GOOGLE_CLIENT_TITLE,
-    LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
-    LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
-    LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
     LANGCHAIN_CLIENT_PROVIDER,
     LANGCHAIN_OPENAI_CLIENT_TITLE,
     OPENAI_CLIENT_TITLE,
-    PYDANTIC_AI_CLIENT_PROVIDER,
 )
+from tests.llm.unit_test_objects import UnitTestX, UnitTestY
 
 
 def test_list_to_json_native_types():
@@ -165,10 +158,12 @@ def test_get_response_content():
 
     assert invoke.get_response_content({"abc": "def"}) == {"abc": "def"}
 
-    # Don't worry that I'm using Config here, it doesn't matter.
-    legacy_api_response = Config()
+    class MockLegacyAPIResponse:
+        def __init__(self):
+            self.text = json.dumps({"abc": "def"})
+
+    legacy_api_response = MockLegacyAPIResponse()
     legacy_api_response.__class__.__name__ = "LegacyAPIResponse"
     legacy_api_response.__class__.__module__ = "openai._legacy_response"
-    legacy_api_response.text = json.dumps({"abc": "def"})
 
     assert invoke.get_response_content(legacy_api_response) == {"abc": "def"}

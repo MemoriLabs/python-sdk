@@ -10,7 +10,6 @@ r"""
 """
 
 import copy
-import json
 import time
 
 from memori._config import Config

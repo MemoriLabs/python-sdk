@@ -21,7 +21,7 @@ def bytes_to_json(obj):
 
         try:
             return json.loads(obj)
-        except json.decoder.JSONDecodeError:
+        except json.JSONDecodeError:
             return obj
     elif isinstance(obj, dict):
         return {bytes_to_json(k): bytes_to_json(v) for k, v in obj.items()}
@@ -37,7 +37,7 @@ def bytes_to_json(obj):
 
         try:
             return json.loads(obj)
-        except json.decoder.JSONDecodeError:
+        except json.JSONDecodeError:
             return obj
 
 

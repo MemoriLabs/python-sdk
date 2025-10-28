@@ -12,24 +12,12 @@ r"""
 import copy
 import json
 import pprint
-import time
 
 from google.protobuf import json_format
 
 from memori._config import Config
 from memori._utils import merge_chunk
-from memori.llm._constants import (
-    ATHROPIC_CLIENT_TITLE,
-    GOOGLE_CLIENT_TITLE,
-    LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
-    LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
-    LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
-    LANGCHAIN_CLIENT_PROVIDER,
-    LANGCHAIN_OPENAI_CLIENT_TITLE,
-    OPENAI_CLIENT_TITLE,
-)
 from memori.llm._utils import (
-    client_is_bedrock,
     llm_is_anthropic,
     llm_is_bedrock,
     llm_is_google,
@@ -55,7 +43,7 @@ class BaseInvoke:
 
     def configure_for_streaming_usage(self, kwargs):
         if llm_is_openai(self._client_provider, self._client_title):
-            if kwargs.get("stream", None) == True:
+            if kwargs.get("stream", None):
                 stream_options = kwargs.get("stream_options", None)
                 if stream_options is None or not isinstance(
                     kwargs["stream_options"], dict
@@ -266,7 +254,7 @@ class BaseIterator:
         self.config = config
         self.source_iterator = source_iterator
         self.iterator = None
-        self.raw_response = None
+        self.raw_response: dict | list | None = None
 
     def configure_invoke(self, invoke: BaseInvoke):
         self.invoke = invoke
@@ -280,11 +268,15 @@ class BaseIterator:
     def process_chunk(self, chunk):
         if self.invoke._uses_protobuf is True:
             formatted_chunk = copy.deepcopy(chunk)
-            self.raw_response.append(
-                json.loads(json_format.MessageToJson(formatted_chunk.__dict__["_pb"]))
-            )
+            if isinstance(self.raw_response, list):
+                self.raw_response.append(
+                    json.loads(
+                        json_format.MessageToJson(formatted_chunk.__dict__["_pb"])
+                    )
+                )
         else:
-            self.raw_response = merge_chunk(self.raw_response, chunk.__dict__)
+            if isinstance(self.raw_response, dict):
+                self.raw_response = merge_chunk(self.raw_response, chunk.__dict__)
 
         return self
 

@@ -26,7 +26,7 @@ class Manager:
     def _get_dialect_family(self, dialect):
         if dialect in self.registry._drivers:
             driver_class = self.registry._drivers[dialect]
-            return driver_class.migrations
+            return getattr(driver_class, "migrations", None)
 
         return None
 
@@ -62,10 +62,12 @@ class Manager:
         dialect = self.config.conn.get_dialect()
 
         try:
+            if self.config.driver is None:
+                raise RuntimeError("Driver not initialized")
             num = self.config.driver.schema.version.read()
             if num is None:
                 num = 0
-        except:
+        except Exception:
             if self._requires_rollback(dialect):
                 self.config.conn.rollback()
             num = 0
@@ -93,6 +95,8 @@ class Manager:
                     self.config.conn.execute(migration["operation"])
                     self.config.conn.commit()
 
+            if self.config.driver is None:
+                raise RuntimeError("Driver not initialized")
             self.config.driver.schema.version.delete()
             self.config.driver.schema.version.create(num - 1)
 

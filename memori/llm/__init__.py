@@ -9,12 +9,8 @@ r"""
                        memorilabs.ai
 """
 
-from memori.llm._registry import Registry
-
 from memori.llm import _clients  # noqa: F401
-from memori.llm.adapters.anthropic import _adapter  # noqa: F401
-from memori.llm.adapters.bedrock import _adapter  # noqa: F401
-from memori.llm.adapters.google import _adapter  # noqa: F401
-from memori.llm.adapters.openai import _adapter  # noqa: F401
+from memori.llm._registry import Registry
+from memori.llm.adapters import anthropic, bedrock, google, openai  # noqa: F401
 
 __all__ = ["Registry"]

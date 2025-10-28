@@ -11,7 +11,7 @@ r"""
 
 import time
 
-from memori.llm._base import BaseInvoke, BaseIterator
+from memori.llm._base import BaseIterator
 from memori.memory._manager import Manager as MemoryManager
 
 
@@ -22,6 +22,8 @@ class AsyncIterator(BaseIterator):
 
     async def __anext__(self):
         try:
+            if self.iterator is None:
+                raise RuntimeError("Iterator not initialized")
             chunk = await self.iterator.__anext__()
 
             self.set_raw_response()

@@ -1,4 +1,5 @@
 import pytest
+
 from memori._config import Config
 
 

@@ -1,4 +1,5 @@
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
+
 import pytest
 
 from memori._config import Config

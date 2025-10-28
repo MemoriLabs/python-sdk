@@ -12,7 +12,6 @@ r"""
 import asyncio
 
 from memori.llm._base import BaseClient
-from memori.llm._registry import Registry
 from memori.llm._constants import (
     ATHROPIC_CLIENT_TITLE,
     GOOGLE_CLIENT_TITLE,
@@ -32,6 +31,7 @@ from memori.llm._invoke import (
     InvokeAsyncStream,
     InvokeStream,
 )
+from memori.llm._registry import Registry
 
 
 @Registry.register_client(lambda client: hasattr(client, "messages"))
@@ -327,7 +327,9 @@ class LangChain(BaseClient):
         return self
 
 
-@Registry.register_client(lambda client: hasattr(client, "chat") and hasattr(client, "_version"))
+@Registry.register_client(
+    lambda client: hasattr(client, "chat") and hasattr(client, "_version")
+)
 class OpenAi(BaseClient):
     def register(self, client, _provider=None, stream=False):
         if not hasattr(client, "chat"):

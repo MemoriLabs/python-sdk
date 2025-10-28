@@ -16,10 +16,10 @@ from memori.storage._registry import Registry
 class CursorWrapper:
     def __init__(self, cursor):
         self._cursor = cursor
-    
+
     def mappings(self):
         return MappingResult(self._cursor)
-    
+
     def __getattr__(self, name):
         return getattr(self._cursor, name)
 
@@ -27,18 +27,18 @@ class CursorWrapper:
 class MappingResult:
     def __init__(self, cursor):
         self._cursor = cursor
-    
+
     def fetchone(self):
         row = self._cursor.fetchone()
         if row is None:
             return None
         columns = [col[0] for col in self._cursor.description]
-        return dict(zip(columns, row))
-    
+        return dict(zip(columns, row, strict=True))
+
     def fetchall(self):
         rows = self._cursor.fetchall()
         columns = [col[0] for col in self._cursor.description]
-        return [dict(zip(columns, row)) for row in rows]
+        return [dict(zip(columns, row, strict=True)) for row in rows]
 
 
 def is_dbapi_connection(conn):
@@ -51,7 +51,7 @@ def is_dbapi_connection(conn):
         and callable(getattr(conn, "rollback", None))
     ):
         return False
-    
+
     if hasattr(conn, "__class__"):
         module_name = conn.__class__.__module__
         if module_name.startswith("django.db"):
@@ -61,7 +61,7 @@ def is_dbapi_connection(conn):
             return False
         if hasattr(conn, "get_bind"):
             return False
-    
+
     return True
 
 
@@ -93,7 +93,9 @@ class Adapter(BaseStorageAdapter):
         for dialect, identifiers in dialect_mapping.items():
             if any(identifier in module_name for identifier in identifiers):
                 return dialect
-        raise ValueError(f"Unable to determine dialect from connection module: {module_name}")
+        raise ValueError(
+            f"Unable to determine dialect from connection module: {module_name}"
+        )
 
     def rollback(self):
         self.conn.rollback()

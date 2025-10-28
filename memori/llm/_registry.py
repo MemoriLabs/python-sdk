@@ -9,26 +9,27 @@ r"""
                        memorilabs.ai
 """
 
-from typing import Any, Callable, Dict, Type
+from collections.abc import Callable
+from typing import Any
 
 from memori.llm._base import BaseClient, BaseLlmAdaptor
 
 
 class Registry:
-    _clients: Dict[Callable[[Any], bool], Type[BaseClient]] = {}
-    _adapters: Dict[Callable[[str, str], bool], Type[BaseLlmAdaptor]] = {}
+    _clients: dict[Callable[[Any], bool], type[BaseClient]] = {}
+    _adapters: dict[Callable[[str | None, str], bool], type[BaseLlmAdaptor]] = {}
 
     @classmethod
     def register_client(cls, matcher: Callable[[Any], bool]):
-        def decorator(client_class: Type[BaseClient]):
+        def decorator(client_class: type[BaseClient]):
             cls._clients[matcher] = client_class
             return client_class
 
         return decorator
 
     @classmethod
-    def register_adapter(cls, matcher: Callable[[str, str], bool]):
-        def decorator(adapter_class: Type[BaseLlmAdaptor]):
+    def register_adapter(cls, matcher: Callable[[str | None, str], bool]):
+        def decorator(adapter_class: type[BaseLlmAdaptor]):
             cls._adapters[matcher] = adapter_class
             return adapter_class
 
@@ -39,11 +40,9 @@ class Registry:
             if matcher(client_obj):
                 return client_class(config)
 
-        raise ValueError(
-            f"No client registered for type: {type(client_obj).__name__}"
-        )
+        raise ValueError(f"No client registered for type: {type(client_obj).__name__}")
 
-    def adapter(self, provider: str, title: str) -> BaseLlmAdaptor:
+    def adapter(self, provider: str | None, title: str) -> BaseLlmAdaptor:
         for matcher, adapter_class in self._adapters.items():
             if matcher(provider, title):
                 return adapter_class()

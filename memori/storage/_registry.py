@@ -9,18 +9,19 @@ r"""
                        memorilabs.ai
 """
 
-from typing import Any, Callable, Dict, Type
+from collections.abc import Callable
+from typing import Any
 
 from memori.storage._base import BaseStorageAdapter
 
 
 class Registry:
-    _adapters: Dict[Callable[[Any], bool], Type[BaseStorageAdapter]] = {}
-    _drivers: Dict[str, Type] = {}
+    _adapters: dict[Callable[[Any], bool], type[BaseStorageAdapter]] = {}
+    _drivers: dict[str, type] = {}
 
     @classmethod
     def register_adapter(cls, matcher: Callable[[Any], bool]):
-        def decorator(adapter_class: Type[BaseStorageAdapter]):
+        def decorator(adapter_class: type[BaseStorageAdapter]):
             cls._adapters[matcher] = adapter_class
             return adapter_class
 
@@ -28,7 +29,7 @@ class Registry:
 
     @classmethod
     def register_driver(cls, dialect: str):
-        def decorator(driver_class: Type):
+        def decorator(driver_class: type):
             cls._drivers[dialect] = driver_class
             return driver_class
 

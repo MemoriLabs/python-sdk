@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-import asyncio
 import os
 
 from database.core import TestDBSession
-from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from memori import Memori

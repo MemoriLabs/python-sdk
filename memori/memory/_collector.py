@@ -38,7 +38,9 @@ class Api:
 
         return r.json()
 
-    def patch(self, route, json={}):
+    def patch(self, route, json=None):
+        if json is None:
+            json = {}
         r = self.__session().patch(
             self.url(route),
             headers={"Authorization": f"Bearer {self.config.api_key}"},
@@ -49,7 +51,9 @@ class Api:
 
         return r.json()
 
-    def post(self, route, json={}):
+    def post(self, route, json=None):
+        if json is None:
+            json = {}
         r = self.__session().post(
             self.url(route),
             headers={"Authorization": f"Bearer {self.config.api_key}"},
@@ -102,7 +106,7 @@ class Collector:
                     json=payload,
                     timeout=self.config.request_secs_timeout,
                 )
-            except Exception as e:
+            except Exception:
                 payload["meta"]["fnfg"] = {
                     "exc": traceback.format_exc(),
                     "status": "recovered",
@@ -114,11 +118,9 @@ class Collector:
                         json=json.loads(json.dumps(payload, default=str)),
                         timeout=self.config.request_secs_timeout,
                     )
-                except:
+                except Exception:
                     if self.config.raise_final_request_attempt is True:
                         raise
-                    else:
-                        pass
         else:
             pprint.pprint(payload)
 
