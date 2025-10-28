@@ -64,7 +64,6 @@ services:
     networks:
       - memori-network
 
-  # Optional: MongoDB Express for database management UI
   mongo-express:
     image: mongo-express:1.0.0
     restart: unless-stopped
@@ -81,7 +80,6 @@ services:
     networks:
       - memori-network
 
-  # MySQL for testing
   mysql:
     image: mysql:8
     environment:

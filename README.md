@@ -17,9 +17,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GibsonAI/memori/actions/workflows/ci.yml">
-    <img src="https://github.com/GibsonAI/memori/actions/workflows/ci.yml/badge.svg" alt="CI">
-  </a>
   <a href="https://badge.fury.io/py/memorisdk">
     <img src="https://badge.fury.io/py/memori.svg" alt="PyPI version">
   </a>
