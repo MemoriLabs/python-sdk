@@ -1,7 +1,5 @@
 [![Memori Labs](https://s3.us-east-1.amazonaws.com/images.memorilabs.ai/banner.png)](https://memorilabs.ai/)
 
-# memori
-
 <p align="center">
   <strong>An open-source SQL-Native memory engine for AI</strong>
 </p>
