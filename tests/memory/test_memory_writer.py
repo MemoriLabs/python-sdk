@@ -8,9 +8,7 @@ def test_execute(config, mocker):
         {"role": "assistant", "content": "def"},
         {"role": "assistant", "content": "ghi"},
     ]
-    config.conn.execute.return_value.mappings.return_value.fetchall.return_value = (
-        mock_messages
-    )
+    config.storage.adapter.execute.return_value.mappings.return_value.fetchall.return_value = mock_messages
 
     Writer(config).execute(
         {
@@ -30,11 +28,11 @@ def test_execute(config, mocker):
     assert config.cache.session_id is not None
     assert config.cache.conversation_id is not None
 
-    assert config.driver.session.create.called
-    assert config.driver.conversation.create.called
-    assert config.driver.conversation.message.create.call_count == 3
+    assert config.storage.driver.session.create.called
+    assert config.storage.driver.conversation.create.called
+    assert config.storage.driver.conversation.message.create.call_count == 3
 
-    calls = config.driver.conversation.message.create.call_args_list
+    calls = config.storage.driver.conversation.message.create.call_args_list
     assert calls[0][0][1] == "user"
     assert calls[0][0][3] == "abc"
     assert calls[1][0][1] == "assistant"
@@ -52,10 +50,8 @@ def test_execute_with_parent_and_process(config, mocker):
         {"role": "assistant", "content": "def"},
         {"role": "assistant", "content": "ghi"},
     ]
-    config.conn.execute.return_value.mappings.return_value.fetchall.return_value = (
-        mock_messages
-    )
-    config.conn.execute.return_value.mappings.return_value.fetchone.return_value = {
+    config.storage.adapter.execute.return_value.mappings.return_value.fetchall.return_value = mock_messages
+    config.storage.adapter.execute.return_value.mappings.return_value.fetchone.return_value = {
         "external_id": "123"
     }
 
@@ -79,18 +75,18 @@ def test_execute_with_parent_and_process(config, mocker):
     assert config.cache.session_id is not None
     assert config.cache.conversation_id is not None
 
-    assert config.driver.parent.create.called
-    assert config.driver.parent.create.call_args[0][0] == "123"
+    assert config.storage.driver.parent.create.called
+    assert config.storage.driver.parent.create.call_args[0][0] == "123"
 
-    assert config.driver.process.create.called
-    assert config.driver.process.create.call_args[0][0] == "456"
+    assert config.storage.driver.process.create.called
+    assert config.storage.driver.process.create.call_args[0][0] == "456"
 
-    assert config.driver.session.create.called
-    session_call_args = config.driver.session.create.call_args[0]
+    assert config.storage.driver.session.create.called
+    session_call_args = config.storage.driver.session.create.call_args[0]
     assert session_call_args[1] == config.cache.parent_id
     assert session_call_args[2] == config.cache.process_id
 
-    assert config.driver.conversation.message.create.call_count == 3
+    assert config.storage.driver.conversation.message.create.call_count == 3
 
 
 def test_execute_skips_system_messages(config, mocker):
@@ -99,7 +95,7 @@ def test_execute_skips_system_messages(config, mocker):
         {"role": "user", "content": "Hello"},
         {"role": "assistant", "content": "Hi there!"},
     ]
-    config.conn.execute.return_value.mappings.return_value.fetchall.return_value = (
+    config.storage.adapter.execute.return_value.mappings.return_value.fetchall.return_value = (
         mock_messages
     )
 
@@ -122,9 +118,9 @@ def test_execute_skips_system_messages(config, mocker):
         }
     )
 
-    assert config.driver.conversation.message.create.call_count == 2
+    assert config.storage.driver.conversation.message.create.call_count == 2
 
-    calls = config.driver.conversation.message.create.call_args_list
+    calls = config.storage.driver.conversation.message.create.call_args_list
     assert calls[0][0][1] == "user"
     assert calls[0][0][3] == "Hello"
     assert calls[1][0][1] == "assistant"

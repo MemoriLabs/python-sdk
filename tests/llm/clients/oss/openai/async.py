@@ -39,7 +39,7 @@ async def run(db_backend: str = "default"):
     mem = Memori(conn=session).openai.register(client)
 
     # Initialize database schema
-    mem.storage.build()
+    mem.config.storage.build()
 
     # Multiple registrations should not cause an issue.
     mem.openai.register(client)

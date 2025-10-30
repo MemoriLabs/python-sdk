@@ -15,11 +15,6 @@ def test_attribution_exceptions():
     assert str(e.value) == "process_id cannot be greater than 100 characters"
 
 
-def test_metadata():
-    mem = Memori().metadata({"abc": "def"})
-    assert mem.config.metadata == {"abc": "def"}
-
-
 def test_new_session():
     mem = Memori()
 

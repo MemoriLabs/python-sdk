@@ -18,12 +18,12 @@ class Writer:
         self.config = config
 
     def execute(self, payload):
-        if self.config.driver is None:
+        if self.config.storage.driver is None:
             return self
 
         if self.config.parent_id is not None:
             if self.config.cache.parent_id is None:
-                self.config.cache.parent_id = self.config.driver.parent.create(
+                self.config.cache.parent_id = self.config.storage.driver.parent.create(
                     self.config.parent_id
                 )
                 if self.config.cache.parent_id is None:
@@ -31,14 +31,14 @@ class Writer:
 
         if self.config.process_id is not None:
             if self.config.cache.process_id is None:
-                self.config.cache.process_id = self.config.driver.process.create(
-                    self.config.process_id
+                self.config.cache.process_id = (
+                    self.config.storage.driver.process.create(self.config.process_id)
                 )
                 if self.config.cache.process_id is None:
                     raise RuntimeError("process ID is unexpectedly None")
 
         if self.config.cache.session_id is None:
-            self.config.cache.session_id = self.config.driver.session.create(
+            self.config.cache.session_id = self.config.storage.driver.session.create(
                 self.config.session_id,
                 self.config.cache.parent_id,
                 self.config.cache.process_id,
@@ -47,8 +47,10 @@ class Writer:
                 raise RuntimeError("session ID is unexpectedly None")
 
         if self.config.cache.conversation_id is None:
-            self.config.cache.conversation_id = self.config.driver.conversation.create(
-                self.config.cache.session_id
+            self.config.cache.conversation_id = (
+                self.config.storage.driver.conversation.create(
+                    self.config.cache.session_id
+                )
             )
             if self.config.cache.conversation_id is None:
                 raise RuntimeError("conversation ID is unexpectedly None")
@@ -62,7 +64,7 @@ class Writer:
         if len(messages) > 0:
             for message in messages:
                 if message["role"] != "system":
-                    self.config.driver.conversation.message.create(
+                    self.config.storage.driver.conversation.message.create(
                         self.config.cache.conversation_id,
                         message["role"],
                         None,
@@ -72,14 +74,14 @@ class Writer:
         responses = llm.get_formatted_response(payload)
         if len(responses) > 0:
             for response in responses:
-                self.config.driver.conversation.message.create(
+                self.config.storage.driver.conversation.message.create(
                     self.config.cache.conversation_id,
                     response["role"],
                     response["type"],
                     response["text"],
                 )
 
-        if self.config.conn is not None:
-            self.config.conn.flush()
+        if self.config.storage.adapter is not None:
+            self.config.storage.adapter.flush()
 
         return self

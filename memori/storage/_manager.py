@@ -9,100 +9,32 @@ r"""
                        memorilabs.ai
 """
 
-from memori._cli import Cli
 from memori._config import Config
+from memori.storage._builder import Builder
 from memori.storage._registry import Registry
 
 
 class Manager:
     def __init__(self, config: Config):
-        self.cli = Cli(config)
+        self.adapter = None
         self.config = config
-        self.registry = Registry()
-
-    def _get_supported_dialects(self):
-        return list(self.registry._drivers.keys())
-
-    def _get_dialect_family(self, dialect):
-        if dialect in self.registry._drivers:
-            driver_class = self.registry._drivers[dialect]
-            return getattr(driver_class, "migrations", None)
-
-        return None
-
-    def _requires_rollback(self, dialect):
-        if dialect in self.registry._drivers:
-            driver_class = self.registry._drivers[dialect]
-            return getattr(driver_class, "requires_rollback_on_error", False)
-        return False
+        self.__conn = None
+        self.driver = None
 
     def build(self):
-        if self.config.conn is None:
+        if self.__conn is None:
             return self
 
-        dialect = self.config.conn.get_dialect()
-        supported_dialects = self._get_supported_dialects()
-
-        if dialect in supported_dialects:
-            self.build_schema()
-        else:
-            raise NotImplementedError(
-                f"Unsupported dialect: {dialect}. "
-                f"Supported dialects: {supported_dialects}."
-            )
+        Builder(self.config).execute()
 
         return self
 
-    def build_schema(self):
-        self.cli.banner()
-
-        if self.config.conn is None:
+    def start(self, conn):
+        if conn is None:
             return self
 
-        dialect = self.config.conn.get_dialect()
-
-        try:
-            if self.config.driver is None:
-                raise RuntimeError("Driver not initialized")
-            num = self.config.driver.schema.version.read()
-            if num is None:
-                num = 0
-        except Exception:
-            if self._requires_rollback(dialect):
-                self.config.conn.rollback()
-            num = 0
-
-        self.cli.notice(f"Currently at revision #{num}.")
-
-        migrations = self._get_dialect_family(dialect)
-        if migrations is None:
-            raise NotImplementedError(
-                f"No migration mapping found for dialect: {dialect}."
-            )
-
-        if num == max(migrations.keys()):
-            self.cli.notice("data structures are up-to-date", 1)
-        else:
-            while True:
-                num += 1
-                if num not in migrations:
-                    break
-
-                self.cli.notice(f"Building revision #{num}...")
-
-                for migration in migrations[num]:
-                    self.cli.notice(migration["description"], 1)
-                    self.config.conn.execute(migration["operation"])
-                    self.config.conn.commit()
-
-            if self.config.driver is None:
-                raise RuntimeError("Driver not initialized")
-            self.config.driver.schema.version.delete()
-            self.config.driver.schema.version.create(num - 1)
-
-            self.config.conn.commit()
-
-        self.cli.notice("Build executed successfully!")
-        self.cli.newline()
+        self.adapter = Registry().adapter(conn)
+        self.__conn = conn
+        self.driver = Registry().driver(self.adapter)
 
         return self

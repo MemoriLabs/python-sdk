@@ -181,7 +181,7 @@ class BaseInvoke:
         if self.config.cache.conversation_id is None:
             return kwargs
 
-        messages = self.config.driver.conversation.messages.read(
+        messages = self.config.storage.driver.conversation.messages.read(
             self.config.cache.conversation_id
         )
         if len(messages) == 0:

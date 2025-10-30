@@ -9,7 +9,7 @@ r"""
                        memorilabs.ai
 """
 
-from memori.storage._registry import Registry
+from memori.storage._manager import Manager
 
 # Import adapters and drivers to trigger their self-registration decorators.
 # Order matters: more specific matchers (sqlalchemy, django) before generic ones (mongodb, dbapi)
@@ -23,4 +23,4 @@ from memori.storage.drivers import (
     sqlite,  # noqa: F401
 )
 
-__all__ = ["Registry"]
+__all__ = ["Manager"]
