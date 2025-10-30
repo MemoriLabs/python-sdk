@@ -13,7 +13,6 @@ import os
 from uuid import uuid4
 
 from memori._config import Config
-from memori.api._sign_up import Manager as ApiSignUpManager
 from memori.llm._providers import Anthropic as LlmProviderAnthropic
 from memori.llm._providers import Google as LlmProviderGoogle
 from memori.llm._providers import LangChain as LlmProviderLangChain
@@ -76,9 +75,6 @@ class Memori:
     def set_session(self, id):
         self.config.session_id = id
         return self
-
-    def sign_up(self, email):
-        ApiSignUpManager(self.config).execute(email)
 
     def storage_adapter(self, conn):
         if conn is None:
