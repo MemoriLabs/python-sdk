@@ -67,3 +67,20 @@ def test_get_formatted_response_unstreamed():
         {"role": "model", "text": "abc", "type": "text"},
         {"role": "model", "text": "def", "type": "text"},
     ]
+
+
+def test_get_formatted_query_with_injected_messages():
+    assert Adapter().get_formatted_query(
+        {
+            "conversation": {
+                "query": {
+                    "_memori_injected_count": 2,
+                    "contents": [
+                        {"parts": [{"text": "injected 1"}], "role": "user"},
+                        {"parts": [{"text": "injected 2"}], "role": "model"},
+                        {"parts": [{"text": "new message"}], "role": "user"},
+                    ],
+                }
+            }
+        }
+    ) == [{"content": "new message", "role": "user"}]

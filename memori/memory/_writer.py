@@ -61,12 +61,13 @@ class Writer:
         messages = llm.get_formatted_query(payload)
         if len(messages) > 0:
             for message in messages:
-                self.config.driver.conversation.message.create(
-                    self.config.cache.conversation_id,
-                    message["role"],
-                    None,
-                    message["content"],
-                )
+                if message["role"] != "system":
+                    self.config.driver.conversation.message.create(
+                        self.config.cache.conversation_id,
+                        message["role"],
+                        None,
+                        message["content"],
+                    )
 
         responses = llm.get_formatted_response(payload)
         if len(responses) > 0:

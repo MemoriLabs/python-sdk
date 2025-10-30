@@ -71,7 +71,7 @@ class Adapter(BaseLlmAdaptor):
                         {"content": " ".join(content), "role": entry["role"]}
                     )
 
-        return messages
+        return self._exclude_injected_messages(messages, payload)
 
     def get_formatted_response(self, payload):
         try:

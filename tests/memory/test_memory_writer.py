@@ -91,3 +91,41 @@ def test_execute_with_parent_and_process(config, mocker):
     assert session_call_args[2] == config.cache.process_id
 
     assert config.driver.conversation.message.create.call_count == 3
+
+
+def test_execute_skips_system_messages(config, mocker):
+    mock_messages = [
+        {"role": "system", "content": "You are a helpful assistant"},
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi there!"},
+    ]
+    config.conn.execute.return_value.mappings.return_value.fetchall.return_value = (
+        mock_messages
+    )
+
+    Writer(config).execute(
+        {
+            "conversation": {
+                "client": {"provider": None, "title": OPENAI_CLIENT_TITLE},
+                "query": {
+                    "messages": [
+                        {"content": "You are a helpful assistant", "role": "system"},
+                        {"content": "Hello", "role": "user"},
+                    ]
+                },
+                "response": {
+                    "choices": [
+                        {"message": {"content": "Hi there!", "role": "assistant"}}
+                    ]
+                },
+            }
+        }
+    )
+
+    assert config.driver.conversation.message.create.call_count == 2
+
+    calls = config.driver.conversation.message.create.call_args_list
+    assert calls[0][0][1] == "user"
+    assert calls[0][0][3] == "Hello"
+    assert calls[1][0][1] == "assistant"
+    assert calls[1][0][3] == "Hi there!"

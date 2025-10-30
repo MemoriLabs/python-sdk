@@ -28,7 +28,7 @@ class Adapter(BaseStorageAdapter):
             *args: Positional arguments for the operation
             **kwargs: Keyword arguments for the operation
         """
-        db = self.conn.get_database()
+        db = self.conn
 
         if operation is None:
             exec(collection_name_or_code.strip(), {"db": db})

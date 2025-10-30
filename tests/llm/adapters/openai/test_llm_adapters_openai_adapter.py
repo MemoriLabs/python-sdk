@@ -68,3 +68,24 @@ def test_get_formatted_response_unstreamed():
         {"role": "assistant", "text": "abc", "type": "text"},
         {"role": "assistant", "text": "def", "type": "text"},
     ]
+
+
+def test_get_formatted_query_with_injected_messages():
+    assert Adapter().get_formatted_query(
+        {
+            "conversation": {
+                "query": {
+                    "_memori_injected_count": 2,
+                    "messages": [
+                        {"content": "injected 1", "role": "user"},
+                        {"content": "injected 2", "role": "assistant"},
+                        {"content": "new message", "role": "user"},
+                        {"content": "new response", "role": "assistant"},
+                    ],
+                }
+            }
+        }
+    ) == [
+        {"content": "new message", "role": "user"},
+        {"content": "new response", "role": "assistant"},
+    ]

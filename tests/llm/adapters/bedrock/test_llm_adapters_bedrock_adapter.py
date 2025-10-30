@@ -36,3 +36,21 @@ def test_get_formatted_response_streamed():
             }
         }
     ) == [{"role": "assistant", "text": "abcdef", "type": "text"}]
+
+
+def test_get_formatted_query_with_injected_messages():
+    assert Adapter().get_formatted_query(
+        {
+            "conversation": {
+                "query": {
+                    "_memori_injected_count": 1,
+                    "body": {
+                        "messages": [
+                            {"content": "injected 1", "role": "user"},
+                            {"content": "new message", "role": "user"},
+                        ]
+                    },
+                }
+            }
+        }
+    ) == [{"content": "new message", "role": "user"}]

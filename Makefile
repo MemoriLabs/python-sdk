@@ -46,10 +46,6 @@ dev-clean: ## Complete teardown: stop containers, remove images, prune build cac
 test: ## Run tests in the container
 	docker compose exec dev pytest
 
-test-integration: ## Run integration tests (requires API keys and database)
-	@echo "Note: Integration tests require OPENAI_API_KEY to be set"
-	docker compose exec dev pytest tests/llm/clients/ -v
-
 run-integration: ## Run integration test scripts directly (e.g., make run-integration FILE=tests/llm/clients/oss/openai/async.py)
 	@echo "Running integration test: $(FILE)"
 	docker compose exec -e PYTHONPATH=/app dev python $(FILE)

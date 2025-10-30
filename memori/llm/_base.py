@@ -40,6 +40,7 @@ class BaseInvoke:
         self._client_title = None
         self._client_version = None
         self._uses_protobuf = False
+        self._injected_message_count = 0
 
     def configure_for_streaming_usage(self, kwargs):
         if llm_is_openai(self._client_provider, self._client_title):
@@ -95,6 +96,9 @@ class BaseInvoke:
                     del formatted_kwargs["response_format"]
 
             formatted_kwargs = self.dict_to_json(formatted_kwargs)
+
+        if self._injected_message_count > 0:
+            formatted_kwargs["_memori_injected_count"] = self._injected_message_count
 
         return formatted_kwargs
 
@@ -182,6 +186,8 @@ class BaseInvoke:
         )
         if len(messages) == 0:
             return kwargs
+
+        self._injected_message_count = len(messages)
 
         if (
             llm_is_openai(self._client_provider, self._client_title)
@@ -307,6 +313,14 @@ class BaseIterator:
 
 
 class BaseLlmAdaptor:
+    def _exclude_injected_messages(self, messages, payload):
+        injected_count = (
+            payload.get("conversation", {})
+            .get("query", {})
+            .get("_memori_injected_count", 0)
+        )
+        return messages[injected_count:]
+
     def get_formatted_query(self, payload):
         raise NotImplementedError
 

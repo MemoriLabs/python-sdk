@@ -27,7 +27,8 @@ class Adapter(BaseLlmAdaptor):
         """
 
         try:
-            return payload["conversation"]["query"]["body"]["messages"]
+            messages = payload["conversation"]["query"]["body"]["messages"]
+            return self._exclude_injected_messages(messages, payload)
         except KeyError:
             return []
 

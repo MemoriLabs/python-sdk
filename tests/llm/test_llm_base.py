@@ -1,7 +1,7 @@
 import json
 
 from memori._config import Config
-from memori.llm._base import BaseInvoke
+from memori.llm._base import BaseInvoke, BaseLlmAdaptor
 from memori.llm._constants import (
     LANGCHAIN_CLIENT_PROVIDER,
     LANGCHAIN_OPENAI_CLIENT_TITLE,
@@ -167,3 +167,26 @@ def test_get_response_content():
     legacy_api_response.__class__.__module__ = "openai._legacy_response"
 
     assert invoke.get_response_content(legacy_api_response) == {"abc": "def"}
+
+
+def test_exclude_injected_messages():
+    adapter = BaseLlmAdaptor()
+
+    # No injected count - returns all messages
+    messages = [{"role": "user", "content": "Hello"}]
+    payload = {"conversation": {"query": {}}}
+    assert adapter._exclude_injected_messages(messages, payload) == messages
+
+    # Injected count of 2 - slices off first 2 messages
+    messages = [
+        {"role": "user", "content": "injected 1"},
+        {"role": "assistant", "content": "injected 2"},
+        {"role": "user", "content": "new message"},
+    ]
+    payload = {"conversation": {"query": {"_memori_injected_count": 2}}}
+    assert adapter._exclude_injected_messages(messages, payload) == [
+        {"role": "user", "content": "new message"}
+    ]
+
+    # Safe navigation - missing keys don't cause errors
+    assert adapter._exclude_injected_messages(messages, {}) == messages
