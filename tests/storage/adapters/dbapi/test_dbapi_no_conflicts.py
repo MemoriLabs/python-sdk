@@ -1,4 +1,4 @@
-from memori.storage import Registry
+from memori.storage._registry import Registry
 from memori.storage.adapters.dbapi._adapter import (
     Adapter as DBAPIAdapter,
 )

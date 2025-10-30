@@ -11,7 +11,6 @@ r"""
 
 import os
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 
 
 class Cache:
@@ -23,14 +22,10 @@ class Cache:
 
 
 class Config:
-    conn: Any = None
-    driver: Any = None
-
     def __init__(self):
         self.api_key = None
         self.augmentation = None
         self.cache = Cache()
-        self.metadata = None
         self.parent_id = None
         self.process_id = None
         self.raise_final_request_attempt = True
@@ -38,6 +33,7 @@ class Config:
         self.request_num_backoff = 5
         self.request_secs_timeout = 5
         self.session_id = None
+        self.storage = None
         self.thread_pool_executor = ThreadPoolExecutor(max_workers=15)
         self.version = "3.0.0"
 

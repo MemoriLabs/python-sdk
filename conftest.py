@@ -1,6 +1,7 @@
 import pytest
 
 from memori._config import Config
+from memori.storage import Manager as StorageManager
 
 
 @pytest.fixture
@@ -44,16 +45,7 @@ def postgres_session(mock_postgres_session):
 @pytest.fixture
 def config(mocker, session):
     config = Config()
-
-    mock_conn = mocker.MagicMock()
-    mock_conn.get_dialect.return_value = "mysql"
-
-    mock_result = mocker.MagicMock()
-    mock_result.mappings.return_value.fetchall.return_value = []
-    mock_result.mappings.return_value.fetchone.return_value = {}
-    mock_conn.execute.return_value = mock_result
-
-    config.conn = mock_conn
-    config.driver = mocker.MagicMock()
-
+    config.storage = StorageManager(config)
+    config.storage.adapter = mocker.MagicMock()
+    config.storage.driver = mocker.MagicMock()
     return config

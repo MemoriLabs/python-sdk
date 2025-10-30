@@ -16,10 +16,10 @@ for table_name in [
     session.connection().exec_driver_sql(f"DROP TABLE IF EXISTS {table_name} CASCADE")
 
 # Executes all migrations.
-Memori(conn=session).storage.build()
+Memori(conn=session).config.storage.build()
 print("-" * 50)
 # Has no effect, version number is set correctly.
-Memori(conn=session).storage.build()
+Memori(conn=session).config.storage.build()
 print("-" * 50)
 
 session.connection().exec_driver_sql(
@@ -30,7 +30,7 @@ session.connection().exec_driver_sql(
 session.commit()
 
 # Executes all migrations again.
-Memori(conn=session).storage.build()
+Memori(conn=session).config.storage.build()
 
 session.connection().exec_driver_sql(
     """

@@ -6,7 +6,7 @@ def init_db():
     try:
         session = TestDBSession()
         mem = Memori(conn=session)
-        mem.storage.build()
+        mem.config.storage.build()
         print("Database schema initialized successfully")
         return True
     except Exception as e:

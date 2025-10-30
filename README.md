@@ -76,7 +76,7 @@ mem.set_session(session_id)
 1. Run this command once, via CI/CD or anytime you update Memori.
 
     ```python
-    Memori(conn=session).storage.build()
+    Memori(conn=session).config.storage.build()
     ```
 
 2. Instantiate Memori with the connection.

@@ -19,8 +19,7 @@ from memori.llm._providers import LangChain as LlmProviderLangChain
 from memori.llm._providers import OpenAi as LlmProviderOpenAi
 from memori.llm._providers import PydanticAi as LlmProviderPydanticAi
 from memori.memory.augmentation._registry import Registry as AugmentationRegistry
-from memori.storage import Registry as StorageRegistry
-from memori.storage._manager import Manager as StorageManager
+from memori.storage import Manager as StorageManager
 
 __all__ = ["Memori"]
 
@@ -30,17 +29,14 @@ class Memori:
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)
         self.config.augmentation = self.augmentation_adapter()
-        self.config.conn = self.storage_adapter(conn)
-        self.config.driver = self.storage_driver()
         self.config.session_id = uuid4()
+        self.config.storage = StorageManager(self.config).start(conn)
 
         self.anthropic = LlmProviderAnthropic(self)
         self.google = LlmProviderGoogle(self)
         self.langchain = LlmProviderLangChain(self)
         self.openai = LlmProviderOpenAi(self)
         self.pydantic_ai = LlmProviderPydanticAi(self)
-
-        self.storage = StorageManager(self.config)
 
     def attribution(self, parent_id=None, process_id=None):
         if parent_id is not None:
@@ -63,10 +59,6 @@ class Memori:
     def augmentation_adapter(self):
         return AugmentationRegistry().adapter(self.config)
 
-    def metadata(self, data):
-        self.config.metadata = data
-        return self
-
     def new_session(self):
         self.config.session_id = uuid4()
         self.config.reset_cache()
@@ -75,15 +67,3 @@ class Memori:
     def set_session(self, id):
         self.config.session_id = id
         return self
-
-    def storage_adapter(self, conn):
-        if conn is None:
-            return None
-
-        return StorageRegistry().adapter(conn)
-
-    def storage_driver(self):
-        if self.config.conn is None:
-            return None
-
-        return StorageRegistry().driver(self.config.conn)
