@@ -472,3 +472,39 @@ class PydanticAi(BaseClient):
             client._memori_installed = True
 
         return self
+
+
+@Registry.register_client(
+    lambda client: hasattr(client, "chat")
+    and hasattr(client.chat, "create")
+    and not hasattr(client.chat, "completions")
+)
+class XAi(BaseClient):
+    """XAI client requires special handling due to its two-step API.
+
+    Unlike other clients, the actual API call happens on the Chat object
+    returned by create(), not on the create() method itself. All wrapping
+    logic is delegated to the XAiWrappers class.
+    """
+
+    def register(self, client, stream=False):
+        from memori.llm._xai_wrappers import XAiWrappers
+
+        if not hasattr(client, "chat"):
+            raise RuntimeError("client provided is not instance of xAI")
+
+        if not hasattr(client, "_memori_installed"):
+            client.chat._create = client.chat.create
+            client_version = getattr(client, "_version", None)
+            wrappers = XAiWrappers(self.config)
+
+            def wrapped_create(*args, **kwargs):
+                kwargs = wrappers.inject_conversation_history(kwargs)
+                chat_obj = client.chat._create(*args, **kwargs)
+                wrappers.wrap_chat_methods(chat_obj, client_version)
+                return chat_obj
+
+            client.chat.create = wrapped_create
+            client._memori_installed = True
+
+        return self

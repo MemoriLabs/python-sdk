@@ -11,6 +11,6 @@ r"""
 
 from memori.llm import _clients  # noqa: F401
 from memori.llm._registry import Registry
-from memori.llm.adapters import anthropic, bedrock, google, openai  # noqa: F401
+from memori.llm.adapters import anthropic, bedrock, google, openai, xai  # noqa: F401
 
 __all__ = ["Registry"]

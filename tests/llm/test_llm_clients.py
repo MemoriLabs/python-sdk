@@ -1,7 +1,7 @@
 import pytest
 
 from memori._config import Config
-from memori.llm._clients import Anthropic, Google, LangChain, OpenAi, PydanticAi
+from memori.llm._clients import Anthropic, Google, LangChain, OpenAi, PydanticAi, XAi
 
 
 @pytest.fixture
@@ -32,6 +32,11 @@ def pydantic_client(config):
 @pytest.fixture
 def langchain_client(config):
     return LangChain(config)
+
+
+@pytest.fixture
+def xai_client(config):
+    return XAi(config)
 
 
 def test_anthropic_register_adds_memori_wrappers_sync(anthropic_client, mocker):
@@ -349,3 +354,36 @@ def test_langchain_register_chatvertexai_raises_without_prediction_client(
 
     with pytest.raises(RuntimeError, match="not instance of ChatVertexAI"):
         langchain_client.register(chatvertexai=mock_chatvertexai)
+
+
+def test_xai_register_adds_memori_wrappers(xai_client, mocker):
+    mock_client = mocker.MagicMock()
+    mock_client._version = "1.0.0"
+    mock_client.chat.create = mocker.MagicMock()
+    del mock_client._memori_installed
+
+    result = xai_client.register(mock_client)
+
+    assert result is xai_client
+    assert hasattr(mock_client, "_memori_installed")
+    assert mock_client._memori_installed is True
+    assert hasattr(mock_client.chat, "_create")
+
+
+def test_xai_register_skips_if_already_installed(xai_client, mocker):
+    mock_client = mocker.MagicMock()
+    mock_client._version = "1.0.0"
+    mock_client._memori_installed = True
+    original_create = mock_client.chat.create
+
+    result = xai_client.register(mock_client)
+
+    assert result is xai_client
+    assert mock_client.chat.create == original_create
+
+
+def test_xai_register_raises_without_chat_attr(xai_client, mocker):
+    mock_client = mocker.MagicMock(spec=[])
+
+    with pytest.raises(RuntimeError, match="not instance of xAI"):
+        xai_client.register(mock_client)

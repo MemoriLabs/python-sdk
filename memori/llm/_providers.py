@@ -15,6 +15,7 @@ from memori.llm._clients import Google as GoogleMemoriClient
 from memori.llm._clients import LangChain as LangChainMemoriClient
 from memori.llm._clients import OpenAi as OpenAiMemoriClient
 from memori.llm._clients import PydanticAi as PydanticAiMemoriClient
+from memori.llm._clients import XAi as XAiMemoriClient
 
 
 class Anthropic(BaseProvider):
@@ -62,5 +63,13 @@ class PydanticAi(BaseProvider):
     def register(self, client):
         if self.client is None:
             self.client = PydanticAiMemoriClient(self.config).register(client)
+
+        return self.parent
+
+
+class XAi(BaseProvider):
+    def register(self, client, stream=False):
+        if self.client is None:
+            self.client = XAiMemoriClient(self.config).register(client, stream=stream)
 
         return self.parent

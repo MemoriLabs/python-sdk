@@ -18,6 +18,7 @@ from memori.llm._constants import (
     LANGCHAIN_CLIENT_PROVIDER,
     LANGCHAIN_OPENAI_CLIENT_TITLE,
     OPENAI_CLIENT_TITLE,
+    XAI_CLIENT_TITLE,
 )
 
 
@@ -49,6 +50,10 @@ def llm_is_openai(provider, title):
     return title == OPENAI_CLIENT_TITLE or (
         provider_is_langchain(provider) and title == LANGCHAIN_OPENAI_CLIENT_TITLE
     )
+
+
+def llm_is_xai(provider, title):
+    return title == XAI_CLIENT_TITLE
 
 
 def provider_is_langchain(provider):

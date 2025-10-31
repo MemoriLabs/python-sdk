@@ -22,6 +22,7 @@ from memori.llm._utils import (
     llm_is_bedrock,
     llm_is_google,
     llm_is_openai,
+    llm_is_xai,
     provider_is_langchain,
 )
 
@@ -43,7 +44,9 @@ class BaseInvoke:
         self._injected_message_count = 0
 
     def configure_for_streaming_usage(self, kwargs):
-        if llm_is_openai(self._client_provider, self._client_title):
+        if llm_is_openai(self._client_provider, self._client_title) or llm_is_xai(
+            self._client_provider, self._client_title
+        ):
             if kwargs.get("stream", None):
                 stream_options = kwargs.get("stream_options", None)
                 if stream_options is None or not isinstance(
@@ -195,6 +198,19 @@ class BaseInvoke:
             or llm_is_bedrock(self._client_provider, self._client_title)
         ):
             kwargs["messages"] = messages + kwargs["messages"]
+        elif llm_is_xai(self._client_provider, self._client_title):
+            from xai_sdk.chat import assistant, user
+
+            xai_messages = []
+            for message in messages:
+                role = message.get("role", "")
+                content = message.get("content", "")
+                if role == "user":
+                    xai_messages.append(user(content))
+                elif role == "assistant":
+                    xai_messages.append(assistant(content))
+
+            kwargs["messages"] = xai_messages + kwargs["messages"]
         elif llm_is_google(self._client_provider, self._client_title):
             contents = []
             for message in messages:

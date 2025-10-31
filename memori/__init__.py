@@ -18,6 +18,7 @@ from memori.llm._providers import Google as LlmProviderGoogle
 from memori.llm._providers import LangChain as LlmProviderLangChain
 from memori.llm._providers import OpenAi as LlmProviderOpenAi
 from memori.llm._providers import PydanticAi as LlmProviderPydanticAi
+from memori.llm._providers import XAi as LlmProviderXAi
 from memori.memory.augmentation._registry import Registry as AugmentationRegistry
 from memori.storage import Manager as StorageManager
 
@@ -37,6 +38,7 @@ class Memori:
         self.langchain = LlmProviderLangChain(self)
         self.openai = LlmProviderOpenAi(self)
         self.pydantic_ai = LlmProviderPydanticAi(self)
+        self.xai = LlmProviderXAi(self)
 
     def attribution(self, parent_id=None, process_id=None):
         if parent_id is not None:
