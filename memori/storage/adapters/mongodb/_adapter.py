@@ -28,10 +28,14 @@ class Adapter(BaseStorageAdapter):
             *args: Positional arguments for the operation
             **kwargs: Keyword arguments for the operation
         """
-        db = self.conn
+        if hasattr(self.conn, "get_default_database"):
+            db = self.conn.get_default_database()
+        else:
+            db = self.conn
 
         if operation is None:
-            exec(collection_name_or_code.strip(), {"db": db})
+            namespace = {"db": db}
+            exec(collection_name_or_code.strip(), namespace)
             return None
 
         collection = db[collection_name_or_code]
