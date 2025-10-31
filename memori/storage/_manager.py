@@ -12,6 +12,9 @@ r"""
 from memori._config import Config
 from memori.storage._builder import Builder
 from memori.storage._registry import Registry
+from memori.storage.session.asynchronous.queued._manager import (
+    Manager as AsyncQueuedSessionManager,
+)
 
 
 class Manager:
@@ -20,6 +23,7 @@ class Manager:
         self.config = config
         self.__conn = None
         self.driver = None
+        self.session = AsyncQueuedSessionManager(self.config, self)
 
     def build(self):
         if self.__conn is None:
@@ -36,5 +40,7 @@ class Manager:
         self.adapter = Registry().adapter(conn)
         self.__conn = conn
         self.driver = Registry().driver(self.adapter)
+
+        self.session.queue.start()
 
         return self
