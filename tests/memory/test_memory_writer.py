@@ -95,9 +95,7 @@ def test_execute_skips_system_messages(config, mocker):
         {"role": "user", "content": "Hello"},
         {"role": "assistant", "content": "Hi there!"},
     ]
-    config.storage.adapter.execute.return_value.mappings.return_value.fetchall.return_value = (
-        mock_messages
-    )
+    config.storage.adapter.execute.return_value.mappings.return_value.fetchall.return_value = mock_messages
 
     Writer(config).execute(
         {
