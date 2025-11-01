@@ -20,10 +20,14 @@ for collection_name in [
         db.drop_collection(collection_name)
 
 # Executes all migrations.
-Memori(conn=client).config.storage.build()
+mem = Memori(conn=client)
+if mem.config.storage is not None:
+    mem.config.storage.build()
 print("-" * 50)
 # Has no effect, version number is set correctly.
-Memori(conn=client).config.storage.build()
+mem = Memori(conn=client)
+if mem.config.storage is not None:
+    mem.config.storage.build()
 print("-" * 50)
 
 # Drop schema version collection
@@ -31,7 +35,9 @@ if "memori_schema_version" in db.list_collection_names():
     db.drop_collection("memori_schema_version")
 
 # Executes all migrations again.
-Memori(conn=client).config.storage.build()
+mem = Memori(conn=client)
+if mem.config.storage is not None:
+    mem.config.storage.build()
 
 # Clear schema version
 db["memori_schema_version"].delete_many({})

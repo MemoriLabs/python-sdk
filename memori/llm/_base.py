@@ -184,6 +184,9 @@ class BaseInvoke:
         if self.config.cache.conversation_id is None:
             return kwargs
 
+        if self.config.storage is None or self.config.storage.driver is None:
+            return kwargs
+
         messages = self.config.storage.driver.conversation.messages.read(
             self.config.cache.conversation_id
         )

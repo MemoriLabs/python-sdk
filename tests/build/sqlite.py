@@ -16,10 +16,14 @@ for table_name in [
     session.connection().exec_driver_sql(f"DROP TABLE IF EXISTS {table_name}")
 
 # Executes all migrations.
-Memori(conn=session).config.storage.build()
+mem = Memori(conn=session)
+if mem.config.storage is not None:
+    mem.config.storage.build()
 print("-" * 50)
 # Has no effect, version number is set correctly.
-Memori(conn=session).config.storage.build()
+mem = Memori(conn=session)
+if mem.config.storage is not None:
+    mem.config.storage.build()
 print("-" * 50)
 
 session.connection().exec_driver_sql(
@@ -30,7 +34,9 @@ session.connection().exec_driver_sql(
 session.commit()
 
 # Executes all migrations again.
-Memori(conn=session).config.storage.build()
+mem = Memori(conn=session)
+if mem.config.storage is not None:
+    mem.config.storage.build()
 
 session.connection().exec_driver_sql(
     """

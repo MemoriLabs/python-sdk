@@ -18,7 +18,7 @@ class Writer:
         self.config = config
 
     def execute(self, payload):
-        if self.config.storage.driver is None:
+        if self.config.storage is None or self.config.storage.driver is None:
             return self
 
         if self.config.parent_id is not None:
@@ -81,7 +81,7 @@ class Writer:
                     response["text"],
                 )
 
-        if self.config.storage.adapter is not None:
+        if self.config.storage is not None and self.config.storage.adapter is not None:
             self.config.storage.adapter.flush()
 
         return self
