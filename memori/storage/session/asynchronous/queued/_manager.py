@@ -42,7 +42,10 @@ class Queue:
         self.transactions: asyncio.Queue | None = None
         self.worker: asyncio.Task | None = None
 
-        weakref.finalize(caller, self._on_caller_finalize)
+        self._configure_shutdown(caller)
+
+    def _configure_shutdown(self, caller: Any) -> None:
+        weakref.finalize(caller, self._on_exit)
         atexit.register(self._on_exit)
 
     def enqueue(self, transaction: Transaction) -> Any:
@@ -57,20 +60,13 @@ class Queue:
         return asyncio.run_coroutine_threadsafe(coroutine, self._loop).result()
 
     async def _enqueue_coroutine(self, transaction):
-        if self.transactions is None:
-            raise RuntimeError("Transactions queue not initialized")
+        self.__verify_queue()
 
         future = asyncio.get_running_loop().create_future()
 
         await self.transactions.put((future, transaction))
 
         return await future
-
-    def _on_caller_finalize(self):
-        try:
-            self.stop()
-        except Exception:
-            pass
 
     def _on_exit(self):
         try:
@@ -97,10 +93,7 @@ class Queue:
         self._thread.start()
 
     def stop(self):
-        if not self._running or self._loop is None:
-            return
-
-        if self.transactions is None:
+        if not self._running or self.transactions is None or self._loop is None:
             return
 
         future = asyncio.run_coroutine_threadsafe(
@@ -110,15 +103,20 @@ class Queue:
 
         if self.worker is not None:
             self.worker.cancel()
+
         self._loop.call_soon_threadsafe(self._loop.stop)
+
         if self._thread is not None:
             self._thread.join()
 
         self._running = False
 
-    async def _worker(self):
+    def __verify_queue(self):
         if self.transactions is None:
-            raise RuntimeError("Transactions queue not initialized")
+            raise RuntimeError("Queue was not initialized")
+
+    async def _worker(self):
+        self.__verify_queue()
 
         while True:
             entry = await self.transactions.get()
