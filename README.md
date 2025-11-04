@@ -98,7 +98,7 @@ from openai import OpenAI
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-db = create_engine("mysql+pymysql://dbuser:dbuser@dbhost/dbname")
+db = create_engine("mysql+pymysql://dbuser:dbpassword@dbhost/dbname")
 session = sessionmaker(autocommit=False, autoflush=False, bind=db)()
 
 client = OpenAI()
@@ -147,6 +147,7 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 
 - **DB API 2.0** - Direct support for any Python database driver that implements the [PEP 249 Database API Specification v2.0](https://peps.python.org/pep-0249/). This includes drivers like `psycopg`, `pymysql`, `MySQLdb`, and `sqlite3`. Simply pass your raw database connection object to Memori and it will automatically detect and use the appropriate dialect.
 - **Django** - Native integration with Django's ORM and database layer
+- **SQLAlchemy**
 
 ## Supported Datastores
 
@@ -180,13 +181,13 @@ Memori's Advanced Augmentation enhances memories at each of these levels with:
 
 Memori knows who your user is, what tasks your agent handles and creates unparalleled context between the two. Augmentation occurs in the background incurring no latency.
 
-[Sign up for Memori Advanced Augmentation](https://memorilabs.ai/sign-up/github) or execute the following:
+By default, Memori Advanced Augmentation is available without an account but rate limited. When you need increased limited, [sign up for Memori Advanced Augmentation](https://memorilabs.ai/sign-up/github) or execute the following:
 
 ```bash
 python3 -m memori sign-up <email_address>
 ```
 
-Memori Advanced Augmentation is free for developers!
+Memori Advanced Augmentation is always free for developers!
 
 Once you've obtained an API key, simply set the following environment variable:
 
@@ -194,4 +195,49 @@ Once you've obtained an API key, simply set the following environment variable:
 export MEMORI_API_KEY=[api_key]
 ```
 
-Memori will now apply advanced augmentation!
+## Running Memori Advanced Augmentation
+
+The process of augmenting memories is technically complex and requires time for processing. Your application should benefit from the power of augmentation without the latency. In order to achieve this we have designed a background job that you need to run in order to activate Advanced Augmentation.
+
+We designed this job for scale and parallel processing and suggest that you run the job in a loop as fast you want. The benefit of running this job frequently is that memories can be formed in near real time which means additional context will be available immediately. However, if it's more suitable for you to run augmentation once a day you can do that as well.
+
+Note, that this job is for augmenting memories, not for recalling them. It is imperative that recall be done in real time at the moment your system is engaging the LLM. Recall will execute at exactly the right moment but relies on the enhancements made by augmentation to be fully effective.
+
+To execute Advanced Augmentation, execute the following:
+
+```python
+Memori(conn=session).augmentation.run()
+```
+
+Here is a full example for how Advanced Augmentation should be run:
+
+```python
+#!/usr/bin/env python3
+
+import os
+import sys
+import time
+
+from memori import Memori
+
+if len(sys.argv) != 2:
+    print(f"usage: {{os.path.basename(sys.argv[0])} [int(job_id)]")
+    exit(1)
+
+Memori.augmentation.pidlock(dir="/tmp")
+
+def main():
+    job_id = sys.argv[1]
+    seconds_sleep = 1
+    session = [however you connect to your datastore]
+    with_output = True
+
+    mem = Memori(conn=session)
+
+    while True:
+        mem.augmentation.run(job_id=job_id, with_output=with_output)
+        time.sleep(seconds_sleep)
+
+if __name__ == "__main__":
+    main()
+```
