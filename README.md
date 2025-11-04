@@ -201,7 +201,7 @@ The process of augmenting memories is technically complex and requires time for 
 
 We designed this job for scale and parallel processing and suggest that you run the job in a loop as fast you want. The benefit of running this job frequently is that memories can be formed in near real time which means additional context will be available immediately. However, if it's more suitable for you to run augmentation once a day you can do that as well.
 
-Note, that this job is for augmenting memories, not for recalling them. It is imperative that recall be done in real time at the moment your system is engaging the LLM. Recall will execute at exactly the right moment but relies on the enhancements made by augmentation to be fully effective.
+Note, that this job is for augmenting memories, not for recalling them. It is imperative that recall be done in real time at the moment your system is engaging the LLM. Recall will execute at exactly the right moment but relies on the enhancements made by Augmentation to be fully effective.
 
 To execute Advanced Augmentation, execute the following:
 
