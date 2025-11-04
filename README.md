@@ -130,11 +130,11 @@ print(response.choices[0].message.content)
 
 ## Supported LLM
 
-- OpenAI
-- Gemini
 - Anthropic
 - Bedrock
+- Gemini
 - Grok (xAI)
+- OpenAI
 
 _(unstreamed, streamed, synchronous and asynchronous)_
 
