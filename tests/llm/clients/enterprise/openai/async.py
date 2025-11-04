@@ -16,7 +16,7 @@ os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 
 async def run():
-    session = TestDBSession()
+    session = TestDBSession
     client = AsyncOpenAI()
 
     mem = Memori(conn=session).openai.register(client)

@@ -64,7 +64,7 @@ def mock_django_sqlite_conn(mocker):
 
 
 def test_commit_postgresql(mock_django_postgresql_conn):
-    adapter = DjangoAdapter(mock_django_postgresql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_postgresql_conn)
     result = adapter.commit()
 
     mock_django_postgresql_conn.commit.assert_called_once()
@@ -72,7 +72,7 @@ def test_commit_postgresql(mock_django_postgresql_conn):
 
 
 def test_execute_postgresql(mock_django_postgresql_conn):
-    adapter = DjangoAdapter(mock_django_postgresql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_postgresql_conn)
     cursor = adapter.execute("SELECT 1")
 
     mock_django_postgresql_conn.cursor.assert_called_once()
@@ -80,7 +80,7 @@ def test_execute_postgresql(mock_django_postgresql_conn):
 
 
 def test_execute_with_binds_postgresql(mock_django_postgresql_conn):
-    adapter = DjangoAdapter(mock_django_postgresql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_postgresql_conn)
     adapter.execute("SELECT * FROM users WHERE id = %s", (1,))
 
     mock_django_postgresql_conn.cursor.assert_called_once()
@@ -91,19 +91,19 @@ def test_execute_with_binds_postgresql(mock_django_postgresql_conn):
 
 
 def test_flush_postgresql(mock_django_postgresql_conn):
-    adapter = DjangoAdapter(mock_django_postgresql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_postgresql_conn)
     result = adapter.flush()
 
     assert result is adapter
 
 
 def test_get_dialect_postgresql(mock_django_postgresql_conn):
-    adapter = DjangoAdapter(mock_django_postgresql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_postgresql_conn)
     assert adapter.get_dialect() == "postgresql"
 
 
 def test_rollback_postgresql(mock_django_postgresql_conn):
-    adapter = DjangoAdapter(mock_django_postgresql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_postgresql_conn)
     result = adapter.rollback()
 
     mock_django_postgresql_conn.rollback.assert_called_once()
@@ -111,7 +111,7 @@ def test_rollback_postgresql(mock_django_postgresql_conn):
 
 
 def test_commit_mysql(mock_django_mysql_conn):
-    adapter = DjangoAdapter(mock_django_mysql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_mysql_conn)
     result = adapter.commit()
 
     mock_django_mysql_conn.commit.assert_called_once()
@@ -119,7 +119,7 @@ def test_commit_mysql(mock_django_mysql_conn):
 
 
 def test_execute_mysql(mock_django_mysql_conn):
-    adapter = DjangoAdapter(mock_django_mysql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_mysql_conn)
     cursor = adapter.execute("SELECT 1")
 
     mock_django_mysql_conn.cursor.assert_called_once()
@@ -127,12 +127,12 @@ def test_execute_mysql(mock_django_mysql_conn):
 
 
 def test_get_dialect_mysql(mock_django_mysql_conn):
-    adapter = DjangoAdapter(mock_django_mysql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_mysql_conn)
     assert adapter.get_dialect() == "mysql"
 
 
 def test_rollback_mysql(mock_django_mysql_conn):
-    adapter = DjangoAdapter(mock_django_mysql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_mysql_conn)
     result = adapter.rollback()
 
     mock_django_mysql_conn.rollback.assert_called_once()
@@ -140,7 +140,7 @@ def test_rollback_mysql(mock_django_mysql_conn):
 
 
 def test_commit_sqlite(mock_django_sqlite_conn):
-    adapter = DjangoAdapter(mock_django_sqlite_conn)
+    adapter = DjangoAdapter(lambda: mock_django_sqlite_conn)
     result = adapter.commit()
 
     mock_django_sqlite_conn.commit.assert_called_once()
@@ -148,7 +148,7 @@ def test_commit_sqlite(mock_django_sqlite_conn):
 
 
 def test_execute_sqlite(mock_django_sqlite_conn):
-    adapter = DjangoAdapter(mock_django_sqlite_conn)
+    adapter = DjangoAdapter(lambda: mock_django_sqlite_conn)
     cursor = adapter.execute("SELECT 1")
 
     mock_django_sqlite_conn.cursor.assert_called_once()
@@ -156,12 +156,12 @@ def test_execute_sqlite(mock_django_sqlite_conn):
 
 
 def test_get_dialect_sqlite(mock_django_sqlite_conn):
-    adapter = DjangoAdapter(mock_django_sqlite_conn)
+    adapter = DjangoAdapter(lambda: mock_django_sqlite_conn)
     assert adapter.get_dialect() == "sqlite"
 
 
 def test_rollback_sqlite(mock_django_sqlite_conn):
-    adapter = DjangoAdapter(mock_django_sqlite_conn)
+    adapter = DjangoAdapter(lambda: mock_django_sqlite_conn)
     result = adapter.rollback()
 
     mock_django_sqlite_conn.rollback.assert_called_once()
@@ -169,7 +169,7 @@ def test_rollback_sqlite(mock_django_sqlite_conn):
 
 
 def test_execute_closes_cursor_on_exception(mock_django_postgresql_conn):
-    adapter = DjangoAdapter(mock_django_postgresql_conn)
+    adapter = DjangoAdapter(lambda: mock_django_postgresql_conn)
     mock_cursor = mock_django_postgresql_conn.cursor.return_value
     mock_cursor.execute.side_effect = Exception("Query error")
 
@@ -187,7 +187,7 @@ def test_get_dialect_unknown_raises_error(mocker):
     mock_conn.commit = mocker.MagicMock()
     mock_conn.rollback = mocker.MagicMock()
 
-    adapter = DjangoAdapter(mock_conn)
+    adapter = DjangoAdapter(lambda: mock_conn)
 
     with pytest.raises(ValueError, match="Unable to determine dialect"):
         adapter.get_dialect()
@@ -220,17 +220,17 @@ def test_is_django_connection_rejects_non_callable_cursor(mocker):
 
 def test_registry_routes_postgresql_to_django_adapter(mock_django_postgresql_conn):
     registry = Registry()
-    adapter = registry.adapter(mock_django_postgresql_conn)
+    adapter = registry.adapter(lambda: mock_django_postgresql_conn)
     assert isinstance(adapter, DjangoAdapter)
 
 
 def test_registry_routes_mysql_to_django_adapter(mock_django_mysql_conn):
     registry = Registry()
-    adapter = registry.adapter(mock_django_mysql_conn)
+    adapter = registry.adapter(lambda: mock_django_mysql_conn)
     assert isinstance(adapter, DjangoAdapter)
 
 
 def test_registry_routes_sqlite_to_django_adapter(mock_django_sqlite_conn):
     registry = Registry()
-    adapter = registry.adapter(mock_django_sqlite_conn)
+    adapter = registry.adapter(lambda: mock_django_sqlite_conn)
     assert isinstance(adapter, DjangoAdapter)

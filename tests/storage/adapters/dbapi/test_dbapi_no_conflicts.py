@@ -15,14 +15,14 @@ def test_sqlalchemy_session_not_detected_as_dbapi(session):
 
 def test_registry_routes_sqlalchemy_to_sqlalchemy_adapter(session):
     registry = Registry()
-    adapter = registry.adapter(session)
+    adapter = registry.adapter(lambda: session)
     assert isinstance(adapter, SQLAlchemyAdapter)
     assert not isinstance(adapter, DBAPIAdapter)
 
 
 def test_registry_routes_postgres_session_to_sqlalchemy_adapter(postgres_session):
     registry = Registry()
-    adapter = registry.adapter(postgres_session)
+    adapter = registry.adapter(lambda: postgres_session)
     assert isinstance(adapter, SQLAlchemyAdapter)
     assert not isinstance(adapter, DBAPIAdapter)
 
@@ -44,6 +44,6 @@ def test_registry_routes_django_to_django_adapter(mocker):
     mock_conn.cursor = mocker.MagicMock(return_value=mock_cursor)
 
     registry = Registry()
-    adapter = registry.adapter(mock_conn)
+    adapter = registry.adapter(lambda: mock_conn)
     assert isinstance(adapter, DjangoAdapter)
     assert not isinstance(adapter, DBAPIAdapter)

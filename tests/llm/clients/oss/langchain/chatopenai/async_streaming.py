@@ -16,7 +16,7 @@ os.environ["MEMORI_TEST_MODE"] = "1"
 
 
 async def main():
-    session = TestDBSession()
+    session = TestDBSession
     client = ChatOpenAI(model="gpt-4.1", streaming=True)
 
     mem = Memori(conn=session).langchain.register(chatopenai=client)

@@ -18,7 +18,7 @@ os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 
 async def main():
-    session = TestDBSession()
+    session = TestDBSession
     client = ChatOpenAI(model="gpt-4o", streaming=True)
     prompt = ChatPromptTemplate.from_messages(
         [

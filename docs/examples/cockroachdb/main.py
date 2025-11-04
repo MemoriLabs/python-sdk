@@ -27,21 +27,26 @@ from openai import OpenAI
 
 from memori import Memori
 
+load_dotenv()
 
-def main():
-    load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY is not set")
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
+database_url = os.getenv("COCKROACH_CONNECTION_STRING")
+if not database_url:
+    raise RuntimeError("COCKROACH_CONNECTION_STRING is not set")
 
-    database_url = os.getenv("COCKROACH_CONNECTION_STRING")
-    if not database_url:
-        raise RuntimeError("COCKROACH_CONNECTION_STRING is not set")
+client = OpenAI(api_key=api_key)
+conn = psycopg2.connect(database_url)
 
-    client = OpenAI(api_key=api_key)
 
-    conn = psycopg2.connect(database_url)
+def get_connection():
+    """Return the CockroachDB connection."""
+    return conn
+
+
+if __name__ == "__main__":
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT now()")
@@ -54,7 +59,8 @@ def main():
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         # Register OpenAI client with Memori for automatic persistence
-        mem = Memori(conn=conn).openai.register(client)
+        # Pass a function that returns the connection when needed
+        mem = Memori(conn=get_connection).openai.register(client)
 
         # Track conversations by user (parent_id) and session (process_id)
         mem.attribution(parent_id="12345", process_id="my-ai-bot")
@@ -90,7 +96,3 @@ def main():
             conn.commit()
     finally:
         conn.close()
-
-
-if __name__ == "__main__":
-    main()

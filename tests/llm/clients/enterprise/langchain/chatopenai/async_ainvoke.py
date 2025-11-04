@@ -17,7 +17,7 @@ os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 
 async def run():
-    session = TestDBSession()
+    session = TestDBSession
     client = ChatOpenAI(model="gpt-4.1", streaming=True)
     message = HumanMessage(content="What color is the planet Mars?")
 

@@ -15,7 +15,7 @@ if os.environ.get("OPENAI_API_KEY", None) is None:
 os.environ["MEMORI_TEST_MODE"] = "1"
 
 
-session = TestDBSession()
+session = TestDBSession
 client = ChatOpenAI(model="gpt-4o", streaming=True)
 prompt = ChatPromptTemplate.from_messages(
     [

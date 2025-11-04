@@ -13,7 +13,7 @@ if os.environ.get("XAI_API_KEY", None) is None:
 
 os.environ["MEMORI_TEST_MODE"] = "1"
 
-session = TestDBSession()
+session = TestDBSession
 client = Client(api_key=os.environ.get("XAI_API_KEY"))
 
 mem = Memori(conn=session).xai.register(client)

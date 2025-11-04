@@ -23,7 +23,7 @@ class Order(BaseModel):
     order: str
 
 
-session = TestDBSession()
+session = TestDBSession
 client = ChatOpenAI(model="gpt-4o")
 
 mem = Memori(conn=session).langchain.register(chatopenai=client)
