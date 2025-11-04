@@ -36,16 +36,11 @@ class Registry:
         return decorator
 
     def adapter(self, conn: Any) -> BaseStorageAdapter:
-        """Get the appropriate adapter for the connection.
-
-        If conn is callable (factory), calls it to get the connection and keeps it open.
-        """
-        # Call factory to get actual connection for type detection
         conn_to_check = conn() if callable(conn) else conn
 
         for matcher, adapter_class in self._adapters.items():
             if matcher(conn_to_check):
-                return adapter_class(conn)
+                return adapter_class(lambda: conn_to_check)
 
         raise ValueError(
             f"No adapter registered for connection type: {type(conn_to_check).__module__}"
