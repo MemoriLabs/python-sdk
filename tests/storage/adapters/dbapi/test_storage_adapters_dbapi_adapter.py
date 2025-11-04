@@ -58,7 +58,7 @@ def mock_sqlite3_conn(mocker):
 
 
 def test_commit_psycopg2(mock_psycopg2_conn):
-    adapter = DBAPIAdapter(mock_psycopg2_conn)
+    adapter = DBAPIAdapter(lambda: mock_psycopg2_conn)
     result = adapter.commit()
 
     mock_psycopg2_conn.commit.assert_called_once()
@@ -66,7 +66,7 @@ def test_commit_psycopg2(mock_psycopg2_conn):
 
 
 def test_execute_psycopg2(mock_psycopg2_conn):
-    adapter = DBAPIAdapter(mock_psycopg2_conn)
+    adapter = DBAPIAdapter(lambda: mock_psycopg2_conn)
     cursor = adapter.execute("SELECT 1")
 
     mock_psycopg2_conn.cursor.assert_called_once()
@@ -74,7 +74,7 @@ def test_execute_psycopg2(mock_psycopg2_conn):
 
 
 def test_execute_with_binds_psycopg2(mock_psycopg2_conn):
-    adapter = DBAPIAdapter(mock_psycopg2_conn)
+    adapter = DBAPIAdapter(lambda: mock_psycopg2_conn)
     adapter.execute("SELECT * FROM users WHERE id = %s", (1,))
 
     mock_psycopg2_conn.cursor.assert_called_once()
@@ -85,19 +85,19 @@ def test_execute_with_binds_psycopg2(mock_psycopg2_conn):
 
 
 def test_flush_psycopg2(mock_psycopg2_conn):
-    adapter = DBAPIAdapter(mock_psycopg2_conn)
+    adapter = DBAPIAdapter(lambda: mock_psycopg2_conn)
     result = adapter.flush()
 
     assert result is adapter
 
 
 def test_get_dialect_psycopg2(mock_psycopg2_conn):
-    adapter = DBAPIAdapter(mock_psycopg2_conn)
+    adapter = DBAPIAdapter(lambda: mock_psycopg2_conn)
     assert adapter.get_dialect() == "postgresql"
 
 
 def test_rollback_psycopg2(mock_psycopg2_conn):
-    adapter = DBAPIAdapter(mock_psycopg2_conn)
+    adapter = DBAPIAdapter(lambda: mock_psycopg2_conn)
     result = adapter.rollback()
 
     mock_psycopg2_conn.rollback.assert_called_once()
@@ -105,7 +105,7 @@ def test_rollback_psycopg2(mock_psycopg2_conn):
 
 
 def test_commit_pymysql(mock_pymysql_conn):
-    adapter = DBAPIAdapter(mock_pymysql_conn)
+    adapter = DBAPIAdapter(lambda: mock_pymysql_conn)
     result = adapter.commit()
 
     mock_pymysql_conn.commit.assert_called_once()
@@ -113,7 +113,7 @@ def test_commit_pymysql(mock_pymysql_conn):
 
 
 def test_execute_pymysql(mock_pymysql_conn):
-    adapter = DBAPIAdapter(mock_pymysql_conn)
+    adapter = DBAPIAdapter(lambda: mock_pymysql_conn)
     cursor = adapter.execute("SELECT 1")
 
     mock_pymysql_conn.cursor.assert_called_once()
@@ -121,12 +121,12 @@ def test_execute_pymysql(mock_pymysql_conn):
 
 
 def test_get_dialect_pymysql(mock_pymysql_conn):
-    adapter = DBAPIAdapter(mock_pymysql_conn)
+    adapter = DBAPIAdapter(lambda: mock_pymysql_conn)
     assert adapter.get_dialect() == "mysql"
 
 
 def test_rollback_pymysql(mock_pymysql_conn):
-    adapter = DBAPIAdapter(mock_pymysql_conn)
+    adapter = DBAPIAdapter(lambda: mock_pymysql_conn)
     result = adapter.rollback()
 
     mock_pymysql_conn.rollback.assert_called_once()
@@ -134,7 +134,7 @@ def test_rollback_pymysql(mock_pymysql_conn):
 
 
 def test_commit_sqlite3(mock_sqlite3_conn):
-    adapter = DBAPIAdapter(mock_sqlite3_conn)
+    adapter = DBAPIAdapter(lambda: mock_sqlite3_conn)
     result = adapter.commit()
 
     mock_sqlite3_conn.commit.assert_called_once()
@@ -142,7 +142,7 @@ def test_commit_sqlite3(mock_sqlite3_conn):
 
 
 def test_execute_sqlite3(mock_sqlite3_conn):
-    adapter = DBAPIAdapter(mock_sqlite3_conn)
+    adapter = DBAPIAdapter(lambda: mock_sqlite3_conn)
     cursor = adapter.execute("SELECT 1")
 
     mock_sqlite3_conn.cursor.assert_called_once()
@@ -150,12 +150,12 @@ def test_execute_sqlite3(mock_sqlite3_conn):
 
 
 def test_get_dialect_sqlite3(mock_sqlite3_conn):
-    adapter = DBAPIAdapter(mock_sqlite3_conn)
+    adapter = DBAPIAdapter(lambda: mock_sqlite3_conn)
     assert adapter.get_dialect() == "sqlite"
 
 
 def test_rollback_sqlite3(mock_sqlite3_conn):
-    adapter = DBAPIAdapter(mock_sqlite3_conn)
+    adapter = DBAPIAdapter(lambda: mock_sqlite3_conn)
     result = adapter.rollback()
 
     mock_sqlite3_conn.rollback.assert_called_once()
@@ -163,7 +163,7 @@ def test_rollback_sqlite3(mock_sqlite3_conn):
 
 
 def test_execute_closes_cursor_on_exception(mock_psycopg2_conn):
-    adapter = DBAPIAdapter(mock_psycopg2_conn)
+    adapter = DBAPIAdapter(lambda: mock_psycopg2_conn)
     mock_cursor = mock_psycopg2_conn.cursor.return_value
     mock_cursor.execute.side_effect = Exception("Query error")
 
@@ -181,7 +181,7 @@ def test_get_dialect_unknown_raises_error(mocker):
     mock_conn.commit = mocker.MagicMock()
     mock_conn.rollback = mocker.MagicMock()
 
-    adapter = DBAPIAdapter(mock_conn)
+    adapter = DBAPIAdapter(lambda: mock_conn)
 
     with pytest.raises(ValueError, match="Unable to determine dialect"):
         adapter.get_dialect()
@@ -215,17 +215,17 @@ def test_is_dbapi_connection_rejects_non_callable_methods(mocker):
 
 def test_registry_routes_psycopg2_to_dbapi_adapter(mock_psycopg2_conn):
     registry = Registry()
-    adapter = registry.adapter(mock_psycopg2_conn)
+    adapter = registry.adapter(lambda: mock_psycopg2_conn)
     assert isinstance(adapter, DBAPIAdapter)
 
 
 def test_registry_routes_pymysql_to_dbapi_adapter(mock_pymysql_conn):
     registry = Registry()
-    adapter = registry.adapter(mock_pymysql_conn)
+    adapter = registry.adapter(lambda: mock_pymysql_conn)
     assert isinstance(adapter, DBAPIAdapter)
 
 
 def test_registry_routes_sqlite3_to_dbapi_adapter(mock_sqlite3_conn):
     registry = Registry()
-    adapter = registry.adapter(mock_sqlite3_conn)
+    adapter = registry.adapter(lambda: mock_sqlite3_conn)
     assert isinstance(adapter, DBAPIAdapter)

@@ -13,7 +13,7 @@ if os.environ.get("GEMINI_API_KEY", None) is None:
 os.environ["MEMORI_TEST_MODE"] = "1"
 os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
-session = TestDBSession()
+session = TestDBSession
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 mem = Memori(conn=session).google.register(client)

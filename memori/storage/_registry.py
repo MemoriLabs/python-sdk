@@ -36,12 +36,14 @@ class Registry:
         return decorator
 
     def adapter(self, conn: Any) -> BaseStorageAdapter:
+        conn_to_check = conn() if callable(conn) else conn
+
         for matcher, adapter_class in self._adapters.items():
-            if matcher(conn):
-                return adapter_class(conn)
+            if matcher(conn_to_check):
+                return adapter_class(lambda: conn_to_check)
 
         raise ValueError(
-            f"No adapter registered for connection type: {type(conn).__module__}"
+            f"No adapter registered for connection type: {type(conn_to_check).__module__}"
         )
 
     def driver(self, conn: BaseStorageAdapter):

@@ -12,7 +12,7 @@ if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None) is None:
 
 os.environ["MEMORI_TEST_MODE"] = "1"
 
-session = TestDBSession()
+session = TestDBSession
 client = ChatVertexAI(
     model_name="gemini-2.0-flash",
     temperature=0,

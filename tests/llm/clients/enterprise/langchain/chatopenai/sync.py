@@ -13,7 +13,7 @@ if os.environ.get("OPENAI_API_KEY", None) is None:
 os.environ["MEMORI_TEST_MODE"] = "1"
 os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
-session = TestDBSession()
+session = TestDBSession
 client = ChatOpenAI(model="gpt-4o-mini")
 
 mem = Memori(conn=session).langchain.register(chatopenai=client)

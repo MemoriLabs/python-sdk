@@ -12,7 +12,18 @@ r"""
 
 class BaseStorageAdapter:
     def __init__(self, conn):
-        self.conn = conn
+        if not callable(conn):
+            raise TypeError(
+                "conn must be a callable function or method that returns a database connection. "
+                "Example: def get_conn(): return session_maker() or lambda: psycopg2.connect(...)"
+            )
+        self.conn = conn()
+
+    def close(self):
+        if self.conn is not None:
+            if hasattr(self.conn, "close"):
+                self.conn.close()
+            self.conn = None
 
     def commit(self):
         raise NotImplementedError

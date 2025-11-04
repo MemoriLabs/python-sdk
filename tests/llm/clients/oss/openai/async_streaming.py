@@ -15,7 +15,7 @@ os.environ["MEMORI_TEST_MODE"] = "1"
 
 
 async def run():
-    session = TestDBSession()
+    session = TestDBSession
     client = AsyncOpenAI()
 
     mem = Memori(conn=session).openai.register(client, stream=True)

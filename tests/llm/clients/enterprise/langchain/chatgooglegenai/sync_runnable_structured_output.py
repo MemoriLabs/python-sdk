@@ -20,7 +20,7 @@ class Color(BaseModel):
     color: str
 
 
-session = TestDBSession()
+session = TestDBSession
 client = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash", google_api_key=os.environ["GEMINI_API_KEY"]
 )

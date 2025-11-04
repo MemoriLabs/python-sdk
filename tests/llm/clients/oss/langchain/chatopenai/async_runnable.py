@@ -17,7 +17,7 @@ os.environ["MEMORI_TEST_MODE"] = "1"
 
 
 async def main():
-    session = TestDBSession()
+    session = TestDBSession
     client = ChatOpenAI(model="gpt-4o", streaming=True)
     prompt = ChatPromptTemplate.from_messages(
         [

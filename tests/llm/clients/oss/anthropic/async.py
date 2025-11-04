@@ -15,7 +15,7 @@ os.environ["MEMORI_TEST_MODE"] = "1"
 
 
 async def run():
-    session = TestDBSession()
+    session = TestDBSession
     client = anthropic.AsyncAnthropic()
 
     mem = Memori(conn=session).anthropic.register(client)

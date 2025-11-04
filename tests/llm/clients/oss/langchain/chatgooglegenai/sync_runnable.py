@@ -15,7 +15,7 @@ if os.environ.get("GEMINI_API_KEY", None) is None:
 os.environ["MEMORI_TEST_MODE"] = "1"
 
 
-session = TestDBSession()
+session = TestDBSession
 client = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash", google_api_key=os.environ["GEMINI_API_KEY"]
 )

@@ -16,7 +16,7 @@ os.environ["MEMORI_TEST_MODE"] = "1"
 
 
 async def run():
-    session = TestDBSession()
+    session = TestDBSession
     client = ChatOpenAI(model="gpt-4.1", streaming=True)
     message = HumanMessage(content="What color is the planet Mars?")
 

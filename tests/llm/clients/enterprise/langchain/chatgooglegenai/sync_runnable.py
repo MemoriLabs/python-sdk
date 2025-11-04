@@ -16,7 +16,7 @@ os.environ["MEMORI_TEST_MODE"] = "1"
 os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 
-session = TestDBSession()
+session = TestDBSession
 client = ChatGoogleGenerativeAI(
     model="gemini-2.0-flash", google_api_key=os.environ["GEMINI_API_KEY"]
 )

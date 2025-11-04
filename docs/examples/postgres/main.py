@@ -26,35 +26,35 @@ from sqlalchemy.orm import sessionmaker
 
 from memori import Memori
 
+load_dotenv()
 
-def main():
-    load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY is not set")
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
+database_url = os.getenv("DATABASE_CONNECTION_STRING")
+if not database_url:
+    raise RuntimeError("DATABASE_CONNECTION_STRING is not set")
 
-    database_url = os.getenv("DATABASE_CONNECTION_STRING")
-    if not database_url:
-        raise RuntimeError("DATABASE_CONNECTION_STRING is not set")
+client = OpenAI(api_key=api_key)
 
-    client = OpenAI(api_key=api_key)
+engine = create_engine(database_url, pool_pre_ping=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-    engine = create_engine(database_url, pool_pre_ping=True)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+with engine.connect() as conn:
+    result = conn.execute(text("SELECT 1")).scalar_one()
+    print(f"Database connection OK: {result}")
 
-    session = SessionLocal()
+if __name__ == "__main__":
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # MEMORI SETUP
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    # Register OpenAI client with Memori for automatic persistence
+    # Pass a function that creates a new session when needed
+    mem = Memori(conn=SessionLocal).openai.register(client)
+
     try:
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT 1")).scalar_one()
-            print(f"Database connection OK: {result}")
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # MEMORI SETUP
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        # Register OpenAI client with Memori for automatic persistence
-        mem = Memori(conn=session).openai.register(client)
-
         # Track conversations by user (parent_id) and session (process_id)
         mem.attribution(parent_id="12345", process_id="my-ai-bot")
 
@@ -86,10 +86,9 @@ def main():
             print(f"AI: {assistant_reply}")
 
             # Persist conversation to database
-            session.commit()
+            mem.storage.adapter.commit()
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
-        session.close()
-
-
-if __name__ == "__main__":
-    main()
+        if mem.storage.adapter:
+            mem.storage.adapter.close()

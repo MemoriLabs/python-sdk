@@ -17,7 +17,7 @@ os.environ["MEMORI_API_KEY"] = "dev-no-such-key"
 
 
 async def run():
-    session = TestDBSession()
+    session = TestDBSession
     client = AsyncClient(api_key=os.environ.get("XAI_API_KEY"))
 
     mem = Memori(conn=session).xai.register(client, stream=True)

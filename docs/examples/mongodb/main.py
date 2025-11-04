@@ -29,34 +29,38 @@ from pymongo.server_api import ServerApi
 
 from memori import Memori
 
+load_dotenv()
 
-def main():
-    load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY is not set")
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
+mongo_url = os.getenv("MONGODB_CONNECTION_STRING")
+if not mongo_url:
+    raise RuntimeError("MONGODB_CONNECTION_STRING is not set")
 
-    mongo_url = os.getenv("MONGODB_CONNECTION_STRING")
-    if not mongo_url:
-        raise RuntimeError("MONGODB_CONNECTION_STRING is not set")
+client = OpenAI(api_key=api_key)
+mongo_client = MongoClient(mongo_url, server_api=ServerApi("1"))
+db_name = os.getenv("MONGODB_DATABASE", "memori")
 
-    client = OpenAI(api_key=api_key)
 
-    mongo_client = MongoClient(mongo_url, server_api=ServerApi("1"))
+def get_db():
+    """Return the MongoDB database connection."""
+    return mongo_client[db_name]
+
+
+if __name__ == "__main__":
     try:
         mongo_client.admin.command("ping")
         print("Database connection OK: ping=1")
-
-        db_name = os.getenv("MONGODB_DATABASE", "memori")
-        db = mongo_client[db_name]
 
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         # MEMORI SETUP
         # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         # Register OpenAI client with Memori for automatic persistence
-        mem = Memori(conn=db).openai.register(client)
+        # Pass a function that returns the database when needed
+        mem = Memori(conn=get_db).openai.register(client)
 
         # Track conversations by user (parent_id) and session (process_id)
         mem.attribution(parent_id="12345", process_id="my-ai-bot")
@@ -90,7 +94,3 @@ def main():
             # MongoDB writes are immediate - no commit needed
     finally:
         mongo_client.close()
-
-
-if __name__ == "__main__":
-    main()

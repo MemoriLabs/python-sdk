@@ -26,13 +26,13 @@ async def run(db_backend: str = "default"):
     if db_backend == "mongodb":
         session = MongoTestDBSession
     elif db_backend == "mysql":
-        session = MySQLTestDBSession()
+        session = MySQLTestDBSession
     elif db_backend == "postgres":
-        session = PostgresTestDBSession()
+        session = PostgresTestDBSession
     elif db_backend == "sqlite":
-        session = SQLiteTestDBSession()
+        session = SQLiteTestDBSession
     else:
-        session = TestDBSession()
+        session = TestDBSession
 
     client = AsyncClient(api_key=os.environ.get("XAI_API_KEY"))
 
