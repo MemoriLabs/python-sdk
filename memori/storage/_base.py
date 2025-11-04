@@ -17,25 +17,13 @@ class BaseStorageAdapter:
                 "conn must be a callable function or method that returns a database connection. "
                 "Example: def get_conn(): return session_maker() or lambda: psycopg2.connect(...)"
             )
-        self._conn_factory = conn
-        self._conn = None
-
-    @property
-    def conn(self):
-        if self._conn is None:
-            self._conn = self._conn_factory()
-        return self._conn
+        self.conn = conn()
 
     def close(self):
-        """Close the underlying connection if it exists."""
-        if self._conn is not None:
-            if hasattr(self._conn, "close"):
-                self._conn.close()
-            self._conn = None
-
-    def reset(self):
-        """Reset the connection, forcing recreation on next access."""
-        self.close()
+        if self.conn is not None:
+            if hasattr(self.conn, "close"):
+                self.conn.close()
+            self.conn = None
 
     def commit(self):
         raise NotImplementedError

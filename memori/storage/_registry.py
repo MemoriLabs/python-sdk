@@ -38,28 +38,18 @@ class Registry:
     def adapter(self, conn: Any) -> BaseStorageAdapter:
         """Get the appropriate adapter for the connection.
 
-        If conn is callable (factory), calls it once to detect the adapter type,
-        then closes the temporary connection.
+        If conn is callable (factory), calls it to get the connection and keeps it open.
         """
         # Call factory to get actual connection for type detection
         conn_to_check = conn() if callable(conn) else conn
-        needs_cleanup = callable(conn)
 
-        try:
-            for matcher, adapter_class in self._adapters.items():
-                if matcher(conn_to_check):
-                    return adapter_class(conn)
+        for matcher, adapter_class in self._adapters.items():
+            if matcher(conn_to_check):
+                return adapter_class(conn)
 
-            raise ValueError(
-                f"No adapter registered for connection type: {type(conn_to_check).__module__}"
-            )
-        finally:
-            # Clean up temporary connection if we created one
-            if needs_cleanup and hasattr(conn_to_check, "close"):
-                try:
-                    conn_to_check.close()
-                except Exception:
-                    pass
+        raise ValueError(
+            f"No adapter registered for connection type: {type(conn_to_check).__module__}"
+        )
 
     def driver(self, conn: BaseStorageAdapter):
         dialect = conn.get_dialect()
