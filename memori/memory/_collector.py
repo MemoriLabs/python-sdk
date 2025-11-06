@@ -25,7 +25,7 @@ class Api:
     def __init__(self, config: Config):
         self.__base = os.environ.get("MEMORI_API_URL_BASE")
         if self.__base is None:
-            self.__base = "FIXME"
+            self.__base = "https://api.memorilabs.ai"
 
         self.config = config
 
@@ -94,7 +94,7 @@ class Collector:
     def __init__(self, config: Config):
         self.__base = os.environ.get("MEMORI_COLLECTOR_URL_BASE")
         if self.__base is None:
-            self.__base = "FIXME"
+            self.__base = "https://api.memorilabs.ai"
 
         self.config = config
 
