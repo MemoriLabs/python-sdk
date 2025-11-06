@@ -9,19 +9,17 @@ r"""
                        memorilabs.ai
 """
 
-import os
-
-from memori._config import Config
-
 
 class Registry:
-    def adapter(self, config: Config):
-        if config.is_test_mode():
-            return None
+    _augmentations: dict[str, type] = {}
 
-        if os.environ.get("MEMORI_API_KEY", None) is not None:
-            # TODO: Implement MemoriAugmentation class
-            # return MemoriAugmentation(config)
-            return None
+    @classmethod
+    def register(cls, name: str):
+        def decorator(augmentation_class: type):
+            cls._augmentations[name] = augmentation_class
+            return augmentation_class
 
-        return None
+        return decorator
+
+    def augmentations(self):
+        return [aug_class() for aug_class in self._augmentations.values()]

@@ -23,13 +23,13 @@ class Builder:
     def create_data_structures(self):
         self.cli.banner()
 
-        if self.config.storage.adapter is None:
+        if self.config.storage is None or self.config.storage.adapter is None:
             return self
 
         dialect = self.config.storage.adapter.get_dialect()
 
         try:
-            if self.config.storage.driver is None:
+            if self.config.storage is None or self.config.storage.driver is None:
                 raise RuntimeError("Driver not initialized")
 
             num = self.config.storage.driver.schema.version.read()
@@ -37,7 +37,11 @@ class Builder:
                 num = 0
         except Exception:
             if self._requires_rollback(dialect):
-                self.config.storage.adapter.rollback()
+                if (
+                    self.config.storage is not None
+                    and self.config.storage.adapter is not None
+                ):
+                    self.config.storage.adapter.rollback()
 
             num = 0
 
@@ -61,19 +65,24 @@ class Builder:
 
                 for migration in migrations[num]:
                     self.cli.notice(migration["description"], 1)
-                    operation = migration.get("operations") or migration.get(
-                        "operation"
-                    )
-                    self.config.storage.adapter.execute(operation)
-                    self.config.storage.adapter.commit()
+                    if (
+                        self.config.storage is not None
+                        and self.config.storage.adapter is not None
+                    ):
+                        operation = migration.get("operations") or migration.get(
+                            "operation"
+                        )
+                        self.config.storage.adapter.execute(operation)
+                        self.config.storage.adapter.commit()
 
-            if self.config.storage.driver is None:
+            if self.config.storage is None or self.config.storage.driver is None:
                 raise RuntimeError("Driver not initialized")
 
             self.config.storage.driver.schema.version.delete()
             self.config.storage.driver.schema.version.create(num - 1)
 
-            self.config.storage.adapter.commit()
+            if self.config.storage.adapter is not None:
+                self.config.storage.adapter.commit()
 
         self.cli.notice("Build executed successfully!")
         self.cli.newline()
@@ -81,7 +90,7 @@ class Builder:
         return self
 
     def execute(self):
-        if self.config.storage.adapter is None:
+        if self.config.storage is None or self.config.storage.adapter is None:
             return self
 
         dialect = self.config.storage.adapter.get_dialect()

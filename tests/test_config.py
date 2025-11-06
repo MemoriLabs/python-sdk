@@ -27,3 +27,8 @@ def test_reset_cache():
     assert config.cache.parent_id is None
     assert config.cache.process_id is None
     assert config.cache.session_id is None
+
+
+def test_augmentation_max_workers_default():
+    config = Config()
+    assert config.augmentation_max_workers == 50
