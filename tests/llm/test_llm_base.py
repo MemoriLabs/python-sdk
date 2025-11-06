@@ -1,4 +1,5 @@
 import json
+from unittest.mock import Mock, patch
 
 from memori._config import Config
 from memori.llm._base import BaseInvoke, BaseLlmAdaptor
@@ -190,3 +191,69 @@ def test_exclude_injected_messages():
 
     # Safe navigation - missing keys don't cause errors
     assert adapter._exclude_injected_messages(messages, {}) == messages
+
+
+def test_handle_post_response_without_augmentation():
+    config = Config()
+    invoke = BaseInvoke(config, "test_method")
+    invoke.set_client("test_provider", "test_title", "1.0.0")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    start_time = 1234567890.0
+    raw_response = {"choices": [{"message": {"content": "Hi"}}]}
+
+    with patch("memori.memory._manager.Manager") as mock_memory_manager:
+        mock_manager_instance = Mock()
+        mock_memory_manager.return_value = mock_manager_instance
+
+        invoke.handle_post_response(kwargs, start_time, raw_response)
+
+        mock_memory_manager.assert_called_once_with(config)
+        mock_manager_instance.execute.assert_called_once()
+
+
+def test_handle_post_response_with_augmentation_no_conversation():
+    config = Config()
+    config.augmentation = Mock()
+    invoke = BaseInvoke(config, "test_method")
+    invoke.set_client("test_provider", "test_title", "1.0.0")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    start_time = 1234567890.0
+    raw_response = {"choices": [{"message": {"content": "Hi"}}]}
+
+    with patch("memori.memory._manager.Manager") as mock_memory_manager:
+        mock_manager_instance = Mock()
+        mock_memory_manager.return_value = mock_manager_instance
+
+        invoke.handle_post_response(kwargs, start_time, raw_response)
+
+        mock_memory_manager.assert_called_once_with(config)
+        mock_manager_instance.execute.assert_called_once()
+        config.augmentation.enqueue.assert_called_once()
+        call_args = config.augmentation.enqueue.call_args[0][0]
+        assert "conversation_id" not in call_args
+
+
+def test_handle_post_response_with_augmentation_and_conversation():
+    config = Config()
+    config.augmentation = Mock()
+    config.cache.conversation_id = 123
+    invoke = BaseInvoke(config, "test_method")
+    invoke.set_client("test_provider", "test_title", "1.0.0")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    start_time = 1234567890.0
+    raw_response = {"choices": [{"message": {"content": "Hi"}}]}
+
+    with patch("memori.memory._manager.Manager") as mock_memory_manager:
+        mock_manager_instance = Mock()
+        mock_memory_manager.return_value = mock_manager_instance
+
+        invoke.handle_post_response(kwargs, start_time, raw_response)
+
+        mock_memory_manager.assert_called_once_with(config)
+        mock_manager_instance.execute.assert_called_once()
+        config.augmentation.enqueue.assert_called_once()
+        call_args = config.augmentation.enqueue.call_args[0][0]
+        assert call_args["conversation_id"] == 123

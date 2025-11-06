@@ -19,7 +19,7 @@ from memori.llm._providers import LangChain as LlmProviderLangChain
 from memori.llm._providers import OpenAi as LlmProviderOpenAi
 from memori.llm._providers import PydanticAi as LlmProviderPydanticAi
 from memori.llm._providers import XAi as LlmProviderXAi
-from memori.memory.augmentation._registry import Registry as AugmentationRegistry
+from memori.memory.augmentation import Manager as AugmentationManager
 from memori.storage import Manager as StorageManager
 
 __all__ = ["Memori"]
@@ -27,11 +27,17 @@ __all__ = ["Memori"]
 
 class Memori:
     def __init__(self, conn=None):
+        if conn is not None and not callable(conn):
+            raise TypeError(
+                "conn must be a callable that returns a new connection. "
+                "Pass a sessionmaker, MongoClient factory, or lambda instead of an instance."
+            )
+
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)
-        self.config.augmentation = self.augmentation_adapter()
         self.config.session_id = uuid4()
         self.config.storage = StorageManager(self.config).start(conn)
+        self.config.augmentation = AugmentationManager(self.config).start(conn)
 
         self.anthropic = LlmProviderAnthropic(self)
         self.google = LlmProviderGoogle(self)
@@ -57,9 +63,6 @@ class Memori:
         self.config.process_id = process_id
 
         return self
-
-    def augmentation_adapter(self):
-        return AugmentationRegistry().adapter(self.config)
 
     def new_session(self):
         self.config.session_id = uuid4()

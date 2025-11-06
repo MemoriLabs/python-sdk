@@ -287,6 +287,26 @@ class BaseInvoke:
         self._uses_protobuf = True
         return self
 
+    def handle_post_response(self, kwargs, start_time, raw_response):
+        from memori.memory._manager import Manager as MemoryManager
+
+        payload = self._format_payload(
+            self._client_provider,
+            self._client_title,
+            self._client_version,
+            start_time,
+            __import__("time").time(),
+            self._format_kwargs(kwargs),
+            self._format_response(self.get_response_content(raw_response)),
+        )
+
+        MemoryManager(self.config).execute(payload)
+        if self.config.augmentation is not None:
+            # TODO: Remove conversation_id logic here unless necessary, this is just for test validation with template augmentation
+            if self.config.cache.conversation_id is not None:
+                payload["conversation_id"] = self.config.cache.conversation_id
+            self.config.augmentation.enqueue(payload)
+
 
 class BaseIterator:
     def __init__(self, config: Config, source_iterator):

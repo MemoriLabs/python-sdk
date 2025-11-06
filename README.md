@@ -76,17 +76,17 @@ mem.set_session(session_id)
 1. Run this command once, via CI/CD or anytime you update Memori.
 
     ```python
-    Memori(conn=session).config.storage.build()
+    Memori(conn=SessionLocal).config.storage.build()
     ```
 
-2. Instantiate Memori with the connection.
+2. Instantiate Memori with the connection factory.
 
     ```python
     from openai import OpenAI
     from memori import Memori
 
     client = OpenAI(...)
-    mem = Memori(conn=session).openai.register(client)
+    mem = Memori(conn=SessionLocal).openai.register(client)
     ```
 
 ## Full Example Using MySQL, SQLAlchemy and OpenAI
@@ -99,11 +99,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 db = create_engine("mysql+pymysql://dbuser:dbpassword@dbhost/dbname")
-session = sessionmaker(autocommit=False, autoflush=False, bind=db)()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=db)
 
 client = OpenAI()
 
-mem = Memori(conn=session).openai.register(client)
+mem = Memori(conn=SessionLocal).openai.register(client)
 mem.attribution(parent_id=str(MyLoggedInUser.id), process_id="astronomer_agent")
 
 response = client.chat.completions.create(
@@ -206,7 +206,7 @@ Note, that this job is for augmenting memories, not for recalling them. It is im
 To execute Advanced Augmentation, execute the following:
 
 ```python
-Memori(conn=session).augmentation.run()
+Memori(conn=SessionLocal).augmentation.run()
 ```
 
 Here is a full example for how Advanced Augmentation should be run:
@@ -229,10 +229,11 @@ Memori.augmentation.pidlock(dir="/tmp")
 def main():
     job_id = sys.argv[1]
     seconds_sleep = 1
-    session = [however you connect to your datastore]
+    # SessionLocal is a sessionmaker or other connection factory
+    SessionLocal = [however you create your connection factory]
     with_output = True
 
-    mem = Memori(conn=session)
+    mem = Memori(conn=SessionLocal)
 
     while True:
         mem.augmentation.run(job_id=job_id, with_output=with_output)

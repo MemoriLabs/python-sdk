@@ -22,7 +22,6 @@ from memori.llm._iterator import AsyncIterator as MemoriAsyncIterator
 from memori.llm._iterator import Iterator as MemoriIterator
 from memori.llm._streaming import StreamingBody as MemoriStreamingBody
 from memori.llm._utils import client_is_bedrock
-from memori.memory._manager import Manager as MemoryManager
 
 
 class Invoke(BaseInvoke):
@@ -57,18 +56,7 @@ class Invoke(BaseInvoke):
 
             return raw_response
         else:
-            MemoryManager(self.config).execute(
-                self._format_payload(
-                    self._client_provider,
-                    self._client_title,
-                    self._client_version,
-                    start,
-                    time.time(),
-                    self._format_kwargs(kwargs),
-                    self._format_response(self.get_response_content(raw_response)),
-                )
-            )
-
+            self.handle_post_response(kwargs, start, raw_response)
             return raw_response
 
 
@@ -81,19 +69,7 @@ class InvokeAsync(BaseInvoke):
         )
 
         raw_response = await self._method(**kwargs)
-
-        MemoryManager(self.config).execute(
-            self._format_payload(
-                self._client_provider,
-                self._client_title,
-                self._client_version,
-                start,
-                time.time(),
-                self._format_kwargs(kwargs),
-                self._format_response(self.get_response_content(raw_response)),
-            )
-        )
-
+        self.handle_post_response(kwargs, start, raw_response)
         return raw_response
 
 
@@ -115,18 +91,7 @@ class InvokeAsyncIterator(BaseInvoke):
                 .configure_request(kwargs, start)
             )
         else:
-            MemoryManager(self.config).execute(
-                self._format_payload(
-                    self._client_provider,
-                    self._client_title,
-                    self._client_version,
-                    start,
-                    time.time(),
-                    self._format_kwargs(kwargs),
-                    self._format_response(self.get_response_content(raw_response)),
-                )
-            )
-
+            self.handle_post_response(kwargs, start, raw_response)
             return raw_response
 
 
@@ -145,17 +110,7 @@ class InvokeAsyncStream(BaseInvoke):
             raw_response = merge_chunk(raw_response, chunk.__dict__)
             yield chunk
 
-        MemoryManager(self.config).execute(
-            self._format_payload(
-                self._client_provider,
-                self._client_title,
-                self._client_version,
-                start,
-                time.time(),
-                self._format_kwargs(kwargs),
-                self._format_response(self.get_response_content(raw_response)),
-            )
-        )
+        self.handle_post_response(kwargs, start, raw_response)
 
 
 class InvokeStream(BaseInvoke):
@@ -168,16 +123,5 @@ class InvokeStream(BaseInvoke):
 
         raw_response = await self._method(**kwargs)
 
-        MemoryManager(self.config).execute(
-            self._format_payload(
-                self._client_provider,
-                self._client_title,
-                self._client_version,
-                start,
-                time.time(),
-                self._format_kwargs(kwargs),
-                self._format_response(self.get_response_content(raw_response)),
-            )
-        )
-
+        self.handle_post_response(kwargs, start, raw_response)
         return raw_response

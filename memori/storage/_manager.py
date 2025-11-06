@@ -11,36 +11,35 @@ r"""
 
 from memori._config import Config
 from memori.storage._builder import Builder
+from memori.storage._connection import connection_context
 from memori.storage._registry import Registry
-from memori.storage.session.asynchronous.queued._manager import (
-    Manager as AsyncQueuedSessionManager,
-)
 
 
 class Manager:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config) -> None:
         self.adapter = None
         self.config = config
-        self.__conn = None
+        self.conn_factory = None
         self.driver = None
-        self.session = AsyncQueuedSessionManager(self.config, self)
 
-    def build(self):
-        if self.__conn is None:
+    @property
+    def conn(self):
+        return connection_context(self.conn_factory)
+
+    def build(self) -> "Manager":
+        if self.conn_factory is None:
             return self
 
         Builder(self.config).execute()
 
         return self
 
-    def start(self, conn):
+    def start(self, conn) -> "Manager":
         if conn is None:
             return self
 
+        self.conn_factory = conn
         self.adapter = Registry().adapter(conn)
-        self.__conn = conn
         self.driver = Registry().driver(self.adapter)
-
-        self.session.queue.start()
 
         return self
