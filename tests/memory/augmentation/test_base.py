@@ -1,6 +1,6 @@
 import pytest
 
-from memori.memory.augmentation._base import BaseAugmentation
+from memori.memory.augmentation._base import AugmentationContext, BaseAugmentation
 
 
 def test_base_augmentation_init_default():
@@ -17,4 +17,4 @@ def test_base_augmentation_init_disabled():
 async def test_base_augmentation_process_not_implemented():
     aug = BaseAugmentation()
     with pytest.raises(NotImplementedError):
-        await aug.process({}, None)
+        await aug.process(AugmentationContext(payload={}), None)

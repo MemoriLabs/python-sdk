@@ -10,44 +10,14 @@ r"""
 """
 
 import asyncio
-import threading
-from dataclasses import dataclass, field
 from typing import Any
 
 from memori._config import Config
+from memori.memory.augmentation._base import AugmentationContext
+from memori.memory.augmentation._db_writer import WriteTask, get_db_writer
 from memori.memory.augmentation._registry import Registry as AugmentationRegistry
+from memori.memory.augmentation._runtime import get_runtime
 from memori.storage._connection import connection_context
-
-
-@dataclass
-class _AugmentationRuntime:
-    loop: asyncio.AbstractEventLoop | None = None
-    thread: threading.Thread | None = None
-    ready: threading.Event = field(default_factory=threading.Event)
-    semaphore: asyncio.Semaphore | None = None
-    lock: threading.Lock = field(default_factory=threading.Lock)
-    max_workers: int = Config.augmentation_max_workers
-
-    def ensure_started(self, max_workers: int) -> None:
-        with self.lock:
-            if self.loop is not None:
-                return
-
-            self.max_workers = max_workers
-            self.thread = threading.Thread(
-                target=self._run_loop, daemon=True, name="memori-augmentation"
-            )
-            self.thread.start()
-
-    def _run_loop(self) -> None:
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.semaphore = asyncio.Semaphore(self.max_workers)
-        self.ready.set()
-        self.loop.run_forever()
-
-
-_runtime = _AugmentationRuntime()
 
 
 class Manager:
@@ -55,7 +25,11 @@ class Manager:
         self.config = config
         self.augmentations = AugmentationRegistry().augmentations()
         self.conn_factory = None
-        self._active: bool = False
+        self._active = False
+        self.max_workers = 50
+        self.db_writer_batch_size = 100
+        self.db_writer_batch_timeout = 0.1
+        self.db_writer_queue_size = 1000
 
     def start(self, conn) -> "Manager":
         if conn is None:
@@ -63,21 +37,30 @@ class Manager:
 
         self.conn_factory = conn
         self._active = True
-        _runtime.ensure_started(self.config.augmentation_max_workers)
+
+        runtime = get_runtime()
+        runtime.ensure_started(self.max_workers)
+
+        db_writer = get_db_writer()
+        db_writer.configure(self)
+        db_writer.ensure_started(conn)
+
         return self
 
     def enqueue(self, payload: dict[str, Any]) -> "Manager":
         if not self._active or not self.conn_factory:
             return self
 
-        if not _runtime.ready.wait(timeout=1.0):
+        runtime = get_runtime()
+
+        if not runtime.ready.wait(timeout=1.0):
             raise RuntimeError("Augmentation runtime is not available")
 
-        if _runtime.loop is None:
+        if runtime.loop is None:
             raise RuntimeError("Event loop is not available")
 
         asyncio.run_coroutine_threadsafe(
-            self._process_augmentations(payload), _runtime.loop
+            self._process_augmentations(payload), runtime.loop
         )
         return self
 
@@ -85,11 +68,28 @@ class Manager:
         if not self.augmentations:
             return
 
-        if _runtime.semaphore is None:
+        runtime = get_runtime()
+        if runtime.semaphore is None:
             return
 
-        async with _runtime.semaphore:
+        async with runtime.semaphore:
+            ctx = AugmentationContext(payload=payload)
+
             with connection_context(self.conn_factory) as (conn, adapter, driver):
                 for aug in self.augmentations:
                     if aug.enabled:
-                        await aug.process(payload, driver)
+                        ctx = await aug.process(ctx, driver)
+
+                if ctx.writes:
+                    self._enqueue_writes(ctx.writes)
+
+    def _enqueue_writes(self, writes: list[dict[str, Any]]) -> None:
+        db_writer = get_db_writer()
+
+        for write_op in writes:
+            task = WriteTask(
+                method_path=write_op["method_path"],
+                args=write_op["args"],
+                kwargs=write_op["kwargs"],
+            )
+            db_writer.enqueue_write(task)

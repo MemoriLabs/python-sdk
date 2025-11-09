@@ -9,10 +9,23 @@ r"""
                        memorilabs.ai
 """
 
+from typing import Any
+
+
+class AugmentationContext:
+    def __init__(self, payload: dict[str, Any]):
+        self.payload = payload
+        self.data = {}
+        self.writes = []
+
+    def add_write(self, method_path: str, *args, **kwargs):
+        self.writes.append({"method_path": method_path, "args": args, "kwargs": kwargs})
+        return self
+
 
 class BaseAugmentation:
     def __init__(self, enabled: bool = True):
         self.enabled = enabled
 
-    async def process(self, payload, driver):
-        raise NotImplementedError
+    async def process(self, ctx: AugmentationContext, driver) -> AugmentationContext:
+        raise NotImplementedError("Augmentation must implement process() method")
