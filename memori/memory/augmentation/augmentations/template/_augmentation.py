@@ -13,7 +13,7 @@ import asyncio
 
 import aiohttp
 
-from memori.memory.augmentation._base import BaseAugmentation
+from memori.memory.augmentation._base import AugmentationContext, BaseAugmentation
 from memori.memory.augmentation._registry import Registry
 
 
@@ -22,13 +22,16 @@ class TemplateAugmentation(BaseAugmentation):
     def __init__(self, enabled: bool = True):
         super().__init__(enabled)
 
-    async def process(self, payload, driver):
-        conversation_id = payload.get("conversation_id")
-        if conversation_id is None:
-            return
+    async def process(self, ctx: AugmentationContext, driver) -> AugmentationContext:
+        conversation_id = ctx.payload.get("conversation_id")
 
-        messages = driver.conversation.messages.read(conversation_id)
-        last_message_idx = len(messages) if messages else 0
+        last_message_idx = 0
+        if conversation_id:
+            try:
+                messages = driver.conversation.messages.read(conversation_id)
+                last_message_idx = len(messages) if messages else 0
+            except Exception:
+                conversation_id = None
 
         await asyncio.sleep(3)
 
@@ -49,9 +52,17 @@ class TemplateAugmentation(BaseAugmentation):
             except Exception as e:
                 status = f"error: {str(e)}"
 
-        driver.conversation.message.create(
-            conversation_id=conversation_id,
-            role="assistant",
-            type="augmentation",
-            content=f"TemplateAugmentation I/O {status} [triggered by message #{last_message_idx}]",
-        )
+        ctx.data["zen_quote"] = status
+
+        if conversation_id:
+            ctx.add_write(
+                "conversation.message.create",
+                conversation_id=conversation_id,
+                role="assistant",
+                type="augmentation",
+                content=f"TemplateAugmentation I/O {status} [triggered by message #{last_message_idx}]",
+            )
+        else:
+            ctx.data["template_output"] = f"TemplateAugmentation I/O {status}"
+
+        return ctx

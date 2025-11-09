@@ -47,3 +47,5 @@ dist/
 google-credentials.json
 *.pem
 *.key
+
+tests/examples/*

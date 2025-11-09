@@ -22,8 +22,6 @@ class Cache:
 
 
 class Config:
-    augmentation_max_workers = 50
-
     def __init__(self):
         self.api_key = None
         self.augmentation = None

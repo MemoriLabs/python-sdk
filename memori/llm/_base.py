@@ -302,7 +302,6 @@ class BaseInvoke:
 
         MemoryManager(self.config).execute(payload)
         if self.config.augmentation is not None:
-            # TODO: Remove conversation_id logic here unless necessary, this is just for test validation with template augmentation
             if self.config.cache.conversation_id is not None:
                 payload["conversation_id"] = self.config.cache.conversation_id
             self.config.augmentation.enqueue(payload)
