@@ -38,61 +38,48 @@ if not database_url:
     raise RuntimeError("COCKROACH_CONNECTION_STRING is not set")
 
 client = OpenAI(api_key=api_key)
-conn = psycopg2.connect(database_url)
 
 
-def get_connection():
-    """Return the CockroachDB connection."""
-    return conn
+def db_conn_factory():
+    """Create a new CockroachDB connection."""
+    return psycopg2.connect(database_url)
 
 
 if __name__ == "__main__":
+    conn = db_conn_factory()
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT now()")
             res = cur.fetchall()
             conn.commit()
             print(f"Database connection OK: {res}")
-
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # MEMORI SETUP
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        # Register OpenAI client with Memori for automatic persistence
-        # Pass a function that returns the connection when needed
-        mem = Memori(conn=get_connection).openai.register(client)
-
-        # Track conversations by user (parent_id) and session (process_id)
-        mem.attribution(parent_id="12345", process_id="my-ai-bot")
-
-        # Build database schema (distributed across CockroachDB cluster)
-        mem.storage.build()
-
-        print("\nType 'exit' to quit.\n")
-        while True:
-            try:
-                user_input = input("You: ").strip()
-            except (EOFError, KeyboardInterrupt):
-                print("\nExiting.")
-                break
-
-            if user_input.lower() in {"exit", "quit", ":q"}:
-                print("Goodbye!")
-                break
-            if not user_input:
-                continue
-
-            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            # Use OpenAI client normally - Memori handles the rest
-            # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": user_input}],
-            )
-            assistant_reply = response.choices[0].message.content
-            print(f"AI: {assistant_reply}")
-
-            # Commit distributed transaction
-            conn.commit()
     finally:
         conn.close()
+
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # MEMORI SETUP
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    # Register OpenAI client with Memori for automatic persistence
+    # Pass a function that creates a new connection when needed
+    mem = Memori(conn=db_conn_factory).openai.register(client)
+
+    mem.attribution(parent_id="user_123", process_id="astronomer_agent")
+
+    print()
+
+    user_msg_1 = "What color is Mars?"
+    print(f"User: {user_msg_1}")
+    response = client.chat.completions.create(
+        model="gpt-4o-mini", messages=[{"role": "user", "content": user_msg_1}]
+    )
+    print(f"AI: {response.choices[0].message.content}\n")
+
+    user_msg_2 = (
+        "That planet we are talking about, in order from the sun, which one is it?"
+    )
+    print(f"User: {user_msg_2}")
+    response = client.chat.completions.create(
+        model="gpt-4o-mini", messages=[{"role": "user", "content": user_msg_2}]
+    )
+    print(f"AI: {response.choices[0].message.content}")
