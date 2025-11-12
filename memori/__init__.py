@@ -12,6 +12,8 @@ r"""
 import os
 from uuid import uuid4
 
+import psycopg2
+
 from memori._config import Config
 from memori.llm._providers import Anthropic as LlmProviderAnthropic
 from memori.llm._providers import Google as LlmProviderGoogle
@@ -32,6 +34,15 @@ class Memori:
                 "conn must be a callable that returns a new connection. "
                 "Pass a sessionmaker, MongoClient factory, or lambda instead of an instance."
             )
+
+        if conn is None:
+            default_conn_string = os.environ.get("COCKROACH_CONNECTION_STRING")
+            if default_conn_string:
+
+                def _create_psycopg2_connection():
+                    return psycopg2.connect(default_conn_string)
+
+                conn = _create_psycopg2_connection
 
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)

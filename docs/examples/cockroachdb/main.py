@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     # Register OpenAI client with Memori for automatic persistence
     # Pass a function that creates a new connection when needed
-    mem = Memori(conn=db_conn_factory).openai.register(client)
+    mem = Memori().openai.register(client)
 
     mem.attribution(parent_id="user_123", process_id="astronomer_agent")
 
