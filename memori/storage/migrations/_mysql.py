@@ -151,6 +151,32 @@ migrations = {
             """,
         },
         {
+            "description": "create table memori_process_attribute",
+            "operation": """
+                create table if not exists memori_process_attribute(
+                    id bigint not null auto_increment,
+                    uuid varchar(36) not null,
+                    process_id bigint not null,
+                    content text not null,
+                    num_times bigint not null,
+                    date_last_time datetime not null,
+                    uniq char(64) not null,
+                    date_created datetime not null default current_timestamp,
+                    date_updated datetime default null on update current_timestamp
+                    --
+                    primary key (id),
+                    unique key (process_id, id),
+                    unique key (process_id, uniq),
+                    unique key (uuid),
+                    --
+                    constraint fk_memori_proc_attribute
+                   foreign key (process_id)
+                    references memori_process (id)
+                     on delete cascade
+                )
+            """,
+        },
+        {
             "description": "create table memori_subject",
             "operation": """
                 create table if not exists memori_subject(

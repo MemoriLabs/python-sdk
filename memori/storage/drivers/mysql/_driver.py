@@ -20,6 +20,7 @@ from memori.storage._base import (
     BaseParent,
     BaseParentFact,
     BaseProcess,
+    BaseProcessAttribute,
     BaseSchema,
     BaseSchemaVersion,
     BaseSession,
@@ -402,6 +403,47 @@ class Process(BaseProcess):
             .fetchone()
             .get("id", None)
         )
+
+
+class ProcessAttribute(BaseProcessAttribute):
+    def create(self, process_id: int, attributes: list):
+        if attributes is None or len(attributes) == 0:
+            return self
+
+        for attribute in attributes:
+            self.conn.execute(
+                """
+                INSERT INTO memori_process_attribute(
+                    uuid,
+                    process_id,
+                    content,
+                    num_times,
+                    date_last_time,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    current_timestamp(),
+                    %s
+                )
+                ON DUPLICATE KEY UPDATE
+                    num_times = num_times + 1
+                    date_last_time = current_timestamp()
+                """,
+                (
+                    uuid4(),
+                    process_id,
+                    attribute,
+                    1,
+                    generate_uniq(attribute),
+                ),
+            )
+
+        self.conn.commit()
+
+        return self
 
 
 class Session(BaseSession):

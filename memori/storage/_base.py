@@ -100,6 +100,14 @@ class BaseProcess:
         raise NotImplementedError
 
 
+class BaseProcessAttribute:
+    def __init__(self, conn: BaseStorageAdapter):
+        self.conn = conn
+
+    def create(self, process_id: int, attributes: list):
+        raise NotImplementedError
+
+
 class BaseSession:
     def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
