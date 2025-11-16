@@ -16,11 +16,12 @@ import time
 
 from google.protobuf import json_format
 
-from memori.llm._constants import XAI_CLIENT_TITLE
+from memori.llm._constants import XAI_LLM_PROVIDER
 
 
 class XAiWrappers:
-    """Handles XAI-specific wrapping logic for the two-step API pattern.
+    """
+    Handles XAI-specific wrapping logic for the two-step API pattern.
 
     XAI's API works differently than other providers:
     1. create() returns a Chat object (no API call yet)
@@ -196,7 +197,7 @@ class XAiWrappers:
             "conversation": {
                 "client": {
                     "provider": None,
-                    "title": XAI_CLIENT_TITLE,
+                    "title": XAI_LLM_PROVIDER,
                     "version": client_version,
                 },
                 "query": query_formatted,

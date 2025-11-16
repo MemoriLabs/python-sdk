@@ -40,7 +40,9 @@ class Invoke(BaseInvoke):
                 .configure_invoke(self)
                 .configure_request(kwargs, start)
             )
-        elif client_is_bedrock(self._client_provider, self._client_title):
+        elif client_is_bedrock(
+            self.config.framework.provider, self.config.llm.provider
+        ):
             if isinstance(raw_response["body"], EventStream):
                 raw_response["body"] = (
                     MemoriIterable(self.config, raw_response["body"])

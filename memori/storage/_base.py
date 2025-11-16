@@ -48,6 +48,9 @@ class BaseConversation:
     def create(self, session_id: int):
         raise NotImplementedError
 
+    def update(self, id: int, summary: str):
+        raise NotImplementedError
+
 
 class BaseConversationMessage:
     def __init__(self, conn: BaseStorageAdapter):
@@ -65,11 +68,27 @@ class BaseConversationMessages:
         raise NotImplementedError
 
 
+class BaseKnowledgeGraph:
+    def __init__(self, conn: BaseStorageAdapter):
+        self.conn = conn
+
+    def create(self, entity_id: int, semantic_triples: list):
+        raise NotImplementedError
+
+
 class BaseParent:
     def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, external_id: str):
+        raise NotImplementedError
+
+
+class BaseParentFact:
+    def __init__(self, conn: BaseStorageAdapter):
+        self.conn = conn
+
+    def create(self, entity_id: int, facts: list):
         raise NotImplementedError
 
 

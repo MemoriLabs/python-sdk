@@ -33,7 +33,7 @@ def test_parent_create(mock_conn, mock_single_result):
 
     assert result == 123
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -71,7 +71,7 @@ def test_process_create(mock_conn, mock_single_result):
 
     assert result == 456
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -95,7 +95,7 @@ def test_session_create(mock_conn, mock_single_result):
 
     assert result == 789
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -127,7 +127,7 @@ def test_conversation_create(mock_conn, mock_single_result):
 
     assert result == 101
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]

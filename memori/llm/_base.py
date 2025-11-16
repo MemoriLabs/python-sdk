@@ -37,16 +37,13 @@ class BaseInvoke:
     def __init__(self, config: Config, method):
         self.config = config
         self._method = method
-        self._client_provider = None
-        self._client_title = None
-        self._client_version = None
         self._uses_protobuf = False
         self._injected_message_count = 0
 
     def configure_for_streaming_usage(self, kwargs):
-        if llm_is_openai(self._client_provider, self._client_title) or llm_is_xai(
-            self._client_provider, self._client_title
-        ):
+        if llm_is_openai(
+            self.config.framework.provider, self.config.llm.provider
+        ) or llm_is_xai(self.config.framework.provider, self.config.llm.provider):
             if kwargs.get("stream", None):
                 stream_options = kwargs.get("stream_options", None)
                 if stream_options is None or not isinstance(
@@ -84,7 +81,7 @@ class BaseInvoke:
                 formatted_kwargs = self.dict_to_json(formatted_kwargs)
         else:
             formatted_kwargs = copy.deepcopy(kwargs)
-            if provider_is_langchain(self._client_provider):
+            if provider_is_langchain(self.config.framework.provider):
                 if "response_format" in formatted_kwargs and isinstance(
                     formatted_kwargs["response_format"], object
                 ):
@@ -196,12 +193,14 @@ class BaseInvoke:
         self._injected_message_count = len(messages)
 
         if (
-            llm_is_openai(self._client_provider, self._client_title)
-            or llm_is_anthropic(self._client_provider, self._client_title)
-            or llm_is_bedrock(self._client_provider, self._client_title)
+            llm_is_openai(self.config.framework.provider, self.config.llm.provider)
+            or llm_is_anthropic(
+                self.config.framework.provider, self.config.llm.provider
+            )
+            or llm_is_bedrock(self.config.framework.provider, self.config.llm.provider)
         ):
             kwargs["messages"] = messages + kwargs["messages"]
-        elif llm_is_xai(self._client_provider, self._client_title):
+        elif llm_is_xai(self.config.framework.provider, self.config.llm.provider):
             from xai_sdk.chat import assistant, user
 
             xai_messages = []
@@ -214,7 +213,7 @@ class BaseInvoke:
                     xai_messages.append(assistant(content))
 
             kwargs["messages"] = xai_messages + kwargs["messages"]
-        elif llm_is_google(self._client_provider, self._client_title):
+        elif llm_is_google(self.config.framework.provider, self.config.llm.provider):
             contents = []
             for message in messages:
                 contents.append(
@@ -277,10 +276,10 @@ class BaseInvoke:
 
         return result
 
-    def set_client(self, provider, title, version):
-        self._client_provider = provider
-        self._client_title = title
-        self._client_version = version
+    def set_client(self, framework_provider, llm_provider, llm_version):
+        self.config.framework.provider = framework_provider
+        self.config.llm.provider = llm_provider
+        self.config.llm.version = llm_version
         return self
 
     def uses_protobuf(self):
@@ -291,9 +290,9 @@ class BaseInvoke:
         from memori.memory._manager import Manager as MemoryManager
 
         payload = self._format_payload(
-            self._client_provider,
-            self._client_title,
-            self._client_version,
+            self.config.framework.provider,
+            self.config.llm.provider,
+            self.config.llm.version,
             start_time,
             __import__("time").time(),
             self._format_kwargs(kwargs),

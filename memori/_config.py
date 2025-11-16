@@ -26,6 +26,8 @@ class Config:
         self.api_key = None
         self.augmentation = None
         self.cache = Cache()
+        self.llm = Llm()
+        self.framework = Framework()
         self.parent_id = None
         self.process_id = None
         self.raise_final_request_attempt = True
@@ -43,3 +45,14 @@ class Config:
     def reset_cache(self):
         self.cache = Cache()
         return self
+
+
+class Framework:
+    def __init__(self):
+        self.provider = None
+
+
+class Llm:
+    def __init__(self):
+        self.provider = None
+        self.version = None

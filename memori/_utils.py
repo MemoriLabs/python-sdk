@@ -9,7 +9,9 @@ r"""
                        memorilabs.ai
 """
 
+import hashlib
 import json
+import re
 
 
 def bytes_to_json(obj):
@@ -39,6 +41,16 @@ def bytes_to_json(obj):
             return json.loads(obj)
         except json.JSONDecodeError:
             return obj
+
+
+def generate_uniq(terms: list):
+    if terms is None or len(terms) == 0:
+        return None
+
+    sha256 = hashlib.sha256()
+    sha256.update(re.sub(r"[^a-z0-9]", "", "".join(terms).lower()).encode("utf-8"))
+
+    return sha256.hexdigest()
 
 
 def merge_chunk(data: dict, chunk: dict):

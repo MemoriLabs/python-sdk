@@ -19,17 +19,35 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from memori._config import Config
+from memori.memory._struct import Memories
 
 
 class Api:
     def __init__(self, config: Config):
-        self.__api_key = "c18b1022-7fe2-42af-ab01-b1f9139184f0"
+        self.__x_api_key = "c18b1022-7fe2-42af-ab01-b1f9139184f0"
         self.__base = os.environ.get("MEMORI_API_URL_BASE")
         if self.__base is None:
-            self.__api_key = "96a7ea3e-11c2-428c-b9ae-5a168363dc80"
+            self.__x_api_key = "96a7ea3e-11c2-428c-b9ae-5a168363dc80"
             self.__base = "https://api.memorilabs.ai"
 
         self.config = config
+
+    def advanced_augmentation(self, summary: str, messages: list):
+        json_ = self.post(
+            "sdk/augmentation",
+            json={
+                "conversation": {"messages": messages, "summary": summary},
+                "llm": {
+                    "model": {
+                        "provider": self.config.llm.provider,
+                        "version": self.config.llm.version,
+                    }
+                },
+                "sdk": {"lang": "python", "version": self.config.version},
+            },
+        )
+
+        return Memories().configure_from_advanced_augmentation(json_)
 
     def get(self, route):
         r = self.__session().get(self.url(route), headers=self.headers())
@@ -53,7 +71,13 @@ class Api:
         return r.json()
 
     def headers(self):
-        return {"X-Memori-API-Key": self.__api_key}
+        headers = {"X-Memori-API-Key": self.__x_api_key}
+
+        api_key = os.environ.get("MEMORI_API_KEY")
+        if api_key is not None:
+            headers["Authorization"] = f"Bearer {api_key}"
+
+        return headers
 
     def __session(self):
         adapter = HTTPAdapter(

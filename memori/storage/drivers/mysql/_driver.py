@@ -11,11 +11,14 @@ r"""
 
 from uuid import uuid4
 
+from memori._utils import generate_uniq
 from memori.storage._base import (
     BaseConversation,
     BaseConversationMessage,
     BaseConversationMessages,
+    BaseKnowledgeGraph,
     BaseParent,
+    BaseParentFact,
     BaseProcess,
     BaseSchema,
     BaseSchemaVersion,
@@ -50,7 +53,7 @@ class Conversation(BaseConversation):
                 session_id,
             ),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -65,6 +68,23 @@ class Conversation(BaseConversation):
             .fetchone()
             .get("id", None)
         )
+
+    def update(self, id: int, summary: str):
+        if summary is None:
+            return self
+
+        self.conn.execute(
+            """
+            UPDATE memori_conversation
+               SET summary = %s
+             WHERE id = %s
+            """,
+            (
+                summary,
+                id,
+            ),
+        )
+        self.conn.commit()
 
 
 class ConversationMessage(BaseConversationMessage):
@@ -118,6 +138,166 @@ class ConversationMessages(BaseConversationMessages):
         return messages
 
 
+class KnowledgeGraph(BaseKnowledgeGraph):
+    def create(self, entity_id: int, semantic_triples: list):
+        if semantic_triples is None or len(semantic_triples) == 0:
+            return self
+
+        for semantic_triple in semantic_triples:
+            uniq = generate_uniq(
+                [semantic_triple.subject_name, semantic_triple.subject_type]
+            )
+
+            self.conn.execute(
+                """
+                INSERT IGNORE INTO memori_subject(
+                    uuid,
+                    name,
+                    type,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    uuid4(),
+                    semantic_triple.name,
+                    semantic_triple.type,
+                    uniq,
+                ),
+            )
+            self.conn.commit()
+
+            subject_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_subject
+                     WHERE uniq = %s
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            uniq = generate_uniq([semantic_triple.predicate])
+
+            self.conn.execute(
+                """
+                INSERT IGNORE INTO memori_predicate(
+                    uuid,
+                    content,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    uuid4(),
+                    semantic_triple.predicate,
+                    uniq,
+                ),
+            )
+            self.conn.commit()
+
+            predicate_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_predicate
+                     WHERE uniq = %s
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            uniq = generate_uniq(
+                [semantic_triple.object_name, semantic_triple.object_type]
+            )
+
+            self.conn.execute(
+                """
+                INSERT IGNORE INTO memori_object(
+                    uuid,
+                    name,
+                    type,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    uuid4(),
+                    semantic_triple.object_name,
+                    semantic_triple.object_type,
+                    uniq,
+                ),
+            )
+            self.conn.commit()
+
+            object_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_object
+                     WHERE uniq = %s
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            if (
+                entity_id is not None
+                and subject_id is not None
+                and predicate_id is not None
+                and object_id is not None
+            ):
+                self.conn.execute(
+                    """
+                    INSERT INTO memori_knowledge_graph(
+                        uuid,
+                        entity_id,
+                        subject_id,
+                        predicate_id,
+                        object_id,
+                        num_times,
+                        date_last_time
+                    ) VALUES (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        1,
+                        current_timestamp()
+                    )
+                    ON DUPLICATE KEY UPDATE
+                        num_times = num_times + 1
+                        date_last_time = current_timestamp()
+                    """,
+                    (uuid4(), entity_id, subject_id, predicate_id, object_id),
+                )
+                self.conn.commit()
+
+        return self
+
+
 class Parent(BaseParent):
     def create(self, external_id: str):
         self.conn.execute(
@@ -132,7 +312,7 @@ class Parent(BaseParent):
             """,
             (uuid4(), external_id),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -149,6 +329,47 @@ class Parent(BaseParent):
         )
 
 
+class ParentFact(BaseParentFact):
+    def create(self, entity_id: str, facts: list):
+        if facts is None or len(facts) == 0:
+            return self
+
+        for fact in facts:
+            self.conn.execute(
+                """
+                INSERT INTO memori_entity_fact(
+                    uuid,
+                    entity_id,
+                    content,
+                    num_times,
+                    date_last_time,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    current_timestamp(),
+                    %s
+                )
+                ON DUPLICATE KEY UPDATE
+                    num_times = num_times + 1
+                    date_last_time = current_timestamp()
+                """,
+                (
+                    uuid4(),
+                    entity_id,
+                    fact,
+                    1,
+                    generate_uniq(fact),
+                ),
+            )
+
+        self.conn.commit()
+
+        return self
+
+
 class Process(BaseProcess):
     def create(self, external_id: str):
         self.conn.execute(
@@ -161,9 +382,12 @@ class Process(BaseProcess):
                 %s
             )
             """,
-            (uuid4(), external_id),
+            (
+                uuid4(),
+                external_id,
+            ),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -194,9 +418,13 @@ class Session(BaseSession):
                 %s
             )
             """,
-            (uuid, parent_id, process_id),
+            (
+                uuid,
+                parent_id,
+                process_id,
+            ),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(

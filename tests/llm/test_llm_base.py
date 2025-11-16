@@ -4,9 +4,9 @@ from unittest.mock import Mock, patch
 from memori._config import Config
 from memori.llm._base import BaseInvoke, BaseLlmAdaptor
 from memori.llm._constants import (
-    LANGCHAIN_CLIENT_PROVIDER,
-    LANGCHAIN_OPENAI_CLIENT_TITLE,
-    OPENAI_CLIENT_TITLE,
+    LANGCHAIN_FRAMEWORK_PROVIDER,
+    LANGCHAIN_OPENAI_LLM_PROVIDER,
+    OPENAI_LLM_PROVIDER,
 )
 from tests.llm.unit_test_objects import UnitTestX, UnitTestY
 
@@ -75,7 +75,7 @@ def test_dist_to_json_dict_has_dict():
 
 def test_configure_for_streaming_usage_openai():
     invoke = BaseInvoke(Config(), "abc")
-    invoke._client_title = OPENAI_CLIENT_TITLE
+    invoke.config.llm.provider = OPENAI_LLM_PROVIDER
 
     assert invoke.configure_for_streaming_usage({"abc": "def", "stream": True}) == {
         "abc": "def",
@@ -94,7 +94,7 @@ def test_configure_for_streaming_usage_openai():
 
 def test_configure_for_streaming_usage_streaming_options_is_not_dict_openai():
     invoke = BaseInvoke(Config(), "abc")
-    invoke._client_title = OPENAI_CLIENT_TITLE
+    invoke.config.llm.provider = OPENAI_LLM_PROVIDER
 
     assert invoke.configure_for_streaming_usage(
         {"abc": "def", "stream": True, "stream_options": 123}
@@ -107,15 +107,15 @@ def test_configure_for_streaming_usage_streaming_options_is_not_dict_openai():
 
 def test_configure_for_streaming_usage_only_if_stream_is_true_openai():
     invoke = BaseInvoke(Config(), "abc")
-    invoke._client_title = OPENAI_CLIENT_TITLE
+    invoke.config.llm.provider = OPENAI_LLM_PROVIDER
 
     assert invoke.configure_for_streaming_usage({"abc": "def"}) == {"abc": "def"}
 
 
 def test_configure_for_streaming_usage_langchain_openai():
     invoke = BaseInvoke(Config(), "abc")
-    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
-    invoke._client_title = LANGCHAIN_OPENAI_CLIENT_TITLE
+    invoke.config.framework.provider = LANGCHAIN_FRAMEWORK_PROVIDER
+    invoke.config.llm.provider = OPENAI_LLM_PROVIDER
 
     assert invoke.configure_for_streaming_usage({"abc": "def", "stream": True}) == {
         "abc": "def",
@@ -134,8 +134,8 @@ def test_configure_for_streaming_usage_langchain_openai():
 
 def test_configure_for_streaming_usage_streaming_opts_is_not_dict_langchain_openai():
     invoke = BaseInvoke(Config(), "abc")
-    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
-    invoke._client_title = LANGCHAIN_OPENAI_CLIENT_TITLE
+    invoke.config.framework.provider = LANGCHAIN_FRAMEWORK_PROVIDER
+    invoke.config.llm.provider = LANGCHAIN_OPENAI_LLM_PROVIDER
 
     assert invoke.configure_for_streaming_usage(
         {"abc": "def", "stream": True, "stream_options": 123}
@@ -148,8 +148,8 @@ def test_configure_for_streaming_usage_streaming_opts_is_not_dict_langchain_open
 
 def test_configure_for_streaming_usage_only_if_stream_is_true_langchain_openai():
     invoke = BaseInvoke(Config(), "abc")
-    invoke._client_provider = LANGCHAIN_CLIENT_PROVIDER
-    invoke._client_title = LANGCHAIN_OPENAI_CLIENT_TITLE
+    invoke.config.framework.provider = LANGCHAIN_FRAMEWORK_PROVIDER
+    invoke.config.llm.provider = LANGCHAIN_OPENAI_LLM_PROVIDER
 
     assert invoke.configure_for_streaming_usage({"abc": "def"}) == {"abc": "def"}
 

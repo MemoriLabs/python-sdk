@@ -1,9 +1,9 @@
 from memori.llm._constants import (
-    ATHROPIC_CLIENT_TITLE,
-    GOOGLE_CLIENT_TITLE,
-    LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
-    LANGCHAIN_CLIENT_PROVIDER,
-    OPENAI_CLIENT_TITLE,
+    ATHROPIC_LLM_PROVIDER,
+    GOOGLE_LLM_PROVIDER,
+    LANGCHAIN_CHATBEDROCK_LLM_PROVIDER,
+    LANGCHAIN_FRAMEWORK_PROVIDER,
+    OPENAI_LLM_PROVIDER,
 )
 from memori.llm._registry import Registry
 from memori.llm.adapters.anthropic._adapter import Adapter as AnthropicLlmAdapter
@@ -14,22 +14,22 @@ from memori.llm.adapters.openai._adapter import Adapter as OpenAiLlmAdapter
 
 def test_llm_anthropic():
     assert isinstance(
-        Registry().adapter(None, ATHROPIC_CLIENT_TITLE), AnthropicLlmAdapter
+        Registry().adapter(None, ATHROPIC_LLM_PROVIDER), AnthropicLlmAdapter
     )
 
 
 def test_llm_bedrock():
     assert isinstance(
         Registry().adapter(
-            LANGCHAIN_CLIENT_PROVIDER, LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
+            LANGCHAIN_FRAMEWORK_PROVIDER, LANGCHAIN_CHATBEDROCK_LLM_PROVIDER
         ),
         BedrockLlmAdapter,
     )
 
 
 def test_llm_google():
-    assert isinstance(Registry().adapter(None, GOOGLE_CLIENT_TITLE), GoogleLlmAdapter)
+    assert isinstance(Registry().adapter(None, GOOGLE_LLM_PROVIDER), GoogleLlmAdapter)
 
 
 def test_llm_openai():
-    assert isinstance(Registry().adapter(None, OPENAI_CLIENT_TITLE), OpenAiLlmAdapter)
+    assert isinstance(Registry().adapter(None, OPENAI_LLM_PROVIDER), OpenAiLlmAdapter)

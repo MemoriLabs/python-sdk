@@ -13,16 +13,16 @@ import asyncio
 
 from memori.llm._base import BaseClient
 from memori.llm._constants import (
-    ATHROPIC_CLIENT_TITLE,
-    GOOGLE_CLIENT_TITLE,
-    LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
-    LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
-    LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
-    LANGCHAIN_CLIENT_PROVIDER,
-    LANGCHAIN_OPENAI_CLIENT_TITLE,
-    OPENAI_CLIENT_TITLE,
-    PYDANTIC_AI_CLIENT_PROVIDER,
-    PYDANTIC_AI_OPENAI_CLIENT_TITLE,
+    ATHROPIC_LLM_PROVIDER,
+    GOOGLE_LLM_PROVIDER,
+    LANGCHAIN_CHATBEDROCK_LLM_PROVIDER,
+    LANGCHAIN_CHATGOOGLEGENAI_LLM_PROVIDER,
+    LANGCHAIN_CHATVERTEXAI_LLM_PROVIDER,
+    LANGCHAIN_FRAMEWORK_PROVIDER,
+    LANGCHAIN_OPENAI_LLM_PROVIDER,
+    OPENAI_LLM_PROVIDER,
+    PYDANTIC_AI_FRAMEWORK_PROVIDER,
+    PYDANTIC_AI_OPENAI_LLM_PROVIDER,
 )
 from memori.llm._invoke import (
     Invoke,
@@ -49,23 +49,23 @@ class Anthropic(BaseClient):
 
                 client.beta.messages.create = (
                     InvokeAsync(self.config, client.beta._messages_create)
-                    .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
+                    .set_client(None, ATHROPIC_LLM_PROVIDER, client._version)
                     .invoke
                 )
                 client.messages.create = (
                     InvokeAsync(self.config, client._messages_create)
-                    .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
+                    .set_client(None, ATHROPIC_LLM_PROVIDER, client._version)
                     .invoke
                 )
             except RuntimeError:
                 client.beta.messages.create = (
                     Invoke(self.config, client.beta._messages_create)
-                    .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
+                    .set_client(None, ATHROPIC_LLM_PROVIDER, client._version)
                     .invoke
                 )
                 client.messages.create = (
                     Invoke(self.config, client._messages_create)
-                    .set_client(None, ATHROPIC_CLIENT_TITLE, client._version)
+                    .set_client(None, ATHROPIC_LLM_PROVIDER, client._version)
                     .invoke
                 )
 
@@ -85,7 +85,7 @@ class Google(BaseClient):
             client_version = getattr(client, "_version", None)
             client.models.generate_content = (
                 Invoke(self.config, client.models.actual_generate_content)
-                .set_client(None, GOOGLE_CLIENT_TITLE, client_version)
+                .set_client(None, GOOGLE_LLM_PROVIDER, client_version)
                 .uses_protobuf()
                 .invoke
             )
@@ -97,7 +97,7 @@ class Google(BaseClient):
                 )
                 client.aio.models.generate_content = (
                     InvokeAsync(self.config, client.aio.models.actual_generate_content)
-                    .set_client(None, GOOGLE_CLIENT_TITLE, client_version)
+                    .set_client(None, GOOGLE_LLM_PROVIDER, client_version)
                     .uses_protobuf()
                     .invoke
                 )
@@ -112,7 +112,7 @@ class Google(BaseClient):
                             self.config,
                             client.aio.models.actual_generate_content_stream,
                         )
-                        .set_client(None, GOOGLE_CLIENT_TITLE, client_version)
+                        .set_client(None, GOOGLE_LLM_PROVIDER, client_version)
                         .uses_protobuf()
                         .invoke
                     )
@@ -143,8 +143,8 @@ class LangChain(BaseClient):
                 chatbedrock.client.invoke_model = (
                     Invoke(self.config, chatbedrock.client._invoke_model)
                     .set_client(
-                        LANGCHAIN_CLIENT_PROVIDER,
-                        LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
+                        LANGCHAIN_FRAMEWORK_PROVIDER,
+                        LANGCHAIN_CHATBEDROCK_LLM_PROVIDER,
                         None,
                     )
                     .invoke
@@ -159,8 +159,8 @@ class LangChain(BaseClient):
                         chatbedrock.client._invoke_model_with_response_stream,
                     )
                     .set_client(
-                        LANGCHAIN_CLIENT_PROVIDER,
-                        LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
+                        LANGCHAIN_FRAMEWORK_PROVIDER,
+                        LANGCHAIN_CHATBEDROCK_LLM_PROVIDER,
                         None,
                     )
                     .invoke
@@ -181,8 +181,8 @@ class LangChain(BaseClient):
                 chatgooglegenai.client.generate_content = (
                     Invoke(self.config, chatgooglegenai.client._generate_content)
                     .set_client(
-                        LANGCHAIN_CLIENT_PROVIDER,
-                        LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+                        LANGCHAIN_FRAMEWORK_PROVIDER,
+                        LANGCHAIN_CHATGOOGLEGENAI_LLM_PROVIDER,
                         None,
                     )
                     .uses_protobuf()
@@ -199,8 +199,8 @@ class LangChain(BaseClient):
                             chatgooglegenai.async_client._stream_generate_content,
                         )
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_CHATGOOGLEGENAI_LLM_PROVIDER,
                             None,
                         )
                         .uses_protobuf()
@@ -226,8 +226,8 @@ class LangChain(BaseClient):
                     client.beta.chat.completions.create = (
                         Invoke(self.config, client.beta._chat_completions_create)
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -239,8 +239,8 @@ class LangChain(BaseClient):
                     client.beta.chat.completions.parse = (
                         Invoke(self.config, client.beta._chat_completions_parse)
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -250,8 +250,8 @@ class LangChain(BaseClient):
                     client.chat.completions.create = (
                         Invoke(self.config, client._chat_completions_create)
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -261,8 +261,8 @@ class LangChain(BaseClient):
                     client.chat.completions.parse = (
                         Invoke(self.config, client._chat_completions_parse)
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -286,8 +286,8 @@ class LangChain(BaseClient):
                             self.config, client.beta._chat_completions_create
                         )
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -301,8 +301,8 @@ class LangChain(BaseClient):
                             self.config, client.beta._chat_completions_parse
                         )
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -314,8 +314,8 @@ class LangChain(BaseClient):
                             self.config, client._chat_completions_create
                         )
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -325,8 +325,8 @@ class LangChain(BaseClient):
                     client.chat.completions.parse = (
                         InvokeAsyncIterator(self.config, client._chat_completions_parse)
                         .set_client(
-                            LANGCHAIN_CLIENT_PROVIDER,
-                            LANGCHAIN_OPENAI_CLIENT_TITLE,
+                            LANGCHAIN_FRAMEWORK_PROVIDER,
+                            LANGCHAIN_OPENAI_LLM_PROVIDER,
                             None,
                         )
                         .invoke
@@ -348,8 +348,8 @@ class LangChain(BaseClient):
                         chatvertexai.prediction_client.actual_generate_content,
                     )
                     .set_client(
-                        LANGCHAIN_CLIENT_PROVIDER,
-                        LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
+                        LANGCHAIN_FRAMEWORK_PROVIDER,
+                        LANGCHAIN_CHATVERTEXAI_LLM_PROVIDER,
                         None,
                     )
                     .uses_protobuf()
@@ -381,7 +381,7 @@ class OpenAi(BaseClient):
                         InvokeAsyncStream(
                             self.config, client.beta._chat_completions_parse
                         )
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
                     client.chat.completions.create = (
@@ -389,13 +389,13 @@ class OpenAi(BaseClient):
                             self.config,
                             client.chat._completions_create,
                         )
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
                 else:
                     client.beta.chat.completions.parse = (
                         InvokeAsync(self.config, client.beta._chat_completions_parse)
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
                     client.chat.completions.create = (
@@ -403,14 +403,14 @@ class OpenAi(BaseClient):
                             self.config,
                             client.chat._completions_create,
                         )
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
             except RuntimeError:
                 if stream is True:
                     client.beta.chat.completions.parse = (
                         InvokeStream(self.config, client.beta._chat_completions_parse)
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
                     client.chat.completions.create = (
@@ -418,13 +418,13 @@ class OpenAi(BaseClient):
                             self.config,
                             client.chat._completions_create,
                         )
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
                 else:
                     client.beta.chat.completions.parse = (
                         Invoke(self.config, client.beta._chat_completions_parse)
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
                     client.chat.completions.create = (
@@ -432,7 +432,7 @@ class OpenAi(BaseClient):
                             self.config,
                             client.chat._completions_create,
                         )
-                        .set_client(_provider, OPENAI_CLIENT_TITLE, client._version)
+                        .set_client(_provider, OPENAI_LLM_PROVIDER, client._version)
                         .invoke
                     )
 
@@ -462,8 +462,8 @@ class PydanticAi(BaseClient):
                     client.chat.completions.actual_chat_completions_create,
                 )
                 .set_client(
-                    PYDANTIC_AI_CLIENT_PROVIDER,
-                    PYDANTIC_AI_OPENAI_CLIENT_TITLE,
+                    PYDANTIC_AI_FRAMEWORK_PROVIDER,
+                    PYDANTIC_AI_OPENAI_LLM_PROVIDER,
                     client._version,
                 )
                 .invoke
@@ -476,7 +476,8 @@ class PydanticAi(BaseClient):
 
 @Registry.register_client(lambda client: "xai" in str(type(client).__module__).lower())
 class XAi(BaseClient):
-    """XAI client requires special handling due to its two-step API.
+    """
+    XAI client requires special handling due to its two-step API.
 
     Unlike other clients, the actual API call happens on the Chat object
     returned by create(), not on the create() method itself. All wrapping

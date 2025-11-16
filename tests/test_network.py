@@ -263,3 +263,12 @@ def test_api_headers():
     assert Api(Config()).headers() == {
         "X-Memori-API-Key": "c18b1022-7fe2-42af-ab01-b1f9139184f0"
     }
+
+
+def test_api_headers_with_api_key():
+    os.environ["MEMORI_API_KEY"] = "abc-def-ghi-jkl"
+    os.environ["MEMORI_API_URL_BASE"] = "https://a.b.com"
+    assert Api(Config()).headers() == {
+        "Authorization": "Bearer abc-def-ghi-jkl",
+        "X-Memori-API-Key": "c18b1022-7fe2-42af-ab01-b1f9139184f0",
+    }

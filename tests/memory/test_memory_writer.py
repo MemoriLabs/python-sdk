@@ -1,4 +1,4 @@
-from memori.llm._constants import OPENAI_CLIENT_TITLE
+from memori.llm._constants import OPENAI_LLM_PROVIDER
 from memori.memory._writer import Writer
 
 
@@ -13,7 +13,7 @@ def test_execute(config, mocker):
     Writer(config).execute(
         {
             "conversation": {
-                "client": {"provider": None, "title": OPENAI_CLIENT_TITLE},
+                "client": {"provider": None, "title": OPENAI_LLM_PROVIDER},
                 "query": {"messages": [{"content": "abc", "role": "user"}]},
                 "response": {
                     "choices": [
@@ -58,7 +58,7 @@ def test_execute_with_parent_and_process(config, mocker):
     Writer(config).execute(
         {
             "conversation": {
-                "client": {"provider": None, "title": OPENAI_CLIENT_TITLE},
+                "client": {"provider": None, "title": OPENAI_LLM_PROVIDER},
                 "query": {"messages": [{"content": "abc", "role": "user"}]},
                 "response": {
                     "choices": [
@@ -100,7 +100,7 @@ def test_execute_skips_system_messages(config, mocker):
     Writer(config).execute(
         {
             "conversation": {
-                "client": {"provider": None, "title": OPENAI_CLIENT_TITLE},
+                "client": {"provider": None, "title": OPENAI_LLM_PROVIDER},
                 "query": {
                     "messages": [
                         {"content": "You are a helpful assistant", "role": "system"},
