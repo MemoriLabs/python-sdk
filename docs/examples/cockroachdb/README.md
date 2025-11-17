@@ -14,6 +14,24 @@ Sign Up for [CockroachDB Cloud](https://www.cockroachlabs.com/product/cloud/):
 
 You may need to record the database connection string for your implementation. Once you've signed up, your database is provisioned and ready for use with Memori.
 
+## Quick Start
+
+1. **Install dependencies**:
+   ```bash
+   uv sync
+   ```
+
+2. **Set environment variables**:
+   ```bash
+   export OPENAI_API_KEY=your_api_key_here
+   export COCKROACH_CONNECTION_STRING=postgresql://user:password@host:26257/defaultdb?sslmode=require
+   ```
+
+3. **Run the example**:
+   ```bash
+   uv run python main.py
+   ```
+
 ## Full Example Using CockroachDB, SQLAlchemy and OpenAI
 
 ```python
