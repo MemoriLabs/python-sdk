@@ -18,6 +18,7 @@ services:
       - DATABASE_URL=postgresql://memori:memori@postgres:5432/memori_test
       - MONGODB_URL=mongodb://memori:memori@mongodb:27017/memori_test?authSource=admin
       - MYSQL_DATABASE_URL=mysql+pymysql://memori:memori@mysql:3306/memori_test
+      - ORACLE_DATABASE_URL=oracle+oracledb://system:memori@oracle:1521/?service_name=FREEPDB1
       - GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
     command: /bin/bash
     depends_on:
@@ -26,6 +27,8 @@ services:
       mongodb:
         condition: service_healthy
       mysql:
+        condition: service_healthy
+      oracle:
         condition: service_healthy
     networks:
       - memori-network
@@ -101,10 +104,28 @@ services:
     networks:
       - memori-network
 
+  oracle:
+    image: container-registry.oracle.com/database/free:latest-lite
+    environment:
+      ORACLE_PWD: memori
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    networks:
+      - memori-network
+
 volumes:
   postgres_data:
   mongodb_data:
   mysql_data:
+  oracle_data:
 
 networks:
   memori-network:

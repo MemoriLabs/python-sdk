@@ -64,7 +64,7 @@ SQLiteTestDBSession = sessionmaker(
 # Oracle-specific session
 oracle_test_uri = os.environ.get(
     "ORACLE_DATABASE_URL",
-    "oracle+oracledb://memori:memori@oracle:1521/?service_name=ORCLPDB",
+    "oracle+oracledb://system:memori@oracle:1521/?service_name=FREEPDB1",
 )
 
 oracle_test_db_core = create_engine(
