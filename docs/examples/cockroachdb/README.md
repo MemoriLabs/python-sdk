@@ -1,6 +1,6 @@
 # Memori + CockroachDB Example
 
-**Memori + CockroachDB** brings durable, distributed memory to AI — instantly, globally, and at any scale. Memori transforms conversations into structured, queryable intelligence, while CockroachDB keeps that memory available, resilient, and consistently accurate across regions. Deploy and scale effortlessly from prototype to production with zero downtime on enterprise-grade infrastructure. Give your AI a foundation to remember, reason, and evolve — with the simplicity of cloud and the reliability and power of distributed SQL.
+**Memori + CockroachDB** brings durable, distributed memory to AI - instantly, globally, and at any scale. Memori transforms conversations into structured, queryable intelligence, while CockroachDB keeps that memory available, resilient, and consistently accurate across regions. Deploy and scale effortlessly from prototype to production with zero downtime on enterprise-grade infrastructure. Give your AI a foundation to remember, reason, and evolve - with the simplicity of cloud and the reliability and power of distributed SQL.
 
 ## Getting Started
 
