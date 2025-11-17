@@ -230,6 +230,7 @@ uv run pre-commit run --all-files
 - PostgreSQL (via psycopg2, psycopg3)
 - MySQL / MariaDB (via pymysql)
 - MongoDB (via pymongo)
+- Oracle (via cx_Oracle, python-oracledb)
 - SQLite (stdlib)
 - CockroachDB
 - Neon, Supabase (PostgreSQL-compatible)

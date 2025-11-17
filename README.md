@@ -144,7 +144,7 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 
 ## Supported Database Integrations
 
-- **DB API 2.0** - Direct support for any Python database driver that implements the [PEP 249 Database API Specification v2.0](https://peps.python.org/pep-0249/). This includes drivers like `psycopg`, `pymysql`, `MySQLdb`, and `sqlite3`.
+- **DB API 2.0** - Direct support for any Python database driver that implements the [PEP 249 Database API Specification v2.0](https://peps.python.org/pep-0249/). This includes drivers like `psycopg`, `pymysql`, `MySQLdb`, `cx_Oracle`, `oracledb`, and `sqlite3`.
 - **Django** - Native integration with Django's ORM and database layer
 - SQLAlchemy
 

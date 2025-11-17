@@ -18,6 +18,7 @@ from memori.storage.drivers import (
 )
 from memori.storage.drivers import (
     mysql,  # noqa: F401
+    oracle,  # noqa: F401
     postgresql,  # noqa: F401
     sqlite,  # noqa: F401
 )

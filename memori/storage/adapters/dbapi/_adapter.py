@@ -88,6 +88,7 @@ class Adapter(BaseStorageAdapter):
             "postgresql": ["psycopg"],
             "mysql": ["mysql", "MySQLdb", "pymysql"],
             "sqlite": ["sqlite"],
+            "oracle": ["cx_Oracle", "oracledb"],
         }
         for dialect, identifiers in dialect_mapping.items():
             if any(identifier in module_name for identifier in identifiers):
