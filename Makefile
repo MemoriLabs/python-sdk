@@ -28,6 +28,9 @@ init-postgres: ## Initialize PostgreSQL schema
 init-mysql: ## Initialize MySQL schema
 	docker compose exec -e PYTHONPATH=/app dev python tests/build/mysql.py
 
+init-oracle: ## Initialize Oracle schema
+	docker compose exec -e PYTHONPATH=/app dev python tests/build/oracle.py
+
 init-mongodb: ## Initialize MongoDB schema
 	docker compose exec -e PYTHONPATH=/app dev python tests/build/mongodb.py
 

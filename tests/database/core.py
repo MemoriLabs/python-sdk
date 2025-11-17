@@ -61,6 +61,20 @@ SQLiteTestDBSession = sessionmaker(
     autocommit=False, autoflush=False, bind=sqlite_test_db_core
 )
 
+# Oracle-specific session
+oracle_test_uri = os.environ.get(
+    "ORACLE_DATABASE_URL",
+    "oracle+oracledb://memori:memori@oracle:1521/?service_name=ORCLPDB",
+)
+
+oracle_test_db_core = create_engine(
+    oracle_test_uri, pool_pre_ping=True, pool_recycle=300
+)
+
+OracleTestDBSession = sessionmaker(
+    autocommit=False, autoflush=False, bind=oracle_test_db_core
+)
+
 # MongoDB-specific session
 mongodb_test_uri = os.environ.get(
     "MONGODB_URL", "mongodb://memori:memori@mongodb:27017/memori_test?authSource=admin"
