@@ -10,6 +10,7 @@ from memori import Memori
 from tests.database.core import (
     MongoTestDBSession,
     MySQLTestDBSession,
+    OracleTestDBSession,
     PostgresTestDBSession,
     SQLiteTestDBSession,
     TestDBSession,
@@ -26,9 +27,11 @@ async def run(db_backend: str = "default"):
     if db_backend == "mongodb":
         session = MongoTestDBSession
     elif db_backend == "mysql":
-        session = MySQLTestDBSession
-    elif db_backend == "postgres":
-        session = PostgresTestDBSession
+        conn = MySQLTestDBSession
+    elif db_backend == "oracle":
+        conn = OracleTestDBSession
+    elif db_backend == "mongodb":
+        conn = MongoTestDBSession
     elif db_backend == "sqlite":
         session = SQLiteTestDBSession
     else:
@@ -82,7 +85,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--db",
-        choices=["default", "postgres", "mysql", "mongodb", "sqlite"],
+        choices=["default", "postgres", "mysql", "oracle", "mongodb", "sqlite"],
         default="default",
         help="Database backend to use (default: uses DATABASE_URL env var)",
     )
