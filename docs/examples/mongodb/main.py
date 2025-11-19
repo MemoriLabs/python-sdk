@@ -62,8 +62,8 @@ if __name__ == "__main__":
         # Pass a function that returns the database when needed
         mem = Memori(conn=get_db).openai.register(client)
 
-        # Track conversations by user (parent_id) and session (process_id)
-        mem.attribution(parent_id="12345", process_id="my-ai-bot")
+        # Track conversations by user (entity_id) and session (process_id)
+        mem.attribution(entity_id="12345", process_id="my-ai-bot")
 
         # Build database schema (creates MongoDB collections)
         mem.storage.build()

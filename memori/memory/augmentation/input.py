@@ -9,7 +9,15 @@ r"""
                        memorilabs.ai
 """
 
-from memori.memory.augmentation._manager import Manager
-from memori.memory.augmentation.augmentations import memori  # noqa: F401
+from dataclasses import dataclass
+from typing import Any
 
-__all__ = ["Manager"]
+
+@dataclass
+class AugmentationInput:
+    """Data class for augmentation input."""
+
+    conversation_id: str | None
+    entity_id: str | None
+    process_id: str | None
+    conversation_messages: list[dict[str, Any]]

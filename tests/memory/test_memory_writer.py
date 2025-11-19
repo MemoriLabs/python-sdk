@@ -41,8 +41,8 @@ def test_execute(config, mocker):
     assert calls[2][0][3] == "ghi"
 
 
-def test_execute_with_parent_and_process(config, mocker):
-    config.parent_id = "123"
+def test_execute_with_entity_and_process(config, mocker):
+    config.entity_id = "123"
     config.process_id = "456"
 
     mock_messages = [
@@ -70,20 +70,20 @@ def test_execute_with_parent_and_process(config, mocker):
         }
     )
 
-    assert config.cache.parent_id is not None
+    assert config.cache.entity_id is not None
     assert config.cache.process_id is not None
     assert config.cache.session_id is not None
     assert config.cache.conversation_id is not None
 
-    assert config.storage.driver.parent.create.called
-    assert config.storage.driver.parent.create.call_args[0][0] == "123"
+    assert config.storage.driver.entity.create.called
+    assert config.storage.driver.entity.create.call_args[0][0] == "123"
 
     assert config.storage.driver.process.create.called
     assert config.storage.driver.process.create.call_args[0][0] == "456"
 
     assert config.storage.driver.session.create.called
     session_call_args = config.storage.driver.session.create.call_args[0]
-    assert session_call_args[1] == config.cache.parent_id
+    assert session_call_args[1] == config.cache.entity_id
     assert session_call_args[2] == config.cache.process_id
 
     assert config.storage.driver.conversation.message.create.call_count == 3

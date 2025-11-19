@@ -29,7 +29,7 @@ class Invoke(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = self._method(**kwargs)
@@ -67,7 +67,7 @@ class InvokeAsync(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = await self._method(**kwargs)
@@ -80,7 +80,7 @@ class InvokeAsyncIterator(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = await self._method(**kwargs)
@@ -102,7 +102,7 @@ class InvokeAsyncStream(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         stream = await self._method(**kwargs)
@@ -120,7 +120,7 @@ class InvokeStream(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = await self._method(**kwargs)

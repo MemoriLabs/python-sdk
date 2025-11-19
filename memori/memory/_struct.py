@@ -12,9 +12,9 @@ r"""
 
 class Conversation:
     def __init__(self):
-        self.summary = None
+        self.summary: str | None = None
 
-    def configure_from_advanced_augmentation(self, json_):
+    def configure_from_advanced_augmentation(self, json_: dict) -> "Conversation":
         conversation = json_.get("conversation", None)
         if conversation is None:
             return self
@@ -26,50 +26,60 @@ class Conversation:
 
 class Entity:
     def __init__(self):
-        self.facts = []
-        self.semantic_triples = []
+        self.facts: list[str] = []
+        self.fact_embeddings: list[list[float]] = []
+        self.semantic_triples: list[SemanticTriple] = []
 
-    def configure_from_advanced_augmentation(self, json_):
+    def configure_from_advanced_augmentation(self, json_: dict) -> "Entity":
         entity = json_.get("entity", None)
         if entity is None:
             return self
 
-        facts = entity.get("facts", [])
-        for fact in facts:
-            self.facts.append(fact)
+        self.facts.extend(entity.get("facts", []))
+        self.fact_embeddings.extend(entity.get("fact_embeddings", []))
 
         semantic_triples = entity.get("semantic_triples", [])
         for entry in semantic_triples:
-            subject = entry.get("subject", None)
-            predicate = entry.get("predicate", None)
-            object_ = entry.get("object", None)
-
-            if subject is not None and predicate is not None and object_ is not None:
-                subject_name = subject.get("name", None)
-                subject_type = subject.get("type", None)
-                if subject_name is not None and subject_type is not None:
-                    object_name = object_.get("name", None)
-                    object_type = object_.get("type", None)
-                    if object_name is not None and object_type is not None:
-                        semantic_triple = SemanticTriple()
-                        semantic_triple.subject_name = subject_name
-                        semantic_triple.subject_type = subject_type.lower()
-                        semantic_triple.predicate = predicate
-                        semantic_triple.object_name = object_name
-                        semantic_triple.object_type = object_type.lower()
-
-                        self.semantic_triples.append(semantic_triple)
+            triple = self._parse_semantic_triple(entry)
+            if triple is not None:
+                self.semantic_triples.append(triple)
 
         return self
+
+    def _parse_semantic_triple(self, entry: dict) -> "SemanticTriple | None":
+        """Parse a semantic triple from API response."""
+        subject = entry.get("subject")
+        predicate = entry.get("predicate")
+        object_ = entry.get("object")
+
+        if not subject or not predicate or not object_:
+            return None
+
+        subject_name = subject.get("name")
+        subject_type = subject.get("type")
+        object_name = object_.get("name")
+        object_type = object_.get("type")
+
+        if not all([subject_name, subject_type, object_name, object_type]):
+            return None
+
+        triple = SemanticTriple()
+        triple.subject_name = subject_name
+        triple.subject_type = subject_type.lower()
+        triple.predicate = predicate
+        triple.object_name = object_name
+        triple.object_type = object_type.lower()
+
+        return triple
 
 
 class Memories:
     def __init__(self):
-        self.conversation = None
-        self.entity = None
-        self.process = None
+        self.conversation: Conversation | None = None
+        self.entity: Entity | None = None
+        self.process: Process | None = None
 
-    def configure_from_advanced_augmentation(self, json_):
+    def configure_from_advanced_augmentation(self, json_: dict) -> "Memories":
         self.conversation = Conversation().configure_from_advanced_augmentation(json_)
         self.entity = Entity().configure_from_advanced_augmentation(json_)
         self.process = Process().configure_from_advanced_augmentation(json_)
@@ -78,24 +88,22 @@ class Memories:
 
 class Process:
     def __init__(self):
-        self.attributes = []
+        self.attributes: list[str] = []
 
-    def configure_from_advanced_augmentation(self, json_):
+    def configure_from_advanced_augmentation(self, json_: dict) -> "Process":
         process = json_.get("process", None)
         if process is None:
             return self
 
-        attributes = process.get("attributes", [])
-        for attribute in attributes:
-            self.attributes.append(attribute)
+        self.attributes.extend(process.get("attributes", []))
 
         return self
 
 
 class SemanticTriple:
     def __init__(self):
-        self.subject_name = None
-        self.subject_type = None
-        self.predicate = None
-        self.object_name = None
-        self.object_type = None
+        self.subject_name: str | None = None
+        self.subject_type: str | None = None
+        self.predicate: str | None = None
+        self.object_name: str | None = None
+        self.object_type: str | None = None

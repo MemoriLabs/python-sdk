@@ -16,7 +16,7 @@ Behavior:
 - Creates SQLite database file if it doesn't exist
 - Builds Memori schema (tables for messages, conversations, etc.)
 - Interactive chat loop where all messages are automatically persisted
-- Each conversation tracked by parent_id and process_id
+- Each conversation tracked by entity_id and process_id
 """
 
 import os
@@ -60,8 +60,8 @@ if __name__ == "__main__":
     mem = Memori(conn=SessionLocal).openai.register(client)
 
     try:
-        # Track conversations by user (parent_id) and session (process_id)
-        mem.attribution(parent_id="12345", process_id="my-ai-bot")
+        # Track conversations by user (entity_id) and session (process_id)
+        mem.attribution(entity_id="12345", process_id="my-ai-bot")
 
         # Build database schema (creates tables for messages, conversations, etc.)
         mem.storage.build()

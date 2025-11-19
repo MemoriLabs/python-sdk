@@ -21,5 +21,5 @@ class Registry:
 
         return decorator
 
-    def augmentations(self):
-        return [aug_class() for aug_class in self._augmentations.values()]
+    def augmentations(self, config=None):
+        return [aug_class(config=config) for aug_class in self._augmentations.values()]

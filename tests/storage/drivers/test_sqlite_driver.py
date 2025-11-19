@@ -5,7 +5,8 @@ from memori.storage.drivers.sqlite._driver import (
     ConversationMessage,
     ConversationMessages,
     Driver,
-    Parent,
+    Entity,
+    EntityFact,
     Process,
     Schema,
     SchemaVersion,
@@ -18,41 +19,42 @@ def test_driver_initialization(mock_conn):
     driver = Driver(mock_conn)
 
     assert isinstance(driver.conversation, Conversation)
-    assert isinstance(driver.parent, Parent)
+    assert isinstance(driver.entity, Entity)
+    assert isinstance(driver.entity_fact, EntityFact)
     assert isinstance(driver.process, Process)
     assert isinstance(driver.schema, Schema)
     assert isinstance(driver.session, Session)
 
 
-def test_parent_create(mock_conn, mock_single_result):
-    """Test creating a parent record."""
+def test_entity_create(mock_conn, mock_single_result):
+    """Test creating a entity record."""
     mock_conn.execute.return_value = mock_single_result({"id": 123})
 
-    parent = Parent(mock_conn)
-    result = parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    result = entity.create("external-entity-id")
 
     assert result == 123
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
-    assert "insert or ignore into memori_parent" in insert_call[0][0].lower()
-    assert insert_call[0][1][1] == "external-parent-id"
+    assert "insert or ignore into memori_entity" in insert_call[0][0].lower()
+    assert insert_call[0][1][1] == "external-entity-id"
 
     # Verify SELECT query
     select_call = mock_conn.execute.call_args_list[1]
     assert "select id" in select_call[0][0].lower()
-    assert "from memori_parent" in select_call[0][0].lower()
-    assert select_call[0][1] == ("external-parent-id",)
+    assert "from memori_entity" in select_call[0][0].lower()
+    assert select_call[0][1] == ("external-entity-id",)
 
 
-def test_parent_generates_uuid(mock_conn, mock_single_result):
+def test_entity_generates_uuid(mock_conn, mock_single_result):
     """Test that create generates a valid UUID string."""
     mock_conn.execute.return_value = mock_single_result({"id": 123})
 
-    parent = Parent(mock_conn)
-    parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    entity.create("external-entity-id")
 
     # Check that a UUID was generated in the INSERT
     insert_call = mock_conn.execute.call_args_list[0]
@@ -73,7 +75,7 @@ def test_process_create(mock_conn, mock_single_result):
 
     assert result == 456
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -93,11 +95,11 @@ def test_session_create(mock_conn, mock_single_result):
 
     session = Session(mock_conn)
     session_uuid = "test-session-uuid"
-    result = session.create(session_uuid, parent_id=123, process_id=456)
+    result = session.create(session_uuid, entity_id=123, process_id=456)
 
     assert result == 789
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -129,7 +131,7 @@ def test_conversation_create(mock_conn, mock_single_result):
 
     assert result == 101
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -249,3 +251,141 @@ def test_schema_initialization(mock_conn):
 
     assert isinstance(schema.version, SchemaVersion)
     assert schema.conn == mock_conn
+
+
+def test_entity_fact_create(mock_conn, mocker):
+    """Test creating entity facts."""
+    mocker.patch("memori._utils.generate_uniq", return_value="uniq123")
+    mocker.patch(
+        "memori.llm._embeddings.format_embedding_for_db",
+        return_value=b"\x00\x01\x02\x03",  # Binary data
+    )
+
+    entity_fact = EntityFact(mock_conn)
+    facts = ["User likes Python", "User works as engineer"]
+    embeddings = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+
+    result = entity_fact.create(entity_id=123, facts=facts, fact_embeddings=embeddings)
+
+    assert result == entity_fact
+    assert mock_conn.execute.call_count == 2
+    assert mock_conn.commit.call_count == 1
+
+    # Verify first INSERT query
+    first_insert = mock_conn.execute.call_args_list[0]
+    assert "insert into memori_entity_fact" in first_insert[0][0].lower()
+    assert "on conflict(entity_id, uniq)" in first_insert[0][0].lower()
+
+    # Verify parameters for first fact
+    params = first_insert[0][1]
+    assert params[1] == 123  # entity_id
+    assert params[2] == "User likes Python"  # content
+    assert params[3] == b"\x00\x01\x02\x03"  # content_embedding (binary)
+    assert params[4] == 1  # num_times
+    assert params[5] == "uniq123"  # uniq
+
+
+def test_entity_fact_create_empty_facts(mock_conn):
+    """Test creating entity facts with empty list."""
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.create(entity_id=123, facts=[], fact_embeddings=None)
+
+    assert result == entity_fact
+    assert mock_conn.execute.call_count == 0
+
+
+def test_entity_fact_create_without_embeddings(mock_conn, mocker):
+    """Test creating entity facts without embeddings."""
+    mocker.patch("memori._utils.generate_uniq", return_value="uniq123")
+    mocker.patch(
+        "memori.llm._embeddings.format_embedding_for_db",
+        return_value=b"",  # Empty binary data
+    )
+
+    entity_fact = EntityFact(mock_conn)
+    facts = ["User likes Python"]
+
+    entity_fact.create(entity_id=123, facts=facts, fact_embeddings=None)
+
+    assert mock_conn.execute.call_count == 1
+
+    # Verify embedding was formatted as empty binary
+    insert_call = mock_conn.execute.call_args_list[0]
+    params = insert_call[0][1]
+    assert params[3] == b""  # content_embedding (empty binary)
+
+
+def test_entity_fact_get_embeddings(mock_conn, mock_multiple_results):
+    """Test retrieving embeddings for an entity."""
+    mock_conn.execute.return_value = mock_multiple_results(
+        [
+            {"id": 1, "content_embedding": b"\x00\x01\x02\x03"},
+            {"id": 2, "content_embedding": b"\x04\x05\x06\x07"},
+        ]
+    )
+
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.get_embeddings(entity_id=123, limit=100)
+
+    assert len(result) == 2
+    assert result[0]["id"] == 1
+    assert result[0]["content_embedding"] == b"\x00\x01\x02\x03"
+    assert result[1]["id"] == 2
+    assert result[1]["content_embedding"] == b"\x04\x05\x06\x07"
+
+    # Verify SELECT query
+    select_call = mock_conn.execute.call_args_list[0]
+    assert "select id" in select_call[0][0].lower()
+    assert "content_embedding" in select_call[0][0].lower()
+    assert "from memori_entity_fact" in select_call[0][0].lower()
+    assert "where entity_id = ?" in select_call[0][0].lower()
+    assert "limit ?" in select_call[0][0].lower()
+    assert select_call[0][1] == (123, 100)
+
+
+def test_entity_fact_get_embeddings_default_limit(mock_conn, mock_empty_result):
+    """Test retrieving embeddings with default limit."""
+    mock_conn.execute.return_value = mock_empty_result
+
+    entity_fact = EntityFact(mock_conn)
+    entity_fact.get_embeddings(entity_id=123)
+
+    # Verify default limit of 1000
+    select_call = mock_conn.execute.call_args_list[0]
+    assert select_call[0][1] == (123, 1000)
+
+
+def test_entity_fact_get_facts_by_ids(mock_conn, mock_multiple_results):
+    """Test retrieving fact content by IDs."""
+    mock_conn.execute.return_value = mock_multiple_results(
+        [
+            {"id": 1, "content": "User likes Python"},
+            {"id": 2, "content": "User works as engineer"},
+        ]
+    )
+
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.get_facts_by_ids([1, 2])
+
+    assert len(result) == 2
+    assert result[0]["id"] == 1
+    assert result[0]["content"] == "User likes Python"
+    assert result[1]["id"] == 2
+    assert result[1]["content"] == "User works as engineer"
+
+    # Verify SELECT query
+    select_call = mock_conn.execute.call_args_list[0]
+    assert "select id" in select_call[0][0].lower()
+    assert "content" in select_call[0][0].lower()
+    assert "from memori_entity_fact" in select_call[0][0].lower()
+    assert "where id in (?,?)" in select_call[0][0].lower()
+    assert select_call[0][1] == (1, 2)
+
+
+def test_entity_fact_get_facts_by_ids_empty(mock_conn):
+    """Test retrieving facts with empty IDs list."""
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.get_facts_by_ids([])
+
+    assert result == []
+    assert mock_conn.execute.call_count == 0

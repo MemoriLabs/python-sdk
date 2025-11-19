@@ -232,7 +232,7 @@ def test_handle_post_response_with_augmentation_no_conversation():
         mock_manager_instance.execute.assert_called_once()
         config.augmentation.enqueue.assert_called_once()
         call_args = config.augmentation.enqueue.call_args[0][0]
-        assert "conversation_id" not in call_args
+        assert call_args.conversation_id is None
 
 
 def test_handle_post_response_with_augmentation_and_conversation():
@@ -256,4 +256,295 @@ def test_handle_post_response_with_augmentation_and_conversation():
         mock_manager_instance.execute.assert_called_once()
         config.augmentation.enqueue.assert_called_once()
         call_args = config.augmentation.enqueue.call_args[0][0]
-        assert call_args["conversation_id"] == 123
+        assert call_args.conversation_id == 123
+
+
+def test_extract_user_query_with_user_message():
+    invoke = BaseInvoke(Config(), "test_method")
+    kwargs = {
+        "messages": [
+            {"role": "system", "content": "You are helpful"},
+            {"role": "user", "content": "What is the weather?"},
+        ]
+    }
+    assert invoke._extract_user_query(kwargs) == "What is the weather?"
+
+
+def test_extract_user_query_with_multiple_user_messages():
+    invoke = BaseInvoke(Config(), "test_method")
+    kwargs = {
+        "messages": [
+            {"role": "user", "content": "First question"},
+            {"role": "assistant", "content": "First answer"},
+            {"role": "user", "content": "Second question"},
+        ]
+    }
+    assert invoke._extract_user_query(kwargs) == "Second question"
+
+
+def test_extract_user_query_no_messages():
+    invoke = BaseInvoke(Config(), "test_method")
+    assert invoke._extract_user_query({}) == ""
+    assert invoke._extract_user_query({"messages": []}) == ""
+
+
+def test_extract_user_query_no_user_messages():
+    invoke = BaseInvoke(Config(), "test_method")
+    kwargs = {
+        "messages": [
+            {"role": "system", "content": "You are helpful"},
+            {"role": "assistant", "content": "I can help"},
+        ]
+    }
+    assert invoke._extract_user_query(kwargs) == ""
+
+
+def test_inject_recalled_facts_no_storage():
+    config = Config()
+    config.storage = None
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    result = invoke.inject_recalled_facts(kwargs)
+
+    assert result == kwargs
+
+
+def test_inject_recalled_facts_no_entity_id():
+    config = Config()
+    config.storage = Mock()
+    config.entity_id = None
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    result = invoke.inject_recalled_facts(kwargs)
+
+    assert result == kwargs
+
+
+def test_inject_recalled_facts_entity_create_returns_none():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = None
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    result = invoke.inject_recalled_facts(kwargs)
+
+    assert result == kwargs
+
+
+def test_inject_recalled_facts_no_user_query():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = 1
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "system", "content": "You are helpful"}]}
+    result = invoke.inject_recalled_facts(kwargs)
+
+    assert result == kwargs
+
+
+def test_inject_recalled_facts_no_facts_found():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = 1
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+
+    with patch("memori.memory.recall.Recall") as mock_recall:
+        mock_recall.return_value.search_facts.return_value = []
+        result = invoke.inject_recalled_facts(kwargs)
+
+    assert result == kwargs
+    assert len(kwargs["messages"]) == 1
+
+
+def test_inject_recalled_facts_no_relevant_facts():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = 1
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+
+    with patch("memori.memory.recall.Recall") as mock_recall:
+        mock_recall.return_value.search_facts.return_value = [
+            {"content": "Irrelevant fact", "similarity": 0.05}
+        ]
+        result = invoke.inject_recalled_facts(kwargs)
+
+    assert result == kwargs
+    assert len(kwargs["messages"]) == 1
+
+
+def test_inject_recalled_facts_success():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = 1
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "What do I like?"}]}
+
+    with patch("memori.memory.recall.Recall") as mock_recall:
+        mock_recall.return_value.search_facts.return_value = [
+            {"content": "User likes pizza", "similarity": 0.9},
+            {"content": "User likes coding", "similarity": 0.85},
+        ]
+        result = invoke.inject_recalled_facts(kwargs)
+
+    assert len(result["messages"]) == 2
+    assert result["messages"][0]["role"] == "system"
+    assert "User likes pizza" in result["messages"][0]["content"]
+    assert "User likes coding" in result["messages"][0]["content"]
+    assert result["messages"][1]["role"] == "user"
+
+
+def test_inject_recalled_facts_filters_by_relevance():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = 1
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+
+    with patch("memori.memory.recall.Recall") as mock_recall:
+        mock_recall.return_value.search_facts.return_value = [
+            {"content": "Relevant fact", "similarity": 0.9},
+            {"content": "Irrelevant fact", "similarity": 0.05},
+        ]
+        result = invoke.inject_recalled_facts(kwargs)
+
+    assert len(result["messages"]) == 2
+    assert "Relevant fact" in result["messages"][0]["content"]
+    assert "Irrelevant fact" not in result["messages"][0]["content"]
+
+
+def test_inject_recalled_facts_extends_existing_system_message():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = 1
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "What do I like?"},
+        ]
+    }
+
+    with patch("memori.memory.recall.Recall") as mock_recall:
+        mock_recall.return_value.search_facts.return_value = [
+            {"content": "User likes pizza", "similarity": 0.9},
+        ]
+        result = invoke.inject_recalled_facts(kwargs)
+
+    # Should still have 2 messages (not 3)
+    assert len(result["messages"]) == 2
+    # First message should still be system role
+    assert result["messages"][0]["role"] == "system"
+    # System message should contain both original content and recalled facts
+    assert "You are a helpful assistant." in result["messages"][0]["content"]
+    assert "User likes pizza" in result["messages"][0]["content"]
+    assert "Relevant context about the user" in result["messages"][0]["content"]
+
+
+def test_inject_recalled_facts_creates_system_message_when_none_exists():
+    config = Config()
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.entity.create.return_value = 1
+    config.entity_id = "test-entity"
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "What do I like?"}]}
+
+    with patch("memori.memory.recall.Recall") as mock_recall:
+        mock_recall.return_value.search_facts.return_value = [
+            {"content": "User likes pizza", "similarity": 0.9},
+        ]
+        result = invoke.inject_recalled_facts(kwargs)
+
+    # Should have 2 messages now (system + user)
+    assert len(result["messages"]) == 2
+    # First message should be system role
+    assert result["messages"][0]["role"] == "system"
+    # System message should contain recalled facts
+    assert "User likes pizza" in result["messages"][0]["content"]
+    assert "Relevant context about the user" in result["messages"][0]["content"]
+
+
+def test_inject_conversation_messages_no_conversation_id():
+    config = Config()
+    config.cache.conversation_id = None
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    result = invoke.inject_conversation_messages(kwargs)
+
+    assert result == kwargs
+
+
+def test_inject_conversation_messages_no_storage():
+    config = Config()
+    config.cache.conversation_id = 123
+    config.storage = None
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    result = invoke.inject_conversation_messages(kwargs)
+
+    assert result == kwargs
+
+
+def test_inject_conversation_messages_no_messages():
+    config = Config()
+    config.cache.conversation_id = 123
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.conversation.messages.read.return_value = []
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "Hello"}]}
+    result = invoke.inject_conversation_messages(kwargs)
+
+    assert result == kwargs
+    assert invoke._injected_message_count == 0
+
+
+def test_inject_conversation_messages_openai_success():
+    config = Config()
+    config.cache.conversation_id = 123
+    config.llm.provider = OPENAI_LLM_PROVIDER
+    config.storage = Mock()
+    config.storage.driver = Mock()
+    config.storage.driver.conversation.messages.read.return_value = [
+        {"role": "user", "content": "Previous question"},
+        {"role": "assistant", "content": "Previous answer"},
+    ]
+    invoke = BaseInvoke(config, "test_method")
+
+    kwargs = {"messages": [{"role": "user", "content": "New question"}]}
+    result = invoke.inject_conversation_messages(kwargs)
+
+    assert len(result["messages"]) == 3
+    assert result["messages"][0]["content"] == "Previous question"
+    assert result["messages"][1]["content"] == "Previous answer"
+    assert result["messages"][2]["content"] == "New question"
+    assert invoke._injected_message_count == 2

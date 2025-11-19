@@ -15,6 +15,11 @@ def test_base_augmentation_init_disabled():
 
 @pytest.mark.asyncio
 async def test_base_augmentation_process_not_implemented():
+    from memori.memory.augmentation.input import AugmentationInput
+
     aug = BaseAugmentation()
+    mock_input = AugmentationInput(
+        conversation_id=None, entity_id=None, process_id=None, conversation_messages=[]
+    )
     with pytest.raises(NotImplementedError):
-        await aug.process(AugmentationContext(payload={}), None)
+        await aug.process(AugmentationContext(payload=mock_input), None)

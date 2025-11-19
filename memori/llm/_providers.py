@@ -23,7 +23,7 @@ class Anthropic(BaseProvider):
         if self.client is None:
             self.client = AnthropicMemoriClient(self.config).register(client)
 
-        return self.parent
+        return self.entity
 
 
 class Google(BaseProvider):
@@ -31,7 +31,7 @@ class Google(BaseProvider):
         if self.client is None:
             self.client = GoogleMemoriClient(self.config).register(client)
 
-        return self.parent
+        return self.entity
 
 
 class LangChain(BaseProvider):
@@ -46,7 +46,7 @@ class LangChain(BaseProvider):
                 chatvertexai=chatvertexai,
             )
 
-        return self.parent
+        return self.entity
 
 
 class OpenAi(BaseProvider):
@@ -56,7 +56,7 @@ class OpenAi(BaseProvider):
                 client, stream=stream
             )
 
-        return self.parent
+        return self.entity
 
 
 class PydanticAi(BaseProvider):
@@ -64,7 +64,7 @@ class PydanticAi(BaseProvider):
         if self.client is None:
             self.client = PydanticAiMemoriClient(self.config).register(client)
 
-        return self.parent
+        return self.entity
 
 
 class XAi(BaseProvider):
@@ -72,4 +72,4 @@ class XAi(BaseProvider):
         if self.client is None:
             self.client = XAiMemoriClient(self.config).register(client, stream=stream)
 
-        return self.parent
+        return self.entity

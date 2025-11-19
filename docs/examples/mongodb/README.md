@@ -23,7 +23,7 @@ Example showing how to use Memori with MongoDB.
 ## How Memori is Used
 
 1. Registers OpenAI client with Memori
-2. Configures attribution with `parent_id` (user) and `process_id` (bot/session)
+2. Configures attribution with `entity_id` (user) and `process_id` (bot/session)
 3. Builds Memori collections using `build()` to create necessary database collections
 4. Runs interactive chat loop where all messages are automatically persisted to MongoDB
 5. No explicit commits needed - MongoDB writes are immediate

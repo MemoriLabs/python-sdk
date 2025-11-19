@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # Pass a function that creates a new connection when needed
     mem = Memori(conn=db_conn_factory).openai.register(client)
 
-    mem.attribution(parent_id="user_123", process_id="astronomer_agent")
+    mem.attribution(entity_id="user_123", process_id="astronomer_agent")
 
     print()
 

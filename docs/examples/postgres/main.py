@@ -55,8 +55,8 @@ if __name__ == "__main__":
     mem = Memori(conn=SessionLocal).openai.register(client)
 
     try:
-        # Track conversations by user (parent_id) and session (process_id)
-        mem.attribution(parent_id="12345", process_id="my-ai-bot")
+        # Track conversations by user (entity_id) and session (process_id)
+        mem.attribution(entity_id="12345", process_id="my-ai-bot")
 
         # Build database schema (creates tables for messages, conversations, etc.)
         mem.storage.build()

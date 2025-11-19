@@ -66,4 +66,7 @@ mongodb_test_uri = os.environ.get(
     "MONGODB_URL", "mongodb://memori:memori@mongodb:27017/memori_test?authSource=admin"
 )
 
-MongoTestDBSession = MongoClient(mongodb_test_uri)
+
+def MongoTestDBSession():
+    """Get a fresh MongoDB client instance."""
+    return MongoClient(mongodb_test_uri)

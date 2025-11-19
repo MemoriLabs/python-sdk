@@ -16,9 +16,9 @@ from memori.storage._base import (
     BaseConversation,
     BaseConversationMessage,
     BaseConversationMessages,
+    BaseEntity,
+    BaseEntityFact,
     BaseKnowledgeGraph,
-    BaseParent,
-    BaseParentFact,
     BaseProcess,
     BaseProcessAttribute,
     BaseSchema,
@@ -86,6 +86,27 @@ class Conversation(BaseConversation):
             ),
         )
         self.conn.commit()
+
+        return self
+
+    def read(self, id: int) -> dict | None:
+        result = (
+            self.conn.execute(
+                """
+                SELECT id, uuid, session_id, summary, date_created, date_updated
+                  FROM memori_conversation
+                 WHERE id = %s
+                """,
+                (id,),
+            )
+            .mappings()
+            .fetchone()
+        )
+
+        if result is None:
+            return None
+
+        return dict(result)
 
 
 class ConversationMessage(BaseConversationMessage):
@@ -165,8 +186,8 @@ class KnowledgeGraph(BaseKnowledgeGraph):
                 """,
                 (
                     uuid4(),
-                    semantic_triple.name,
-                    semantic_triple.type,
+                    semantic_triple.subject_name,
+                    semantic_triple.subject_type,
                     uniq,
                 ),
             )
@@ -289,7 +310,7 @@ class KnowledgeGraph(BaseKnowledgeGraph):
                         current_timestamp()
                     )
                     ON DUPLICATE KEY UPDATE
-                        num_times = num_times + 1
+                        num_times = num_times + 1,
                         date_last_time = current_timestamp()
                     """,
                     (uuid4(), entity_id, subject_id, predicate_id, object_id),
@@ -299,11 +320,11 @@ class KnowledgeGraph(BaseKnowledgeGraph):
         return self
 
 
-class Parent(BaseParent):
+class Entity(BaseEntity):
     def create(self, external_id: str):
         self.conn.execute(
             """
-            INSERT IGNORE INTO memori_parent(
+            INSERT IGNORE INTO memori_entity(
                 uuid,
                 external_id
             ) VALUES (
@@ -319,7 +340,7 @@ class Parent(BaseParent):
             self.conn.execute(
                 """
                 SELECT id
-                  FROM memori_parent
+                  FROM memori_entity
                  WHERE external_id = %s
                 """,
                 (external_id,),
@@ -330,18 +351,28 @@ class Parent(BaseParent):
         )
 
 
-class ParentFact(BaseParentFact):
-    def create(self, entity_id: str, facts: list):
+class EntityFact(BaseEntityFact):
+    def create(self, entity_id: str, facts: list, fact_embeddings: list | None = None):
         if facts is None or len(facts) == 0:
             return self
 
-        for fact in facts:
+        from memori.llm._embeddings import format_embedding_for_db
+
+        for i, fact in enumerate(facts):
+            embedding = (
+                fact_embeddings[i]
+                if fact_embeddings and i < len(fact_embeddings)
+                else []
+            )
+            embedding_formatted = format_embedding_for_db(embedding, "mysql")
+
             self.conn.execute(
                 """
                 INSERT INTO memori_entity_fact(
                     uuid,
                     entity_id,
                     content,
+                    content_embedding,
                     num_times,
                     date_last_time,
                     uniq
@@ -350,17 +381,19 @@ class ParentFact(BaseParentFact):
                     %s,
                     %s,
                     %s,
+                    %s,
                     current_timestamp(),
                     %s
                 )
                 ON DUPLICATE KEY UPDATE
-                    num_times = num_times + 1
+                    num_times = num_times + 1,
                     date_last_time = current_timestamp()
                 """,
                 (
                     uuid4(),
                     entity_id,
                     fact,
+                    embedding_formatted,
                     1,
                     generate_uniq(fact),
                 ),
@@ -369,6 +402,40 @@ class ParentFact(BaseParentFact):
         self.conn.commit()
 
         return self
+
+    def get_embeddings(self, entity_id: int, limit: int = 1000):
+        return (
+            self.conn.execute(
+                """
+                SELECT id,
+                       content_embedding
+                  FROM memori_entity_fact
+                 WHERE entity_id = %s
+                 LIMIT %s
+                """,
+                (entity_id, limit),
+            )
+            .mappings()
+            .fetchall()
+        )
+
+    def get_facts_by_ids(self, fact_ids: list[int]):
+        if not fact_ids:
+            return []
+        placeholders = ",".join(["%s"] * len(fact_ids))
+        return (
+            self.conn.execute(
+                f"""
+                SELECT id,
+                       content
+                  FROM memori_entity_fact
+                 WHERE id IN ({placeholders})
+                """,
+                tuple(fact_ids),
+            )
+            .mappings()
+            .fetchall()
+        )
 
 
 class Process(BaseProcess):
@@ -429,7 +496,7 @@ class ProcessAttribute(BaseProcessAttribute):
                     %s
                 )
                 ON DUPLICATE KEY UPDATE
-                    num_times = num_times + 1
+                    num_times = num_times + 1,
                     date_last_time = current_timestamp()
                 """,
                 (
@@ -447,12 +514,12 @@ class ProcessAttribute(BaseProcessAttribute):
 
 
 class Session(BaseSession):
-    def create(self, uuid: str, parent_id: int, process_id: int):
+    def create(self, uuid: str, entity_id: int, process_id: int):
         self.conn.execute(
             """
             INSERT IGNORE INTO memori_session(
                 uuid,
-                parent_id,
+                entity_id,
                 process_id
             ) VALUES (
                 %s,
@@ -462,7 +529,7 @@ class Session(BaseSession):
             """,
             (
                 uuid,
-                parent_id,
+                entity_id,
                 process_id,
             ),
         )
@@ -539,7 +606,10 @@ class Driver:
 
     def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
-        self.parent = Parent(conn)
+        self.entity = Entity(conn)
+        self.entity_fact = EntityFact(conn)
+        self.knowledge_graph = KnowledgeGraph(conn)
         self.process = Process(conn)
+        self.process_attribute = ProcessAttribute(conn)
         self.schema = Schema(conn)
         self.session = Session(conn)

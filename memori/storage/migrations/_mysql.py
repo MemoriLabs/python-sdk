@@ -132,6 +132,7 @@ migrations = {
                     uuid varchar(36) not null,
                     entity_id bigint not null,
                     content text not null,
+                    content_embedding blob not null,
                     num_times bigint not null,
                     date_last_time datetime not null,
                     uniq char(64) not null,
@@ -141,7 +142,9 @@ migrations = {
                     primary key (id),
                     unique key (entity_id, id),
                     unique key (entity_id, uniq),
-                    unique key (uuid)
+                    unique key (uuid),
+                    --
+                    key idx_memori_entity_fact_entity_id_freq (entity_id, num_times desc, date_last_time desc),
                     --
                     constraint fk_memori_ent_summ_entity
                    foreign key (entity_id)
@@ -162,15 +165,13 @@ migrations = {
                     date_last_time datetime not null,
                     uniq char(64) not null,
                     date_created datetime not null default current_timestamp,
-                    date_updated datetime default null on update current_timestamp
-                    --
+                    date_updated datetime default null on update current_timestamp,
                     primary key (id),
                     unique key (process_id, id),
                     unique key (process_id, uniq),
                     unique key (uuid),
-                    --
                     constraint fk_memori_proc_attribute
-                   foreign key (process_id)
+                       foreign key (process_id)
                     references memori_process (id)
                      on delete cascade
                 )

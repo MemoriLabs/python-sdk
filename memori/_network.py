@@ -11,7 +11,6 @@ r"""
 
 import asyncio
 import os
-from functools import partial
 
 import aiohttp
 import requests
@@ -32,8 +31,8 @@ class Api:
 
         self.config = config
 
-    def advanced_augmentation(self, summary: str, messages: list):
-        json_ = self.post(
+    async def advanced_augmentation_async(self, summary: str, messages: list):
+        json_ = await self.post_async(
             "sdk/augmentation",
             json={
                 "conversation": {"messages": messages, "summary": summary},
@@ -56,6 +55,9 @@ class Api:
 
         return r.json()
 
+    async def get_async(self, route):
+        return await self.__request_async("GET", route)
+
     def patch(self, route, json=None):
         r = self.__session().patch(self.url(route), headers=self.headers(), json=json)
 
@@ -63,12 +65,18 @@ class Api:
 
         return r.json()
 
+    async def patch_async(self, route, json=None):
+        return await self.__request_async("PATCH", route, json=json)
+
     def post(self, route, json=None):
         r = self.__session().post(self.url(route), headers=self.headers(), json=json)
 
         r.raise_for_status()
 
         return r.json()
+
+    async def post_async(self, route, json=None):
+        return await self.__request_async("POST", route, json=json)
 
     def headers(self):
         headers = {"X-Memori-API-Key": self.__x_api_key}
@@ -78,6 +86,43 @@ class Api:
             headers["Authorization"] = f"Bearer {api_key}"
 
         return headers
+
+    async def __request_async(self, method: str, route: str, json=None):
+        url = self.url(route)
+        headers = self.headers()
+        attempts = 0
+        max_retries = 5
+        backoff_factor = 1
+
+        while True:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.request(
+                        method.upper(),
+                        url,
+                        headers=headers,
+                        json=json,
+                        timeout=aiohttp.ClientTimeout(total=30),
+                    ) as r:
+                        r.raise_for_status()
+                        return await r.json()
+            except aiohttp.ClientResponseError as e:
+                if e.status < 500 or e.status > 599:
+                    raise
+
+                if attempts >= max_retries:
+                    raise
+
+                sleep = backoff_factor * (2**attempts)
+                await asyncio.sleep(sleep)
+                attempts += 1
+            except Exception:
+                if attempts >= max_retries:
+                    raise
+
+                sleep = backoff_factor * (2**attempts)
+                await asyncio.sleep(sleep)
+                attempts += 1
 
     def __session(self):
         adapter = HTTPAdapter(
@@ -103,90 +148,3 @@ class Api:
 class _ApiRetryRecoverable(Retry):
     def is_retry(self, method, status_code, has_retry_after=False):
         return 500 <= status_code <= 599
-
-
-class AsyncRequest:
-    def __init__(self, config: Config):
-        self.config = config
-
-    def configure_session(self, session: requests.Session):
-        adapter = HTTPAdapter(
-            max_retries=_ApiRetryRecoverable(
-                allowed_methods=["GET", "PATCH", "POST", "PUT", "DELETE"],
-                backoff_factor=self.config.request_backoff_factor,
-                raise_on_status=False,
-                status=None,
-                total=self.config.request_num_backoff,
-            )
-        )
-
-        session.mount("https://", adapter)
-        session.mount("http://", adapter)
-
-        return session
-
-    def delete(self, url: str, **kwargs):
-        return self.send("DELETE", url, **kwargs)
-
-    def get(self, url: str, **kwargs):
-        return self.send("GET", url, **kwargs)
-
-    def patch(self, url: str, **kwargs):
-        return self.send("PATCH", url, **kwargs)
-
-    def post(self, url: str, **kwargs):
-        return self.send("POST", url, **kwargs)
-
-    def put(self, url: str, **kwargs):
-        return self.send("PUT", url, **kwargs)
-
-    def send(self, method: str, url: str, **kwargs):
-        try:
-            loop = asyncio.get_running_loop()
-
-            return self.send_async(method, url, **kwargs)
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            func = partial(self.send_sync, method, url, **kwargs)
-
-            return loop.run_until_complete(
-                loop.run_in_executor(self.config.thread_pool_executor, func)
-            )
-
-    async def send_async(self, method: str, url: str, **kwargs):
-        attempts = 0
-
-        while True:
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.request(
-                        method.upper(),
-                        url,
-                        timeout=self.config.request_secs_timeout,
-                        **kwargs,
-                    ) as r:
-                        r.raise_for_status()
-
-                        await r.json()
-
-                        return r
-            except Exception as e:
-                if isinstance(e, aiohttp.ClientResponseError):
-                    if e.status < 500 or e.status > 599:
-                        raise
-
-                if attempts >= self.config.request_num_backoff:
-                    raise
-
-                sleep = self.config.request_backoff_factor * (2**attempts)
-                await asyncio.sleep(sleep)
-                attempts += 1
-
-    def send_sync(self, method: str, url: str, **kwargs):
-        session = self.configure_session(requests.Session())
-
-        r = session.request(method.upper(), url, **kwargs)
-
-        r.raise_for_status()
-        return r

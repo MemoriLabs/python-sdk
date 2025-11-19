@@ -231,7 +231,7 @@ def test_build_payload(xai_wrappers, config):
         query_formatted, response_json, client_version, start_time
     )
 
-    assert payload["attribution"]["parent"]["id"] == config.parent_id
+    assert payload["attribution"]["entity"]["id"] == config.entity_id
     assert payload["attribution"]["process"]["id"] == config.process_id
     assert payload["conversation"]["client"]["title"] == "xai"
     assert payload["conversation"]["client"]["version"] == "1.0.0"

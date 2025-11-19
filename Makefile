@@ -46,9 +46,9 @@ dev-clean: ## Complete teardown: stop containers, remove images, prune build cac
 test: ## Run tests in the container
 	docker compose exec dev pytest
 
-run-integration: ## Run integration test scripts directly (e.g., make run-integration FILE=tests/llm/clients/oss/openai/async.py)
-	@echo "Running integration test: $(FILE)"
-	docker compose exec -e PYTHONPATH=/app dev python $(FILE)
+run-integration: ## Run integration test scripts directly (e.g., make run-integration FILE=tests/llm/clients/oss/openai/async.py ARGS="--db mysql")
+	@echo "Running integration test: $(FILE) $(ARGS)"
+	docker compose exec -e PYTHONPATH=/app dev python $(FILE) $(ARGS)
 
 lint: ## Run linting (format check)
 	docker compose exec dev uv run ruff check .

@@ -11,7 +11,6 @@ r"""
 
 import asyncio
 import json
-import pprint
 import time
 
 from google.protobuf import json_format
@@ -57,9 +56,6 @@ class XAiWrappers:
                 xai_messages.append(assistant(content))
 
         kwargs["messages"] = xai_messages + kwargs.get("messages", [])
-
-        if self.config.is_test_mode():
-            pprint.pprint(kwargs)
 
         return kwargs
 
@@ -191,7 +187,7 @@ class XAiWrappers:
         """Build the payload for memory storage."""
         return {
             "attribution": {
-                "parent": {"id": self.config.parent_id},
+                "entity": {"id": self.config.entity_id},
                 "process": {"id": self.config.process_id},
             },
             "conversation": {

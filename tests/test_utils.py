@@ -35,7 +35,7 @@ def test_bytes_to_json():
 
 
 def test_generate_uniq():
-    assert generate_uniq(None) is None
+    assert generate_uniq(None) is None  # type: ignore[arg-type]
     assert generate_uniq([]) is None
 
     assert (

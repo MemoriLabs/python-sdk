@@ -76,7 +76,6 @@ class DbWriterRuntime:
     def enqueue_write(self, task: WriteTask, timeout: float = 5.0) -> bool:
         try:
             if self.queue is None:
-                # Not configured/started yet; drop safely
                 return False
             self.queue.put(task, timeout=timeout)
             return True
@@ -105,12 +104,18 @@ class DbWriterRuntime:
                                 adapter.flush()
                                 adapter.commit()
                         except Exception:
+                            import traceback
+
+                            traceback.print_exc()
                             if adapter:
                                 try:
                                     adapter.rollback()
                                 except Exception:  # nosec B110
                                     pass
-            except Exception:  # nosec B110
+            except Exception:
+                import traceback
+
+                traceback.print_exc()
                 time.sleep(1)
 
     def _collect_batch(self) -> list[WriteTask]:

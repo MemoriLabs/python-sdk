@@ -24,7 +24,7 @@ async def run():
 
     mem.xai.register(client)
 
-    mem.attribution(parent_id="123", process_id="456")
+    mem.attribution(entity_id="123", process_id="456")
 
     print("-" * 25)
 

@@ -9,8 +9,8 @@ r"""
                        memorilabs.ai
 """
 
-from memori.memory.augmentation.augmentations.template._augmentation import (
-    TemplateAugmentation,
+from memori.memory.augmentation.augmentations.memori._augmentation import (
+    AdvancedAugmentation,
 )
 
-__all__ = ["TemplateAugmentation"]
+__all__ = ["AdvancedAugmentation"]
