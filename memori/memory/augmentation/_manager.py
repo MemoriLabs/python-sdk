@@ -4,12 +4,14 @@ r"""
 | |\/| |/ _ \ '_ ` _ \ / _ \| '__| |
 | |  | |  __/ | | | | | (_) | |  | |
 |_|  |_|\___|_| |_| |_|\___/|_|  |_|
-                  perfectam memoriam
-                         by GibsonAI
-                       memorilabs.ai
+                 perfectam memoriam
+                        by GibsonAI
+                      memorilabs.ai
 """
 
 import asyncio
+import logging
+from collections.abc import Callable
 from typing import Any
 
 from memori._config import Config
@@ -17,25 +19,44 @@ from memori.memory.augmentation._base import AugmentationContext
 from memori.memory.augmentation._db_writer import WriteTask, get_db_writer
 from memori.memory.augmentation._registry import Registry as AugmentationRegistry
 from memori.memory.augmentation._runtime import get_runtime
+from memori.memory.augmentation.input import AugmentationInput
 from memori.storage._connection import connection_context
+
+logger = logging.getLogger(__name__)
+
+MAX_WORKERS = 50
+DB_WRITER_BATCH_SIZE = 100
+DB_WRITER_BATCH_TIMEOUT = 0.1
+DB_WRITER_QUEUE_SIZE = 1000
+RUNTIME_READY_TIMEOUT = 1.0
 
 
 class Manager:
     def __init__(self, config: Config) -> None:
         self.config = config
-        self.augmentations = AugmentationRegistry().augmentations()
-        self.conn_factory = None
+        self.augmentations = AugmentationRegistry().augmentations(config=config)
+        self.conn_factory: Callable | None = None
         self._active = False
-        self.max_workers = 50
-        self.db_writer_batch_size = 100
-        self.db_writer_batch_timeout = 0.1
-        self.db_writer_queue_size = 1000
+        self.max_workers = MAX_WORKERS
+        self.db_writer_batch_size = DB_WRITER_BATCH_SIZE
+        self.db_writer_batch_timeout = DB_WRITER_BATCH_TIMEOUT
+        self.db_writer_queue_size = DB_WRITER_QUEUE_SIZE
 
-    def start(self, conn) -> "Manager":
+    def start(self, conn: Callable | Any) -> "Manager":
+        """Start the augmentation manager with a database connection.
+
+        Args:
+            conn: Either a callable that returns a connection (e.g. sessionmaker)
+                  or a connection instance (will be wrapped in a lambda).
+        """
         if conn is None:
             return self
 
-        self.conn_factory = conn
+        if callable(conn):
+            self.conn_factory = conn
+        else:
+            self.conn_factory = lambda: conn
+
         self._active = True
 
         runtime = get_runtime()
@@ -43,28 +64,28 @@ class Manager:
 
         db_writer = get_db_writer()
         db_writer.configure(self)
-        db_writer.ensure_started(conn)
+        db_writer.ensure_started(self.conn_factory)
 
         return self
 
-    def enqueue(self, payload: dict[str, Any]) -> "Manager":
+    def enqueue(self, input_data: AugmentationInput) -> "Manager":
         if not self._active or not self.conn_factory:
             return self
 
         runtime = get_runtime()
 
-        if not runtime.ready.wait(timeout=1.0):
+        if not runtime.ready.wait(timeout=RUNTIME_READY_TIMEOUT):
             raise RuntimeError("Augmentation runtime is not available")
 
         if runtime.loop is None:
             raise RuntimeError("Event loop is not available")
 
         asyncio.run_coroutine_threadsafe(
-            self._process_augmentations(payload), runtime.loop
+            self._process_augmentations(input_data), runtime.loop
         )
         return self
 
-    async def _process_augmentations(self, payload: dict[str, Any]) -> None:
+    async def _process_augmentations(self, input_data: AugmentationInput) -> None:
         if not self.augmentations:
             return
 
@@ -73,15 +94,24 @@ class Manager:
             return
 
         async with runtime.semaphore:
-            ctx = AugmentationContext(payload=payload)
+            ctx = AugmentationContext(payload=input_data)
 
-            with connection_context(self.conn_factory) as (conn, adapter, driver):
-                for aug in self.augmentations:
-                    if aug.enabled:
-                        ctx = await aug.process(ctx, driver)
+            try:
+                with connection_context(self.conn_factory) as (conn, adapter, driver):
+                    for aug in self.augmentations:
+                        if aug.enabled:
+                            try:
+                                ctx = await aug.process(ctx, driver)
+                            except Exception as e:
+                                logger.error(
+                                    f"Error in augmentation {aug.__class__.__name__}: {e}",
+                                    exc_info=True,
+                                )
 
-                if ctx.writes:
-                    self._enqueue_writes(ctx.writes)
+                    if ctx.writes:
+                        self._enqueue_writes(ctx.writes)
+            except Exception as e:
+                logger.error(f"Error processing augmentations: {e}", exc_info=True)
 
     def _enqueue_writes(self, writes: list[dict[str, Any]]) -> None:
         db_writer = get_db_writer()

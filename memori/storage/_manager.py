@@ -38,7 +38,11 @@ class Manager:
         if conn is None:
             return self
 
-        self.conn_factory = conn
+        if callable(conn):
+            self.conn_factory = conn
+        else:
+            self.conn_factory = lambda: conn
+
         self.adapter = Registry().adapter(conn)
         self.driver = Registry().driver(self.adapter)
 

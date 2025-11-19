@@ -52,7 +52,7 @@ mem = Memori().openai.register(client)
 ## Attribution
 
 ```python
-mem.attribution(parent_id="12345", process_id="my-ai-bot")
+mem.attribution(entity_id="12345", process_id="my-ai-bot")
 ```
 
 ## Session Management
@@ -103,7 +103,7 @@ db_session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine
 client = OpenAI()
 
 mem = Memori(conn=db_session_factory).openai.register(client)
-mem.attribution(parent_id="user_123", process_id="astronomer_agent")
+mem.attribution(entity_id="user_123", process_id="astronomer_agent")
 
 response = client.chat.completions.create(
     model="gpt-4o-mini",
@@ -163,9 +163,9 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 
 Memories are tracked at several different levels:
 
-- parent: think person, place, or thing; like a user
+- entity: think person, place, or thing; like a user
 - process: think your agent, LLM interaction or program
-- session: the current interactions between the parent, process and the LLM
+- session: the current interactions between the entity, process and the LLM
 
 Memori's Advanced Augmentation enhances memories at each of these levels with:
 

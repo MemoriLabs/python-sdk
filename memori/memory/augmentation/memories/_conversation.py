@@ -9,8 +9,8 @@ r"""
                        memorilabs.ai
 """
 
-from memori.memory.augmentation.augmentations.template._augmentation import (
-    TemplateAugmentation,
-)
 
-__all__ = ["TemplateAugmentation"]
+class Conversation:
+    def __init__(self):
+        self.entities = []
+        self.summary = None

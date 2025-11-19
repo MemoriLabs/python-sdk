@@ -11,7 +11,6 @@ r"""
 
 import copy
 import json
-import pprint
 
 from google.protobuf import json_format
 
@@ -26,6 +25,9 @@ from memori.llm._utils import (
     provider_is_langchain,
 )
 
+RECALLED_FACTS_LIMIT = 5
+RECALLED_FACTS_RELEVANCE_THRESHOLD = 0.1
+
 
 class BaseClient:
     def __init__(self, config: Config):
@@ -37,41 +39,35 @@ class BaseInvoke:
     def __init__(self, config: Config, method):
         self.config = config
         self._method = method
-        self._client_provider = None
-        self._client_title = None
-        self._client_version = None
         self._uses_protobuf = False
         self._injected_message_count = 0
 
-    def configure_for_streaming_usage(self, kwargs):
-        if llm_is_openai(self._client_provider, self._client_title) or llm_is_xai(
-            self._client_provider, self._client_title
-        ):
+    def configure_for_streaming_usage(self, kwargs: dict) -> dict:
+        if llm_is_openai(
+            self.config.framework.provider, self.config.llm.provider
+        ) or llm_is_xai(self.config.framework.provider, self.config.llm.provider):
             if kwargs.get("stream", None):
                 stream_options = kwargs.get("stream_options", None)
-                if stream_options is None or not isinstance(
-                    kwargs["stream_options"], dict
-                ):
+                if stream_options is None or not isinstance(stream_options, dict):
                     kwargs["stream_options"] = {}
 
                 kwargs["stream_options"]["include_usage"] = True
 
         return kwargs
 
-    def dict_to_json(self, dict_):
-        result = {}
-        for key, value in dict_.items():
-            if isinstance(value, list):
-                result[key] = self.list_to_json(value)
-            elif isinstance(value, dict):
-                result[key] = self.dict_to_json(value)
-            else:
-                if hasattr(value, "__dict__"):
-                    result[key] = self.dict_to_json(value.__dict__)
-                else:
-                    result[key] = value
+    def _convert_to_json(self, obj):
+        """Recursively convert objects to JSON-serializable format."""
+        if isinstance(obj, list):
+            return [self._convert_to_json(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {key: self._convert_to_json(value) for key, value in obj.items()}
+        elif hasattr(obj, "__dict__"):
+            return self._convert_to_json(obj.__dict__)
+        else:
+            return obj
 
-        return result
+    def dict_to_json(self, dict_: dict) -> dict:
+        return self._convert_to_json(dict_)
 
     def _format_kwargs(self, kwargs):
         if self._uses_protobuf:
@@ -84,7 +80,7 @@ class BaseInvoke:
                 formatted_kwargs = self.dict_to_json(formatted_kwargs)
         else:
             formatted_kwargs = copy.deepcopy(kwargs)
-            if provider_is_langchain(self._client_provider):
+            if provider_is_langchain(self.config.framework.provider):
                 if "response_format" in formatted_kwargs and isinstance(
                     formatted_kwargs["response_format"], object
                 ):
@@ -119,7 +115,7 @@ class BaseInvoke:
 
         payload = {
             "attribution": {
-                "parent": {"id": self.config.parent_id},
+                "entity": {"id": self.config.entity_id},
                 "process": {"id": self.config.process_id},
             },
             "conversation": {
@@ -180,7 +176,73 @@ class BaseInvoke:
 
         return raw_response
 
-    def inject_conversation_messages(self, kwargs):
+    def _extract_user_query(self, kwargs: dict) -> str:
+        """Extract the most recent user message from kwargs."""
+        if "messages" not in kwargs or not kwargs["messages"]:
+            return ""
+
+        for msg in reversed(kwargs["messages"]):
+            if msg.get("role") == "user":
+                return msg.get("content", "")
+
+        return ""
+
+    def inject_recalled_facts(self, kwargs: dict) -> dict:
+        if self.config.storage is None or self.config.storage.driver is None:
+            return kwargs
+
+        if self.config.entity_id is None:
+            return kwargs
+
+        entity_id = self.config.storage.driver.entity.create(self.config.entity_id)
+        if entity_id is None:
+            return kwargs
+
+        user_query = self._extract_user_query(kwargs)
+        if not user_query:
+            return kwargs
+
+        from memori.memory.recall import Recall
+
+        facts = Recall(self.config).search_facts(
+            user_query, limit=RECALLED_FACTS_LIMIT, entity_id=entity_id
+        )
+
+        if not facts:
+            return kwargs
+
+        relevant_facts = [
+            f
+            for f in facts
+            if f.get("similarity", 0) >= RECALLED_FACTS_RELEVANCE_THRESHOLD
+        ]
+
+        if not relevant_facts:
+            return kwargs
+
+        # Format the recalled facts content
+        fact_lines = [f"- {fact['content']}" for fact in relevant_facts]
+        recall_context = (
+            "\n\nOnly use the relevant context if it is relevant to the user's query. "
+            "Relevant context about the user:\n" + "\n".join(fact_lines)
+        )
+
+        # Check if there's already a system message
+        messages = kwargs.get("messages", [])
+        if messages and messages[0].get("role") == "system":
+            # Extend the existing system message
+            messages[0]["content"] = messages[0]["content"] + recall_context
+        else:
+            # Insert a new system message at the beginning
+            context_message = {
+                "role": "system",
+                "content": recall_context.lstrip("\n"),
+            }
+            messages.insert(0, context_message)
+
+        return kwargs
+
+    def inject_conversation_messages(self, kwargs: dict) -> dict:
         if self.config.cache.conversation_id is None:
             return kwargs
 
@@ -190,18 +252,20 @@ class BaseInvoke:
         messages = self.config.storage.driver.conversation.messages.read(
             self.config.cache.conversation_id
         )
-        if len(messages) == 0:
+        if not messages:
             return kwargs
 
         self._injected_message_count = len(messages)
 
         if (
-            llm_is_openai(self._client_provider, self._client_title)
-            or llm_is_anthropic(self._client_provider, self._client_title)
-            or llm_is_bedrock(self._client_provider, self._client_title)
+            llm_is_openai(self.config.framework.provider, self.config.llm.provider)
+            or llm_is_anthropic(
+                self.config.framework.provider, self.config.llm.provider
+            )
+            or llm_is_bedrock(self.config.framework.provider, self.config.llm.provider)
         ):
             kwargs["messages"] = messages + kwargs["messages"]
-        elif llm_is_xai(self._client_provider, self._client_title):
+        elif llm_is_xai(self.config.framework.provider, self.config.llm.provider):
             from xai_sdk.chat import assistant, user
 
             xai_messages = []
@@ -214,7 +278,7 @@ class BaseInvoke:
                     xai_messages.append(assistant(content))
 
             kwargs["messages"] = xai_messages + kwargs["messages"]
-        elif llm_is_google(self._client_provider, self._client_title):
+        elif llm_is_google(self.config.framework.provider, self.config.llm.provider):
             contents = []
             for message in messages:
                 contents.append(
@@ -234,53 +298,18 @@ class BaseInvoke:
         else:
             raise NotImplementedError
 
-        if self.config.is_test_mode():
-            pprint.pprint(kwargs)
-
         return kwargs
 
-    def list_to_json(self, list_):
-        result = []
-        for entry in list_:
-            if isinstance(entry, list):
-                result.append(self.list_to_json(entry))
-            elif isinstance(entry, dict):
-                result.append(self.dict_to_json(entry))
-            else:
-                if hasattr(entry, "__dict__"):
-                    result.append(self.dict_to_json(entry.__dict__))
-                else:
-                    result.append(entry)
+    def list_to_json(self, list_: list) -> list:
+        return self._convert_to_json(list_)
 
-        return result
+    def response_to_json(self, response) -> dict | list:
+        return self._convert_to_json(response)
 
-    def response_to_json(self, response):
-        data = response
-        if isinstance(data, list):
-            result = self.list_to_json(data)
-        else:
-            if not isinstance(data, dict):
-                data = response.__dict__
-
-            result = {}
-
-            for key, value in data.items():
-                if isinstance(value, list):
-                    result[key] = self.list_to_json(value)
-                elif isinstance(value, dict):
-                    result[key] = self.dict_to_json(value)
-                else:
-                    if hasattr(value, "__dict__"):
-                        result[key] = self.dict_to_json(value.__dict__)
-                    else:
-                        result[key] = value
-
-        return result
-
-    def set_client(self, provider, title, version):
-        self._client_provider = provider
-        self._client_title = title
-        self._client_version = version
+    def set_client(self, framework_provider, llm_provider, llm_version):
+        self.config.framework.provider = framework_provider
+        self.config.llm.provider = llm_provider
+        self.config.llm.version = llm_version
         return self
 
     def uses_protobuf(self):
@@ -291,9 +320,9 @@ class BaseInvoke:
         from memori.memory._manager import Manager as MemoryManager
 
         payload = self._format_payload(
-            self._client_provider,
-            self._client_title,
-            self._client_version,
+            self.config.framework.provider,
+            self.config.llm.provider,
+            self.config.llm.version,
             start_time,
             __import__("time").time(),
             self._format_kwargs(kwargs),
@@ -301,10 +330,36 @@ class BaseInvoke:
         )
 
         MemoryManager(self.config).execute(payload)
+
         if self.config.augmentation is not None:
-            if self.config.cache.conversation_id is not None:
-                payload["conversation_id"] = self.config.cache.conversation_id
-            self.config.augmentation.enqueue(payload)
+            from memori.memory.augmentation.input import AugmentationInput
+
+            messages = payload["conversation"]["query"].get("messages", [])
+            messages_for_aug = list(messages) if isinstance(messages, list) else []
+
+            if isinstance(raw_response, dict):
+                content = (
+                    raw_response.get("choices", [{}])[0]
+                    .get("message", {})
+                    .get("content", "")
+                )
+            else:
+                content = raw_response.choices[0].message.content
+
+            messages_for_aug.append(
+                {
+                    "role": "assistant",
+                    "content": content,
+                }
+            )
+
+            augmentation_input = AugmentationInput(
+                conversation_id=self.config.cache.conversation_id,
+                entity_id=self.config.entity_id,
+                process_id=self.config.process_id,
+                conversation_messages=messages_for_aug,
+            )
+            self.config.augmentation.enqueue(augmentation_input)
 
 
 class BaseIterator:
@@ -367,7 +422,7 @@ class BaseLlmAdaptor:
 
 
 class BaseProvider:
-    def __init__(self, parent):
+    def __init__(self, entity):
         self.client = None
-        self.parent = parent
-        self.config = parent.config
+        self.entity = entity
+        self.config = entity.config

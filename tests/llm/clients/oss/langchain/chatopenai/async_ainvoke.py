@@ -25,7 +25,7 @@ async def run():
     # Multiple registrations should not cause an issue.
     mem.langchain.register(chatopenai=client)
 
-    mem.attribution(parent_id="123", process_id="456")
+    mem.attribution(entity_id="123", process_id="456")
 
     print("-" * 25)
     print("me: What color is the planet Mars?")

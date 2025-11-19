@@ -15,8 +15,11 @@ from memori.storage._base import (
     BaseConversation,
     BaseConversationMessage,
     BaseConversationMessages,
-    BaseParent,
+    BaseEntity,
+    BaseEntityFact,
+    BaseKnowledgeGraph,
     BaseProcess,
+    BaseProcessAttribute,
     BaseSchema,
     BaseSchemaVersion,
     BaseSession,
@@ -51,7 +54,7 @@ class Conversation(BaseConversation):
                 session_id,
             ),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -66,6 +69,44 @@ class Conversation(BaseConversation):
             .fetchone()
             .get("id", None)
         )
+
+    def update(self, id: int, summary: str):
+        if summary is None:
+            return self
+
+        self.conn.execute(
+            """
+            UPDATE memori_conversation
+               SET summary = %s
+             WHERE id = %s
+            """,
+            (
+                summary,
+                id,
+            ),
+        )
+        self.conn.commit()
+
+        return self
+
+    def read(self, id: int) -> dict | None:
+        result = (
+            self.conn.execute(
+                """
+                SELECT id, uuid, session_id, summary, date_created, date_updated
+                  FROM memori_conversation
+                 WHERE id = %s
+                """,
+                (id,),
+            )
+            .mappings()
+            .fetchone()
+        )
+
+        if result is None:
+            return None
+
+        return dict(result)
 
 
 class ConversationMessage(BaseConversationMessage):
@@ -119,11 +160,11 @@ class ConversationMessages(BaseConversationMessages):
         return messages
 
 
-class Parent(BaseParent):
+class Entity(BaseEntity):
     def create(self, external_id: str):
         self.conn.execute(
             """
-            INSERT INTO memori_parent(
+            INSERT INTO memori_entity(
                 uuid,
                 external_id
             ) VALUES (
@@ -134,13 +175,13 @@ class Parent(BaseParent):
             """,
             (str(uuid4()), external_id),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
                 """
                 SELECT id
-                  FROM memori_parent
+                  FROM memori_entity
                  WHERE external_id = %s
                 """,
                 (external_id,),
@@ -149,6 +190,255 @@ class Parent(BaseParent):
             .fetchone()
             .get("id", None)
         )
+
+
+class EntityFact(BaseEntityFact):
+    def create(self, entity_id: int, facts: list, fact_embeddings: list | None = None):
+        if facts is None or len(facts) == 0:
+            return self
+
+        from memori._utils import generate_uniq
+        from memori.llm._embeddings import format_embedding_for_db
+
+        dialect = self.conn.get_dialect()
+
+        for i, fact in enumerate(facts):
+            embedding = (
+                fact_embeddings[i]
+                if fact_embeddings and i < len(fact_embeddings)
+                else []
+            )
+            embedding_formatted = format_embedding_for_db(embedding, dialect)
+            uniq = generate_uniq([fact])
+
+            self.conn.execute(
+                """
+                INSERT INTO memori_entity_fact(
+                    uuid,
+                    entity_id,
+                    content,
+                    content_embedding,
+                    num_times,
+                    date_last_time,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    1,
+                    CURRENT_TIMESTAMP,
+                    %s
+                )
+                ON CONFLICT (entity_id, uniq) DO UPDATE SET
+                    num_times = memori_entity_fact.num_times + 1,
+                    date_last_time = CURRENT_TIMESTAMP
+                """,
+                (
+                    str(uuid4()),
+                    entity_id,
+                    fact,
+                    embedding_formatted,
+                    uniq,
+                ),
+            )
+
+        return self
+
+    def get_embeddings(self, entity_id: int, limit: int = 1000):
+        return (
+            self.conn.execute(
+                """
+                SELECT id,
+                       content_embedding
+                  FROM memori_entity_fact
+                 WHERE entity_id = %s
+                 LIMIT %s
+                """,
+                (entity_id, limit),
+            )
+            .mappings()
+            .fetchall()
+        )
+
+    def get_facts_by_ids(self, fact_ids: list[int]):
+        return (
+            self.conn.execute(
+                """
+                SELECT id,
+                       content
+                  FROM memori_entity_fact
+                 WHERE id = ANY(%s)
+                """,
+                (fact_ids,),
+            )
+            .mappings()
+            .fetchall()
+        )
+
+
+class KnowledgeGraph(BaseKnowledgeGraph):
+    def create(self, entity_id: int, semantic_triples: list):
+        if semantic_triples is None or len(semantic_triples) == 0:
+            return self
+
+        from memori._utils import generate_uniq
+
+        for semantic_triple in semantic_triples:
+            uniq = generate_uniq(
+                [semantic_triple.subject_name, semantic_triple.subject_type]
+            )
+
+            self.conn.execute(
+                """
+                INSERT INTO memori_subject(
+                    uuid,
+                    name,
+                    type,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                ON CONFLICT DO NOTHING
+                """,
+                (
+                    str(uuid4()),
+                    semantic_triple.subject_name,
+                    semantic_triple.subject_type,
+                    uniq,
+                ),
+            )
+            self.conn.commit()
+
+            subject_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_subject
+                     WHERE uniq = %s
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            uniq = generate_uniq([semantic_triple.predicate])
+
+            self.conn.execute(
+                """
+                INSERT INTO memori_predicate(
+                    uuid,
+                    content,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s
+                )
+                ON CONFLICT DO NOTHING
+                """,
+                (
+                    str(uuid4()),
+                    semantic_triple.predicate,
+                    uniq,
+                ),
+            )
+            self.conn.commit()
+
+            predicate_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_predicate
+                     WHERE uniq = %s
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            uniq = generate_uniq(
+                [semantic_triple.object_name, semantic_triple.object_type]
+            )
+
+            self.conn.execute(
+                """
+                INSERT INTO memori_object(
+                    uuid,
+                    name,
+                    type,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                ON CONFLICT DO NOTHING
+                """,
+                (
+                    str(uuid4()),
+                    semantic_triple.object_name,
+                    semantic_triple.object_type,
+                    uniq,
+                ),
+            )
+            self.conn.commit()
+
+            object_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_object
+                     WHERE uniq = %s
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            if (
+                entity_id is not None
+                and subject_id is not None
+                and predicate_id is not None
+                and object_id is not None
+            ):
+                self.conn.execute(
+                    """
+                    INSERT INTO memori_knowledge_graph(
+                        uuid,
+                        entity_id,
+                        subject_id,
+                        predicate_id,
+                        object_id,
+                        num_times,
+                        date_last_time
+                    ) VALUES (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        1,
+                        CURRENT_TIMESTAMP
+                    )
+                    ON CONFLICT (entity_id, subject_id, predicate_id, object_id) DO UPDATE SET
+                        num_times = memori_knowledge_graph.num_times + 1,
+                        date_last_time = CURRENT_TIMESTAMP
+                    """,
+                    (str(uuid4()), entity_id, subject_id, predicate_id, object_id),
+                )
+
+        return self
 
 
 class Process(BaseProcess):
@@ -166,7 +456,7 @@ class Process(BaseProcess):
             """,
             (str(uuid4()), external_id),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -183,13 +473,55 @@ class Process(BaseProcess):
         )
 
 
+class ProcessAttribute(BaseProcessAttribute):
+    def create(self, process_id: int, attributes: list):
+        if attributes is None or len(attributes) == 0:
+            return self
+
+        from memori._utils import generate_uniq
+
+        for attribute in attributes:
+            uniq = generate_uniq([attribute])
+
+            self.conn.execute(
+                """
+                INSERT INTO memori_process_attribute(
+                    uuid,
+                    process_id,
+                    content,
+                    num_times,
+                    date_last_time,
+                    uniq
+                ) VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    1,
+                    CURRENT_TIMESTAMP,
+                    %s
+                )
+                ON CONFLICT (process_id, uniq) DO UPDATE SET
+                    num_times = memori_process_attribute.num_times + 1,
+                    date_last_time = CURRENT_TIMESTAMP
+                """,
+                (
+                    str(uuid4()),
+                    process_id,
+                    attribute,
+                    uniq,
+                ),
+            )
+
+        return self
+
+
 class Session(BaseSession):
-    def create(self, uuid: str, parent_id: int, process_id: int):
+    def create(self, uuid: str, entity_id: int, process_id: int):
         self.conn.execute(
             """
             INSERT INTO memori_session(
                 uuid,
-                parent_id,
+                entity_id,
                 process_id
             ) VALUES (
                 %s,
@@ -198,9 +530,9 @@ class Session(BaseSession):
             )
             ON CONFLICT DO NOTHING
             """,
-            (str(uuid), parent_id, process_id),
+            (str(uuid), entity_id, process_id),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -273,7 +605,10 @@ class Driver:
 
     def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
-        self.parent = Parent(conn)
+        self.entity = Entity(conn)
+        self.entity_fact = EntityFact(conn)
+        self.knowledge_graph = KnowledgeGraph(conn)
         self.process = Process(conn)
+        self.process_attribute = ProcessAttribute(conn)
         self.schema = Schema(conn)
         self.session = Session(conn)

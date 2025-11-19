@@ -65,9 +65,13 @@ def test_manager_start_with_conn():
 
 
 def test_manager_enqueue_inactive():
+    from memori.memory.augmentation.input import AugmentationInput
+
     config = Config()
     manager = Manager(config)
-    payload = {"test": "data"}
+    payload = AugmentationInput(
+        conversation_id=None, entity_id=None, process_id=None, conversation_messages=[]
+    )
 
     result = manager.enqueue(payload)
 
@@ -75,10 +79,14 @@ def test_manager_enqueue_inactive():
 
 
 def test_manager_enqueue_no_conn_factory():
+    from memori.memory.augmentation.input import AugmentationInput
+
     config = Config()
     manager = Manager(config)
     manager._active = True
-    payload = {"test": "data"}
+    payload = AugmentationInput(
+        conversation_id=None, entity_id=None, process_id=None, conversation_messages=[]
+    )
 
     result = manager.enqueue(payload)
 
@@ -100,11 +108,15 @@ def test_runtime_ensure_started():
 
 @pytest.mark.asyncio
 async def test_manager_process_augmentations_no_augmentations():
+    from memori.memory.augmentation.input import AugmentationInput
+
     config = Config()
     manager = Manager(config)
     manager.conn_factory = Mock()
     manager.augmentations = []
-    payload = {"conversation_id": 123}
+    payload = AugmentationInput(
+        conversation_id="123", entity_id=None, process_id=None, conversation_messages=[]
+    )
 
     runtime = get_runtime()
     original_semaphore = runtime.semaphore

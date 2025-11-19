@@ -46,7 +46,7 @@ db_session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine
 client = OpenAI()
 
 mem = Memori(conn=db_session_factory).openai.register(client)
-mem.attribution(parent_id="user_123", process_id="astronomer_agent")
+mem.attribution(entity_id="user_123", process_id="astronomer_agent")
 
 response = client.chat.completions.create(
     model="gpt-4o-mini",

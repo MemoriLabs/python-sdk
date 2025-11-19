@@ -7,7 +7,8 @@ from memori.storage.drivers.mongodb._driver import (
     ConversationMessage,
     ConversationMessages,
     Driver,
-    Parent,
+    Entity,
+    EntityFact,
     Process,
     Schema,
     SchemaVersion,
@@ -20,65 +21,66 @@ def test_driver_initialization(mock_conn):
     driver = Driver(mock_conn)
 
     assert isinstance(driver.conversation, Conversation)
-    assert isinstance(driver.parent, Parent)
+    assert isinstance(driver.entity, Entity)
+    assert isinstance(driver.entity_fact, EntityFact)
     assert isinstance(driver.process, Process)
     assert isinstance(driver.schema, Schema)
     assert isinstance(driver.session, Session)
 
 
-def test_parent_create(mock_conn):
-    """Test creating a parent record."""
+def test_entity_create(mock_conn):
+    """Test creating a entity record."""
     # Mock the find_one to return None (no existing record)
     mock_conn.execute.side_effect = [
         None,  # find_one returns None (no existing record)
         Mock(inserted_id=123),  # insert_one returns mock result
     ]
 
-    parent = Parent(mock_conn)
-    result = parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    result = entity.create("external-entity-id")
 
     assert result == 123
     assert mock_conn.execute.call_count == 2  # find_one, insert_one
 
     # Verify find_one query for existing record
     find_call = mock_conn.execute.call_args_list[0]
-    assert find_call[0][0] == "memori_parent"
+    assert find_call[0][0] == "memori_entity"
     assert find_call[0][1] == "find_one"
-    assert find_call[0][2] == {"external_id": "external-parent-id"}
+    assert find_call[0][2] == {"external_id": "external-entity-id"}
 
     # Verify insert_one query
     insert_call = mock_conn.execute.call_args_list[1]
-    assert insert_call[0][0] == "memori_parent"
+    assert insert_call[0][0] == "memori_entity"
     assert insert_call[0][1] == "insert_one"
     doc = insert_call[0][2]
-    assert doc["external_id"] == "external-parent-id"
+    assert doc["external_id"] == "external-entity-id"
     assert "uuid" in doc
     assert "date_created" in doc
 
 
-def test_parent_create_existing_record(mock_conn):
-    """Test creating a parent record when it already exists."""
+def test_entity_create_existing_record(mock_conn):
+    """Test creating a entity record when it already exists."""
     # Mock the find_one to return existing record
     existing_record = Mock()
     existing_record.get.return_value = 456
     mock_conn.execute.return_value = existing_record
 
-    parent = Parent(mock_conn)
-    result = parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    result = entity.create("external-entity-id")
 
     assert result == 456
     assert mock_conn.execute.call_count == 1  # Only find_one
 
 
-def test_parent_generates_uuid(mock_conn):
+def test_entity_generates_uuid(mock_conn):
     """Test that create generates a valid UUID."""
     mock_conn.execute.side_effect = [
         None,  # find_one returns None
         Mock(inserted_id=123),  # insert_one returns mock result
     ]
 
-    parent = Parent(mock_conn)
-    parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    entity.create("external-entity-id")
 
     # Check that a UUID was generated in the insert_one
     insert_call = mock_conn.execute.call_args_list[1]
@@ -125,7 +127,7 @@ def test_session_create(mock_conn):
 
     session = Session(mock_conn)
     session_uuid = "test-session-uuid"
-    result = session.create(session_uuid, parent_id=123, process_id=456)
+    result = session.create(session_uuid, entity_id=123, process_id=456)
 
     assert result == 789
     assert mock_conn.execute.call_count == 2
@@ -142,7 +144,7 @@ def test_session_create(mock_conn):
     assert insert_call[0][1] == "insert_one"
     doc = insert_call[0][2]
     assert doc["uuid"] == "test-session-uuid"
-    assert doc["parent_id"] == 123
+    assert doc["entity_id"] == 123
     assert doc["process_id"] == 456
 
 
@@ -180,6 +182,7 @@ def test_conversation_create(mock_conn):
     assert insert_call[0][1] == "insert_one"
     doc = insert_call[0][2]
     assert doc["session_id"] == 789
+    assert doc["summary"] is None
     assert "uuid" in doc
 
 
@@ -348,8 +351,8 @@ def test_mongodb_operations_with_datetime(mock_conn):
         Mock(inserted_id=123),  # insert_one returns mock result
     ]
 
-    parent = Parent(mock_conn)
-    parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    entity.create("external-entity-id")
 
     # Verify insert_one query includes date_created
     insert_call = mock_conn.execute.call_args_list[1]
@@ -384,7 +387,7 @@ def test_mongodb_session_with_datetime(mock_conn):
     ]
 
     session = Session(mock_conn)
-    session.create("test-uuid", parent_id=123, process_id=456)
+    session.create("test-uuid", entity_id=123, process_id=456)
 
     # Verify insert_one query includes date_created
     insert_call = mock_conn.execute.call_args_list[1]
@@ -393,3 +396,237 @@ def test_mongodb_session_with_datetime(mock_conn):
     assert "date_created" in doc
     assert isinstance(doc["date_created"], datetime)
     assert doc["date_updated"] is None
+
+
+def test_entity_fact_create_new_fact(mock_conn, mocker):
+    """Test creating a new entity fact."""
+    from unittest.mock import Mock
+
+    mocker.patch("memori._utils.generate_uniq", return_value="uniq123")
+    # Mock bson.Binary for MongoDB
+    mock_binary = Mock()
+    mock_binary.__repr__ = lambda self: "Binary(...)"
+    mocker.patch(
+        "memori.llm._embeddings.format_embedding_for_db",
+        return_value=mock_binary,
+    )
+
+    mock_conn.execute.return_value = None  # No existing fact
+
+    entity_fact = EntityFact(mock_conn)
+    facts = ["User likes Python"]
+    embeddings = [[0.1, 0.2, 0.3]]
+
+    result = entity_fact.create(entity_id=123, facts=facts, fact_embeddings=embeddings)
+
+    assert result == entity_fact
+    assert mock_conn.execute.call_count == 2  # find_one, insert_one
+
+    # Verify find_one query
+    find_call = mock_conn.execute.call_args_list[0]
+    assert find_call[0][0] == "memori_entity_fact"
+    assert find_call[0][1] == "find_one"
+    assert find_call[0][2] == {"entity_id": 123, "uniq": "uniq123"}
+
+    # Verify insert_one query
+    insert_call = mock_conn.execute.call_args_list[1]
+    assert insert_call[0][0] == "memori_entity_fact"
+    assert insert_call[0][1] == "insert_one"
+    doc = insert_call[0][2]
+    assert doc["entity_id"] == 123
+    assert doc["content"] == "User likes Python"
+    # content_embedding is now a Mock object representing bson.Binary
+    assert doc["content_embedding"] is not None
+    assert doc["num_times"] == 1
+    assert doc["uniq"] == "uniq123"
+    assert "uuid" in doc
+    assert "date_created" in doc
+    assert isinstance(doc["date_created"], datetime)
+
+
+def test_entity_fact_create_existing_fact(mock_conn, mocker):
+    """Test updating an existing entity fact."""
+    from unittest.mock import Mock
+
+    mocker.patch("memori._utils.generate_uniq", return_value="uniq123")
+    mock_binary = Mock()
+    mocker.patch(
+        "memori.llm._embeddings.format_embedding_for_db",
+        return_value=mock_binary,
+    )
+
+    # Mock existing fact
+    existing = {"_id": 999, "num_times": 5}
+    mock_conn.execute.return_value = existing
+
+    entity_fact = EntityFact(mock_conn)
+    facts = ["User likes Python"]
+    embeddings = [[0.1, 0.2, 0.3]]
+
+    result = entity_fact.create(entity_id=123, facts=facts, fact_embeddings=embeddings)
+
+    assert result == entity_fact
+    assert mock_conn.execute.call_count == 2  # find_one, update_one
+
+    # Verify find_one query
+    find_call = mock_conn.execute.call_args_list[0]
+    assert find_call[0][0] == "memori_entity_fact"
+    assert find_call[0][1] == "find_one"
+
+    # Verify update_one query
+    update_call = mock_conn.execute.call_args_list[1]
+    assert update_call[0][0] == "memori_entity_fact"
+    assert update_call[0][1] == "update_one"
+    assert update_call[0][2] == {"_id": 999}
+    update_doc = update_call[0][3]
+    assert "$inc" in update_doc
+    assert update_doc["$inc"]["num_times"] == 1
+    assert "$set" in update_doc
+    assert "date_last_time" in update_doc["$set"]
+    assert isinstance(update_doc["$set"]["date_last_time"], datetime)
+
+
+def test_entity_fact_create_empty_facts(mock_conn):
+    """Test creating entity facts with empty list."""
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.create(entity_id=123, facts=[], fact_embeddings=None)
+
+    assert result == entity_fact
+    assert mock_conn.execute.call_count == 0
+
+
+def test_entity_fact_create_multiple_facts(mock_conn, mocker):
+    """Test creating multiple entity facts."""
+    from unittest.mock import Mock
+
+    mocker.patch(
+        "memori._utils.generate_uniq",
+        side_effect=["uniq1", "uniq2"],
+    )
+    mock_binary1 = Mock()
+    mock_binary2 = Mock()
+    mocker.patch(
+        "memori.llm._embeddings.format_embedding_for_db",
+        side_effect=[mock_binary1, mock_binary2],
+    )
+
+    mock_conn.execute.side_effect = [None, None, None, None]  # No existing facts
+
+    entity_fact = EntityFact(mock_conn)
+    facts = ["Fact 1", "Fact 2"]
+    embeddings = [[0.1, 0.2], [0.3, 0.4]]
+
+    entity_fact.create(entity_id=123, facts=facts, fact_embeddings=embeddings)
+
+    # Should be 4 calls: find_one, insert_one for each fact
+    assert mock_conn.execute.call_count == 4
+
+
+def test_entity_fact_create_without_embeddings(mock_conn, mocker):
+    """Test creating entity facts without embeddings."""
+    from unittest.mock import Mock
+
+    mocker.patch("memori._utils.generate_uniq", return_value="uniq123")
+    mock_binary = Mock()
+    mocker.patch(
+        "memori.llm._embeddings.format_embedding_for_db",
+        return_value=mock_binary,
+    )
+
+    mock_conn.execute.return_value = None
+
+    entity_fact = EntityFact(mock_conn)
+    facts = ["User likes Python"]
+
+    entity_fact.create(entity_id=123, facts=facts, fact_embeddings=None)
+
+    # Verify embedding was formatted (as Mock object representing bson.Binary)
+    insert_call = mock_conn.execute.call_args_list[1]
+    doc = insert_call[0][2]
+    assert doc["content_embedding"] is not None
+
+
+def test_entity_fact_get_embeddings(mock_conn):
+    """Test retrieving embeddings for an entity."""
+    mock_cursor = [
+        {"_id": 1, "content_embedding": b"\x00\x01\x02\x03"},
+        {"_id": 2, "content_embedding": b"\x04\x05\x06\x07"},
+    ]
+    mock_conn.execute.return_value = mock_cursor
+
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.get_embeddings(entity_id=123, limit=100)
+
+    assert len(result) == 2
+    assert result[0]["id"] == 1
+    assert result[0]["content_embedding"] == b"\x00\x01\x02\x03"
+    assert result[1]["id"] == 2
+    assert result[1]["content_embedding"] == b"\x04\x05\x06\x07"
+
+    # Verify find query
+    find_call = mock_conn.execute.call_args_list[0]
+    assert find_call[0][0] == "memori_entity_fact"
+    assert find_call[0][1] == "find"
+    assert find_call[0][2] == {"entity_id": 123}
+    assert find_call[0][3] == {"_id": 1, "content_embedding": 1}
+
+
+def test_entity_fact_get_embeddings_with_limit(mock_conn):
+    """Test retrieving embeddings respects the limit."""
+    # Return more results than the limit
+    mock_cursor = [{"_id": i, "content_embedding": bytes([i])} for i in range(1, 11)]
+    mock_conn.execute.return_value = mock_cursor
+
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.get_embeddings(entity_id=123, limit=5)
+
+    # Should only return first 5 results
+    assert len(result) == 5
+    assert result[0]["id"] == 1
+    assert result[4]["id"] == 5
+
+
+def test_entity_fact_get_embeddings_default_limit(mock_conn):
+    """Test retrieving embeddings with default limit."""
+    mock_conn.execute.return_value = []
+
+    entity_fact = EntityFact(mock_conn)
+    entity_fact.get_embeddings(entity_id=123)
+
+    # Verify default limit is used in slicing (1000)
+    find_call = mock_conn.execute.call_args_list[0]
+    assert find_call[0][0] == "memori_entity_fact"
+
+
+def test_entity_fact_get_facts_by_ids(mock_conn):
+    """Test retrieving fact content by IDs."""
+    mock_cursor = [
+        {"_id": 1, "content": "User likes Python"},
+        {"_id": 2, "content": "User works as engineer"},
+    ]
+    mock_conn.execute.return_value = mock_cursor
+
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.get_facts_by_ids([1, 2])
+
+    assert len(result) == 2
+    assert result[0]["id"] == 1
+    assert result[0]["content"] == "User likes Python"
+    assert result[1]["id"] == 2
+    assert result[1]["content"] == "User works as engineer"
+
+    # Verify find query
+    find_call = mock_conn.execute.call_args_list[0]
+    assert find_call[0][0] == "memori_entity_fact"
+    assert find_call[0][1] == "find"
+    assert find_call[0][2] == {"_id": {"$in": [1, 2]}}
+    assert find_call[0][3] == {"_id": 1, "content": 1}
+
+
+def test_entity_fact_get_facts_by_ids_empty(mock_conn):
+    """Test retrieving facts with empty IDs list."""
+    entity_fact = EntityFact(mock_conn)
+    result = entity_fact.get_facts_by_ids([])
+
+    assert result == []
+    assert mock_conn.execute.call_count == 0

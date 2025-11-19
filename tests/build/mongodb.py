@@ -3,8 +3,7 @@
 from memori import Memori
 from tests.database.core import MongoTestDBSession
 
-# MongoTestDBSession is already a MongoClient instance
-client = MongoTestDBSession
+client = MongoTestDBSession()
 db = client["memori_test"]
 
 # Drop existing collections
@@ -12,7 +11,7 @@ for collection_name in [
     "memori_conversation_message",
     "memori_conversation",
     "memori_session",
-    "memori_parent",
+    "memori_entity",
     "memori_process",
     "memori_schema_version",
 ]:

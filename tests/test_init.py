@@ -5,9 +5,9 @@ from memori import Memori
 
 def test_attribution_exceptions():
     with pytest.raises(RuntimeError) as e:
-        Memori().attribution(parent_id="a" * 101)
+        Memori().attribution(entity_id="a" * 101)
 
-    assert str(e.value) == "parent_id cannot be greater than 100 characters"
+    assert str(e.value) == "entity_id cannot be greater than 100 characters"
 
     with pytest.raises(RuntimeError) as e:
         Memori().attribution(process_id="a" * 101)

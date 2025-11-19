@@ -24,7 +24,7 @@ mem = Memori(conn=session).langchain.register(chatvertexai=client)
 # Multiple registrations should not cause an issue.
 mem.langchain.register(chatvertexai=client)
 
-mem.attribution(parent_id="123", process_id="456")
+mem.attribution(entity_id="123", process_id="456")
 
 print("-" * 25)
 

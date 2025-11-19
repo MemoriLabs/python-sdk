@@ -59,6 +59,14 @@ class Adapter(BaseStorageAdapter):
         """MongoDB doesn't require explicit rollbacks for single operations."""
         pass
 
+    def close(self):
+        """MongoDB client connection should not be closed per-operation.
+
+        The MongoClient is designed to be long-lived and shared across threads.
+        Closing it would invalidate all connections from the client pool.
+        """
+        pass
+
     def get_dialect(self):
         return "mongodb"
 

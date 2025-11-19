@@ -10,51 +10,51 @@ r"""
 """
 
 from memori.llm._constants import (
-    ATHROPIC_CLIENT_TITLE,
-    GOOGLE_CLIENT_TITLE,
-    LANGCHAIN_CHATBEDROCK_CLIENT_TITLE,
-    LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE,
-    LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE,
-    LANGCHAIN_CLIENT_PROVIDER,
-    LANGCHAIN_OPENAI_CLIENT_TITLE,
-    OPENAI_CLIENT_TITLE,
-    XAI_CLIENT_TITLE,
+    ATHROPIC_LLM_PROVIDER,
+    GOOGLE_LLM_PROVIDER,
+    LANGCHAIN_CHATBEDROCK_LLM_PROVIDER,
+    LANGCHAIN_CHATGOOGLEGENAI_LLM_PROVIDER,
+    LANGCHAIN_CHATVERTEXAI_LLM_PROVIDER,
+    LANGCHAIN_FRAMEWORK_PROVIDER,
+    LANGCHAIN_OPENAI_LLM_PROVIDER,
+    OPENAI_LLM_PROVIDER,
+    XAI_LLM_PROVIDER,
 )
 
 
 def client_is_bedrock(provider, title):
     return (
-        provider_is_langchain(provider) and title == LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
+        provider_is_langchain(provider) and title == LANGCHAIN_CHATBEDROCK_LLM_PROVIDER
     )
 
 
 def llm_is_anthropic(provider, title):
-    return title == ATHROPIC_CLIENT_TITLE
+    return title == ATHROPIC_LLM_PROVIDER
 
 
 def llm_is_bedrock(provider, title):
     return (
-        provider_is_langchain(provider) and title == LANGCHAIN_CHATBEDROCK_CLIENT_TITLE
+        provider_is_langchain(provider) and title == LANGCHAIN_CHATBEDROCK_LLM_PROVIDER
     )
 
 
 def llm_is_google(provider, title):
-    return title == GOOGLE_CLIENT_TITLE or (
+    return title == GOOGLE_LLM_PROVIDER or (
         provider_is_langchain(provider)
         and title
-        in [LANGCHAIN_CHATGOOGLEGENAI_CLIENT_TITLE, LANGCHAIN_CHATVERTEXAI_CLIENT_TITLE]
+        in [LANGCHAIN_CHATGOOGLEGENAI_LLM_PROVIDER, LANGCHAIN_CHATVERTEXAI_LLM_PROVIDER]
     )
 
 
 def llm_is_openai(provider, title):
-    return title == OPENAI_CLIENT_TITLE or (
-        provider_is_langchain(provider) and title == LANGCHAIN_OPENAI_CLIENT_TITLE
+    return title == OPENAI_LLM_PROVIDER or (
+        provider_is_langchain(provider) and title == LANGCHAIN_OPENAI_LLM_PROVIDER
     )
 
 
 def llm_is_xai(provider, title):
-    return title == XAI_CLIENT_TITLE
+    return title == XAI_LLM_PROVIDER
 
 
 def provider_is_langchain(provider):
-    return provider == LANGCHAIN_CLIENT_PROVIDER
+    return provider == LANGCHAIN_FRAMEWORK_PROVIDER

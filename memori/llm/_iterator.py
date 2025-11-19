@@ -33,9 +33,9 @@ class AsyncIterator(BaseIterator):
         except StopAsyncIteration:
             MemoryManager(self.config).execute(
                 self.invoke._format_payload(
-                    self.invoke._client_provider,
-                    self.invoke._client_title,
-                    self.invoke._client_version,
+                    self.config.framework.provider,
+                    self.config.llm.provider,
+                    self.config.llm.version,
                     self._time_start,
                     time.time(),
                     self.invoke._format_kwargs(self._kwargs),
@@ -67,9 +67,9 @@ class Iterator(BaseIterator):
         except StopIteration:
             MemoryManager(self.config).execute(
                 self.invoke._format_payload(
-                    self.invoke._client_provider,
-                    self.invoke._client_title,
-                    self.invoke._client_version,
+                    self.config.framework.provider,
+                    self.config.llm.provider,
+                    self.config.llm.version,
                     self._time_start,
                     time.time(),
                     self.invoke._format_kwargs(self._kwargs),

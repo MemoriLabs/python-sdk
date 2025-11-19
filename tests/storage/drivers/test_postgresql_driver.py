@@ -5,7 +5,7 @@ from memori.storage.drivers.postgresql._driver import (
     ConversationMessage,
     ConversationMessages,
     Driver,
-    Parent,
+    Entity,
     Process,
     Schema,
     SchemaVersion,
@@ -18,42 +18,42 @@ def test_driver_initialization(mock_conn):
     driver = Driver(mock_conn)
 
     assert isinstance(driver.conversation, Conversation)
-    assert isinstance(driver.parent, Parent)
+    assert isinstance(driver.entity, Entity)
     assert isinstance(driver.process, Process)
     assert isinstance(driver.schema, Schema)
     assert isinstance(driver.session, Session)
 
 
-def test_parent_create(mock_conn, mock_single_result):
-    """Test creating a parent record."""
+def test_entity_create(mock_conn, mock_single_result):
+    """Test creating a entity record."""
     mock_conn.execute.return_value = mock_single_result({"id": 123})
 
-    parent = Parent(mock_conn)
-    result = parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    result = entity.create("external-entity-id")
 
     assert result == 123
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
-    assert "INSERT INTO memori_parent" in insert_call[0][0]
+    assert "INSERT INTO memori_entity" in insert_call[0][0]
     assert "ON CONFLICT DO NOTHING" in insert_call[0][0]
-    assert insert_call[0][1][1] == "external-parent-id"
+    assert insert_call[0][1][1] == "external-entity-id"
 
     # Verify SELECT query
     select_call = mock_conn.execute.call_args_list[1]
     assert "SELECT id" in select_call[0][0]
-    assert "FROM memori_parent" in select_call[0][0]
-    assert select_call[0][1] == ("external-parent-id",)
+    assert "FROM memori_entity" in select_call[0][0]
+    assert select_call[0][1] == ("external-entity-id",)
 
 
-def test_parent_generates_uuid(mock_conn, mock_single_result):
+def test_entity_generates_uuid(mock_conn, mock_single_result):
     """Test that create generates a valid UUID."""
     mock_conn.execute.return_value = mock_single_result({"id": 123})
 
-    parent = Parent(mock_conn)
-    parent.create("external-parent-id")
+    entity = Entity(mock_conn)
+    entity.create("external-entity-id")
 
     # Check that a UUID was generated in the INSERT
     insert_call = mock_conn.execute.call_args_list[0]
@@ -72,7 +72,7 @@ def test_process_create(mock_conn, mock_single_result):
 
     assert result == 456
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -93,11 +93,11 @@ def test_session_create(mock_conn, mock_single_result):
 
     session = Session(mock_conn)
     session_uuid = "test-session-uuid"
-    result = session.create(session_uuid, parent_id=123, process_id=456)
+    result = session.create(session_uuid, entity_id=123, process_id=456)
 
     assert result == 789
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]
@@ -130,7 +130,7 @@ def test_conversation_create(mock_conn, mock_single_result):
 
     assert result == 101
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify INSERT query
     insert_call = mock_conn.execute.call_args_list[0]

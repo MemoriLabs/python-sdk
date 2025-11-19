@@ -29,7 +29,7 @@ class Invoke(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = self._method(**kwargs)
@@ -40,7 +40,9 @@ class Invoke(BaseInvoke):
                 .configure_invoke(self)
                 .configure_request(kwargs, start)
             )
-        elif client_is_bedrock(self._client_provider, self._client_title):
+        elif client_is_bedrock(
+            self.config.framework.provider, self.config.llm.provider
+        ):
             if isinstance(raw_response["body"], EventStream):
                 raw_response["body"] = (
                     MemoriIterable(self.config, raw_response["body"])
@@ -65,7 +67,7 @@ class InvokeAsync(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = await self._method(**kwargs)
@@ -78,7 +80,7 @@ class InvokeAsyncIterator(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = await self._method(**kwargs)
@@ -100,7 +102,7 @@ class InvokeAsyncStream(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         stream = await self._method(**kwargs)
@@ -118,7 +120,7 @@ class InvokeStream(BaseInvoke):
         start = time.time()
 
         kwargs = self.inject_conversation_messages(
-            self.configure_for_streaming_usage(kwargs)
+            self.inject_recalled_facts(self.configure_for_streaming_usage(kwargs))
         )
 
         raw_response = await self._method(**kwargs)

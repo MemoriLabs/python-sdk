@@ -10,6 +10,6 @@ r"""
 """
 
 from memori.memory.augmentation._manager import Manager
-from memori.memory.augmentation.augmentations import template  # noqa: F401
+from memori.memory.augmentation.augmentations import memori  # noqa: F401
 
 __all__ = ["Manager"]

@@ -16,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 class Cache:
     def __init__(self):
         self.conversation_id = None
-        self.parent_id = None
+        self.entity_id = None
         self.process_id = None
         self.session_id = None
 
@@ -26,7 +26,9 @@ class Config:
         self.api_key = None
         self.augmentation = None
         self.cache = Cache()
-        self.parent_id = None
+        self.llm = Llm()
+        self.framework = Framework()
+        self.entity_id = None
         self.process_id = None
         self.raise_final_request_attempt = True
         self.request_backoff_factor = 1
@@ -43,3 +45,14 @@ class Config:
     def reset_cache(self):
         self.cache = Cache()
         return self
+
+
+class Framework:
+    def __init__(self):
+        self.provider = None
+
+
+class Llm:
+    def __init__(self):
+        self.provider = None
+        self.version = None

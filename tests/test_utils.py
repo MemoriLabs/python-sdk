@@ -1,4 +1,4 @@
-from memori._utils import bytes_to_json, merge_chunk
+from memori._utils import bytes_to_json, generate_uniq, merge_chunk
 
 
 def test_merge_chunk():
@@ -32,3 +32,17 @@ def test_bytes_to_json():
         },
         "name": "Alice",
     }
+
+
+def test_generate_uniq():
+    assert generate_uniq(None) is None  # type: ignore[arg-type]
+    assert generate_uniq([]) is None
+
+    assert (
+        generate_uniq(["Abc. Def", "ghi", "123"])
+        == "84596a42b9169065d9f1bf2015e508beab38dd6af0814cc20572cf3b256f763d"
+    )
+    assert (
+        generate_uniq(["abc def", "GHI", "123 "])
+        == "84596a42b9169065d9f1bf2015e508beab38dd6af0814cc20572cf3b256f763d"
+    )

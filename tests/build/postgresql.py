@@ -9,7 +9,7 @@ for table_name in [
     "memori_conversation_message",
     "memori_conversation",
     "memori_session",
-    "memori_parent",
+    "memori_entity",
     "memori_process",
     "memori_schema_version",
 ]:

@@ -13,10 +13,7 @@ r"""
 class BaseStorageAdapter:
     def __init__(self, conn):
         if not callable(conn):
-            raise TypeError(
-                "conn must be a callable function or method that returns a database connection. "
-                "Example: def get_conn(): return session_maker() or lambda: psycopg2.connect(...)"
-            )
+            raise TypeError("conn must be a callable")
         self.conn = conn()
 
     def close(self):
@@ -48,6 +45,12 @@ class BaseConversation:
     def create(self, session_id: int):
         raise NotImplementedError
 
+    def update(self, id: int, summary: str):
+        raise NotImplementedError
+
+    def read(self, id: int) -> dict | None:
+        raise NotImplementedError
+
 
 class BaseConversationMessage:
     def __init__(self, conn: BaseStorageAdapter):
@@ -65,11 +68,33 @@ class BaseConversationMessages:
         raise NotImplementedError
 
 
-class BaseParent:
+class BaseKnowledgeGraph:
+    def __init__(self, conn: BaseStorageAdapter):
+        self.conn = conn
+
+    def create(self, entity_id: int, semantic_triples: list):
+        raise NotImplementedError
+
+
+class BaseEntity:
     def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
     def create(self, external_id: str):
+        raise NotImplementedError
+
+
+class BaseEntityFact:
+    def __init__(self, conn: BaseStorageAdapter):
+        self.conn = conn
+
+    def create(self, entity_id: int, facts: list, fact_embeddings: list | None = None):
+        raise NotImplementedError
+
+    def get_embeddings(self, entity_id: int, limit: int = 1000):
+        raise NotImplementedError
+
+    def get_facts_by_ids(self, fact_ids: list[int]):
         raise NotImplementedError
 
 
@@ -81,11 +106,19 @@ class BaseProcess:
         raise NotImplementedError
 
 
+class BaseProcessAttribute:
+    def __init__(self, conn: BaseStorageAdapter):
+        self.conn = conn
+
+    def create(self, process_id: int, attributes: list):
+        raise NotImplementedError
+
+
 class BaseSession:
     def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
-    def create(self, uuid: str, parent_id: int, process_id: int):
+    def create(self, uuid: str, entity_id: int, process_id: int):
         raise NotImplementedError
 
 
