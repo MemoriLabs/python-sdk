@@ -5,7 +5,6 @@ r"""
 | |  | |  __/ | | | | | (_) | |  | |
 |_|  |_|\___|_| |_| |_|\___/|_|  |_|
                  perfectam memoriam
-                        by GibsonAI
                       memorilabs.ai
 """
 

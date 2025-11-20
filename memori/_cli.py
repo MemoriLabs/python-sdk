@@ -5,7 +5,6 @@ r"""
 | |  | |  __/ | | | | | (_) | |  | |
 |_|  |_|\___|_| |_| |_|\___/|_|  |_|
                   perfectam memoriam
-                         by GibsonAI
                        memorilabs.ai
 """
 
@@ -21,7 +20,6 @@ class Cli:
     def banner(self):
         print(pyfiglet.figlet_format("Memori", font="standard").rstrip())
         print(" " * 18 + "perfectam memoriam")
-        print(" " * 25 + "by GibsonAI")
         print(" " * 23 + "memorilabs.ai")
         print(" " * 30 + "v" + str(self.config.version) + "\n")
 
