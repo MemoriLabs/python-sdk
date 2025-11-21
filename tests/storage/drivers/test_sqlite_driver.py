@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock
 from uuid import UUID
 
 from memori.storage.drivers.sqlite._driver import (
@@ -123,18 +124,32 @@ def test_conversation_initialization(mock_conn):
 
 
 def test_conversation_create(mock_conn, mock_single_result):
-    """Test creating a conversation record."""
-    mock_conn.execute.return_value = mock_single_result({"id": 101})
+    """Test creating a conversation record when none exists."""
+    mock_empty_result = MagicMock()
+    mock_empty_result.mappings.return_value.fetchone.return_value = None
+    mock_conn.execute.side_effect = [
+        mock_empty_result,
+        None,
+        mock_single_result({"id": 101}),
+    ]
 
     conversation = Conversation(mock_conn)
-    result = conversation.create(session_id=789)
+    result = conversation.create(session_id=789, timeout_minutes=30)
 
     assert result == 101
-    assert mock_conn.execute.call_count == 2
+    assert mock_conn.execute.call_count == 3  # Check existing, INSERT, SELECT
     assert mock_conn.commit.call_count == 1
 
+    # Verify check for existing conversation
+    check_call = mock_conn.execute.call_args_list[0]
+    assert (
+        "coalesce(max(m.date_created), c.date_created) as last_activity"
+        in check_call[0][0].lower()
+    )
+    assert check_call[0][1] == (789,)
+
     # Verify INSERT query
-    insert_call = mock_conn.execute.call_args_list[0]
+    insert_call = mock_conn.execute.call_args_list[1]
     assert "insert or ignore into memori_conversation" in insert_call[0][0].lower()
 
     # Verify the UUID is generated and session_id is passed
@@ -143,10 +158,70 @@ def test_conversation_create(mock_conn, mock_single_result):
     assert session_id_arg == 789
 
     # Verify SELECT query
-    select_call = mock_conn.execute.call_args_list[1]
+    select_call = mock_conn.execute.call_args_list[2]
     assert "select id" in select_call[0][0].lower()
     assert "from memori_conversation" in select_call[0][0].lower()
     assert select_call[0][1] == (789,)
+
+
+def test_conversation_create_returns_existing_within_timeout(mock_conn):
+    """Test returning existing conversation when within timeout period."""
+    from datetime import datetime, timedelta
+
+    last_activity = datetime.now() - timedelta(minutes=15)
+
+    mock_existing = MagicMock()
+    mock_existing.mappings.return_value.fetchone.return_value = {
+        "id": 101,
+        "last_activity": last_activity,
+    }
+
+    mock_timeout_check = MagicMock()
+    mock_timeout_check.fetchone.return_value = [15.0]  # 15 minutes elapsed
+
+    mock_conn.execute.side_effect = [
+        mock_existing,  # Existing conversation found
+        mock_timeout_check,  # Time check: 15 min < 30 min timeout
+    ]
+
+    conversation = Conversation(mock_conn)
+    result = conversation.create(session_id=789, timeout_minutes=30)
+
+    assert result == 101  # Returns existing conversation id
+    assert mock_conn.execute.call_count == 2  # Check existing, check timeout
+    assert mock_conn.commit.call_count == 0  # No insert, no commit
+
+
+def test_conversation_create_new_when_expired(mock_conn, mock_single_result):
+    """Test creating new conversation when existing one is expired."""
+    from datetime import datetime, timedelta
+
+    last_activity = datetime.now() - timedelta(minutes=45)
+
+    mock_existing = MagicMock()
+    mock_existing.mappings.return_value.fetchone.return_value = {
+        "id": 101,
+        "last_activity": last_activity,
+    }
+
+    mock_timeout_check = MagicMock()
+    mock_timeout_check.fetchone.return_value = [45.0]  # 45 minutes elapsed
+
+    mock_conn.execute.side_effect = [
+        mock_existing,  # Existing conversation found
+        mock_timeout_check,  # Time check: 45 min > 30 min timeout
+        None,  # INSERT (no return value needed)
+        mock_single_result({"id": 202}),  # SELECT returns new conversation id
+    ]
+
+    conversation = Conversation(mock_conn)
+    result = conversation.create(session_id=789, timeout_minutes=30)
+
+    assert result == 202  # Returns new conversation id
+    assert (
+        mock_conn.execute.call_count == 4
+    )  # Check existing, check timeout, INSERT, SELECT
+    assert mock_conn.commit.call_count == 1  # Committed new conversation
 
 
 def test_conversation_message_create(mock_conn):

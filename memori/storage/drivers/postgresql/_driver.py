@@ -34,9 +34,35 @@ class Conversation(BaseConversation):
         self.message = ConversationMessage(conn)
         self.messages = ConversationMessages(conn)
 
-    def create(self, session_id):
-        uuid = str(uuid4())
+    def create(self, session_id, timeout_minutes: int):
+        existing = (
+            self.conn.execute(
+                """
+                SELECT c.id,
+                       COALESCE(MAX(m.date_created), c.date_created) as last_activity
+                  FROM memori_conversation c
+                  LEFT JOIN memori_conversation_message m ON m.conversation_id = c.id
+                 WHERE c.session_id = %s
+                 GROUP BY c.id, c.date_created
+                """,
+                (session_id,),
+            )
+            .mappings()
+            .fetchone()
+        )
 
+        if existing:
+            result = self.conn.execute(
+                """
+                SELECT EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - %s::timestamp)) / 60 as minutes_since_activity
+                """,
+                (existing["last_activity"],),
+            ).fetchone()
+
+            if result[0] <= timeout_minutes:
+                return existing["id"]
+
+        uuid = str(uuid4())
         self.conn.execute(
             """
             INSERT INTO memori_conversation(
@@ -48,10 +74,7 @@ class Conversation(BaseConversation):
             )
             ON CONFLICT DO NOTHING
             """,
-            (
-                uuid,
-                session_id,
-            ),
+            (uuid, session_id),
         )
         self.conn.commit()
 

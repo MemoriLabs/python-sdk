@@ -93,7 +93,11 @@ def find_similar_embeddings(
 
 
 def search_entity_facts(
-    entity_fact_driver, entity_id: int, query_embedding: list[float], limit: int = 5
+    entity_fact_driver,
+    entity_id: int,
+    query_embedding: list[float],
+    limit: int,
+    embeddings_limit: int,
 ) -> list[dict]:
     """Search entity facts by embedding similarity.
 
@@ -102,11 +106,12 @@ def search_entity_facts(
         entity_id: Entity ID to search within
         query_embedding: Query embedding as list of floats
         limit: Number of results to return
+        embeddings_limit: Number of embeddings to retrieve from database
 
     Returns:
         List of dicts with keys: id, content, similarity
     """
-    results = entity_fact_driver.get_embeddings(entity_id)
+    results = entity_fact_driver.get_embeddings(entity_id, embeddings_limit)
 
     if not results:
         return []

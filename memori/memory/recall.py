@@ -25,7 +25,7 @@ class Recall:
         self.config = config
 
     def search_facts(
-        self, query: str, limit: int = 5, entity_id: int | None = None
+        self, query: str, limit: int | None = None, entity_id: int | None = None
     ) -> list[dict]:
         if self.config.storage is None or self.config.storage.driver is None:
             return []
@@ -38,6 +38,9 @@ class Recall:
         if entity_id is None:
             return []
 
+        if limit is None:
+            limit = self.config.recall_facts_limit
+
         query_embedding = embed_texts(query)[0]
 
         facts = []
@@ -48,6 +51,7 @@ class Recall:
                     entity_id,
                     query_embedding,
                     limit,
+                    self.config.recall_embeddings_limit,
                 )
                 break
             except OperationalError as e:

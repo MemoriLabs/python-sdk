@@ -24,9 +24,6 @@ from memori.llm._utils import (
     provider_is_langchain,
 )
 
-RECALLED_FACTS_LIMIT = 5
-RECALLED_FACTS_RELEVANCE_THRESHOLD = 0.1
-
 
 class BaseClient:
     def __init__(self, config: Config):
@@ -203,9 +200,7 @@ class BaseInvoke:
 
         from memori.memory.recall import Recall
 
-        facts = Recall(self.config).search_facts(
-            user_query, limit=RECALLED_FACTS_LIMIT, entity_id=entity_id
-        )
+        facts = Recall(self.config).search_facts(user_query, entity_id=entity_id)
 
         if not facts:
             return kwargs
@@ -213,7 +208,7 @@ class BaseInvoke:
         relevant_facts = [
             f
             for f in facts
-            if f.get("similarity", 0) >= RECALLED_FACTS_RELEVANCE_THRESHOLD
+            if f.get("similarity", 0) >= self.config.recall_relevance_threshold
         ]
 
         if not relevant_facts:

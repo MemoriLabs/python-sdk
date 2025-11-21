@@ -120,6 +120,7 @@ def test_search_facts_success():
                 1,
                 [0.1, 0.2, 0.3],
                 5,
+                1000,
             )
 
 
@@ -139,6 +140,7 @@ def test_search_facts_with_custom_limit():
 
             mock_search.assert_called_once()
             assert mock_search.call_args[0][3] == 10
+            assert mock_search.call_args[0][4] == 1000
 
 
 def test_search_facts_retry_on_operational_error():

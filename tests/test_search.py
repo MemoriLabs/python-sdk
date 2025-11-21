@@ -199,7 +199,11 @@ def test_search_entity_facts_success():
 
     query_embedding = [1.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding, limit=2
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=2,
+        embeddings_limit=1000,
     )
 
     assert len(result) == 2
@@ -208,7 +212,7 @@ def test_search_entity_facts_success():
     assert "similarity" in result[0]
     assert isinstance(result[0]["similarity"], float)
 
-    mock_driver.get_embeddings.assert_called_once_with(42)
+    mock_driver.get_embeddings.assert_called_once_with(42, 1000)
     mock_driver.get_facts_by_ids.assert_called_once()
 
 
@@ -218,11 +222,15 @@ def test_search_entity_facts_no_embeddings():
 
     query_embedding = [1.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=5,
+        embeddings_limit=1000,
     )
 
     assert result == []
-    mock_driver.get_embeddings.assert_called_once_with(42)
+    mock_driver.get_embeddings.assert_called_once_with(42, 1000)
     mock_driver.get_facts_by_ids.assert_not_called()
 
 
@@ -234,7 +242,11 @@ def test_search_entity_facts_no_similar_results():
 
     query_embedding = [1.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=5,
+        embeddings_limit=1000,
     )
 
     assert result == []
@@ -253,7 +265,11 @@ def test_search_entity_facts_respects_limit():
 
     query_embedding = [1.0, 0.0, 0.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding, limit=3
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=3,
+        embeddings_limit=1000,
     )
 
     assert len(result) <= 3
@@ -270,7 +286,11 @@ def test_search_entity_facts_returns_required_keys():
 
     query_embedding = [1.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=5,
+        embeddings_limit=1000,
     )
 
     assert len(result) == 1
@@ -291,7 +311,11 @@ def test_search_entity_facts_handles_missing_content():
 
     query_embedding = [1.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding, limit=2
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=2,
+        embeddings_limit=1000,
     )
 
     assert len(result) == 1
@@ -313,7 +337,11 @@ def test_search_entity_facts_maintains_similarity_order():
 
     query_embedding = [1.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding, limit=3
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=3,
+        embeddings_limit=1000,
     )
 
     assert len(result) == 3
@@ -337,7 +365,11 @@ def test_search_entity_facts_with_different_db_formats():
 
     query_embedding = [1.0, 0.0, 0.0]
     result = search_entity_facts(
-        mock_driver, entity_id=42, query_embedding=query_embedding, limit=3
+        mock_driver,
+        entity_id=42,
+        query_embedding=query_embedding,
+        limit=3,
+        embeddings_limit=1000,
     )
 
     assert len(result) == 3

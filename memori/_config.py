@@ -20,6 +20,11 @@ class Cache:
         self.session_id = None
 
 
+class Storage:
+    def __init__(self):
+        self.cockroachdb = False
+
+
 class Config:
     def __init__(self):
         self.api_key = None
@@ -30,11 +35,16 @@ class Config:
         self.entity_id = None
         self.process_id = None
         self.raise_final_request_attempt = True
+        self.recall_embeddings_limit = 1000
+        self.recall_facts_limit = 5
+        self.recall_relevance_threshold = 0.1
         self.request_backoff_factor = 1
         self.request_num_backoff = 5
         self.request_secs_timeout = 5
         self.session_id = None
+        self.session_timeout_minutes = 30
         self.storage = None
+        self.storage_config = Storage()
         self.thread_pool_executor = ThreadPoolExecutor(max_workers=15)
         self.version = "3.0.0"
 

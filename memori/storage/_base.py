@@ -41,7 +41,7 @@ class BaseConversation:
     def __init__(self, conn: BaseStorageAdapter):
         self.conn = conn
 
-    def create(self, session_id: int):
+    def create(self, session_id: int, timeout_minutes: int):
         raise NotImplementedError
 
     def update(self, id: int, summary: str):

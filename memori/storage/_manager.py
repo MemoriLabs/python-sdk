@@ -45,4 +45,7 @@ class Manager:
         self.adapter = Registry().adapter(conn)
         self.driver = Registry().driver(self.adapter)
 
+        dialect = self.adapter.get_dialect()
+        self.config.storage_config.cockroachdb = dialect == "cockroachdb"
+
         return self

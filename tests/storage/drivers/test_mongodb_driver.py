@@ -158,14 +158,14 @@ def test_conversation_initialization(mock_conn):
 
 
 def test_conversation_create(mock_conn):
-    """Test creating a conversation record."""
+    """Test creating a conversation record when none exists."""
     mock_conn.execute.side_effect = [
-        None,  # find_one returns None
+        None,  # find_one returns None (no existing conversation)
         Mock(inserted_id=101),  # insert_one returns mock result
     ]
 
     conversation = Conversation(mock_conn)
-    result = conversation.create(session_id=789)
+    result = conversation.create(session_id=789, timeout_minutes=30)
 
     assert result == 101
     assert mock_conn.execute.call_count == 2
@@ -186,17 +186,59 @@ def test_conversation_create(mock_conn):
     assert "uuid" in doc
 
 
-def test_conversation_create_existing_record(mock_conn):
-    """Test creating a conversation when it already exists."""
-    existing_record = Mock()
-    existing_record.get.return_value = 999
-    mock_conn.execute.return_value = existing_record
+def test_conversation_create_returns_existing_within_timeout(mock_conn):
+    """Test returning existing conversation when within timeout period."""
+    from datetime import datetime, timedelta, timezone
+
+    last_activity = datetime.now(timezone.utc) - timedelta(minutes=15)
+
+    # Mock: existing conversation and last message
+    existing_conversation = {
+        "_id": 999,
+        "session_id": 789,
+        "date_created": datetime.now(timezone.utc) - timedelta(minutes=20),
+    }
+    last_message = {"date_created": last_activity}
+
+    mock_conn.execute.side_effect = [
+        existing_conversation,  # find_one for conversation
+        last_message,  # find_one for last message
+    ]
 
     conversation = Conversation(mock_conn)
-    result = conversation.create(session_id=789)
+    result = conversation.create(session_id=789, timeout_minutes=30)
 
-    assert result == 999
-    assert mock_conn.execute.call_count == 1  # Only find_one
+    assert result == 999  # Returns existing conversation id
+    assert mock_conn.execute.call_count == 2  # Check conversation, check last message
+
+
+def test_conversation_create_new_when_expired(mock_conn):
+    """Test creating new conversation when existing one is expired."""
+    from datetime import datetime, timedelta, timezone
+
+    last_activity = datetime.now(timezone.utc) - timedelta(minutes=45)
+
+    # Mock: existing conversation but expired
+    existing_conversation = {
+        "_id": 999,
+        "session_id": 789,
+        "date_created": datetime.now(timezone.utc) - timedelta(minutes=50),
+    }
+    last_message = {"date_created": last_activity}
+
+    mock_conn.execute.side_effect = [
+        existing_conversation,  # find_one for conversation
+        last_message,  # find_one for last message (expired)
+        Mock(inserted_id=202),  # insert_one returns new conversation
+    ]
+
+    conversation = Conversation(mock_conn)
+    result = conversation.create(session_id=789, timeout_minutes=30)
+
+    assert result == 202  # Returns new conversation id
+    assert (
+        mock_conn.execute.call_count == 3
+    )  # Check conversation, check last message, insert new  # Only find_one
 
 
 def test_conversation_message_create(mock_conn):
