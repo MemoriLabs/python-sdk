@@ -35,18 +35,32 @@ class Conversation(BaseConversation):
         self.message = ConversationMessage(conn)
         self.messages = ConversationMessages(conn)
 
-    def create(self, session_id):
-        conversation_uuid = str(uuid4())
-
-        # Check if conversation already exists for this session
+    def create(self, session_id, timeout_minutes: int):
         existing = self.conn.execute(
             "memori_conversation", "find_one", {"session_id": session_id}
         )
 
         if existing:
-            return existing.get("_id")
+            last_message = self.conn.execute(
+                "memori_conversation_message",
+                "find_one",
+                {"conversation_id": existing["_id"]},
+                sort=[("date_created", -1)],
+            )
 
-        # Create new conversation
+            last_activity = (
+                last_message["date_created"]
+                if last_message
+                else existing["date_created"]
+            )
+
+            now = datetime.now(timezone.utc)
+            minutes_elapsed = (now - last_activity).total_seconds() / 60
+
+            if minutes_elapsed <= timeout_minutes:
+                return existing.get("_id")
+
+        conversation_uuid = str(uuid4())
         conversation_doc = {
             "uuid": conversation_uuid,
             "session_id": session_id,

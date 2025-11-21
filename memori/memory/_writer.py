@@ -5,7 +5,7 @@ r"""
 | |  | |  __/ | | | | | (_) | |  | |
 |_|  |_|\___|_| |_| |_|\___/|_|  |_|
                   perfectam memoriam
-                       memorilabs.ai
+                      memorilabs.ai
 """
 
 import time
@@ -77,6 +77,7 @@ class Writer:
             "conversation_id",
             self.config.storage.driver.conversation.create,
             self.config.cache.session_id,
+            self.config.session_timeout_minutes,
         )
 
         llm = LlmRegistry().adapter(

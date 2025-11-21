@@ -38,10 +38,11 @@ class AdvancedAugmentation(BaseAugmentation):
             summary = ""
 
         api = Api(self.config)
+        dialect = driver.conversation.conn.get_dialect()
 
         if not self.config.is_test_mode():
             try:
-                await api.advanced_augmentation_async(summary, messages)
+                await api.advanced_augmentation_async(summary, messages, dialect)
             except Exception:
                 pass
         else:

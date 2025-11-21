@@ -35,9 +35,35 @@ class Conversation(BaseConversation):
         self.message = ConversationMessage(conn)
         self.messages = ConversationMessages(conn)
 
-    def create(self, session_id):
-        uuid = uuid4()
+    def create(self, session_id, timeout_minutes: int):
+        existing = (
+            self.conn.execute(
+                """
+                SELECT c.id,
+                       COALESCE(MAX(m.date_created), c.date_created) as last_activity
+                  FROM memori_conversation c
+                  LEFT JOIN memori_conversation_message m ON m.conversation_id = c.id
+                 WHERE c.session_id = %s
+                 GROUP BY c.id, c.date_created
+                """,
+                (session_id,),
+            )
+            .mappings()
+            .fetchone()
+        )
 
+        if existing:
+            result = self.conn.execute(
+                """
+                SELECT TIMESTAMPDIFF(MINUTE, %s, CURRENT_TIMESTAMP) as minutes_since_activity
+                """,
+                (existing["last_activity"],),
+            ).fetchone()
+
+            if result[0] <= timeout_minutes:
+                return existing["id"]
+
+        uuid = uuid4()
         self.conn.execute(
             """
             INSERT IGNORE INTO memori_conversation(
@@ -48,10 +74,7 @@ class Conversation(BaseConversation):
                 %s
             )
             """,
-            (
-                uuid,
-                session_id,
-            ),
+            (uuid, session_id),
         )
         self.conn.commit()
 
@@ -422,19 +445,14 @@ class EntityFact(BaseEntityFact):
         if not fact_ids:
             return []
         placeholders = ",".join(["%s"] * len(fact_ids))
-        return (
-            self.conn.execute(
-                f"""
+
+        query = f"""
                 SELECT id,
                        content
                   FROM memori_entity_fact
                  WHERE id IN ({placeholders})
-                """,
-                tuple(fact_ids),
-            )
-            .mappings()
-            .fetchall()
-        )
+                """  # nosec B608: Safe - only interpolating placeholder count, actual values parameterized
+        return self.conn.execute(query, tuple(fact_ids)).mappings().fetchall()
 
 
 class Process(BaseProcess):

@@ -209,15 +209,70 @@ class TestApiAdvancedAugmentation:
         api.config.llm.provider = "openai"
         api.config.llm.version = "gpt-4"
         api.config.version = "1.0.0"
+        api.config.storage_config.cockroachdb = False
 
         result = await api.advanced_augmentation_async(
-            "Test summary", [{"role": "user", "content": "test"}]
+            "Test summary", [{"role": "user", "content": "test"}], "postgresql"
         )
 
         assert result is not None
         assert hasattr(result, "conversation")
         assert hasattr(result, "entity")
         assert hasattr(result, "process")
+
+    @pytest.mark.asyncio
+    async def test_advanced_augmentation_async_includes_storage_in_payload(
+        self, api, mocker
+    ):
+        mock_response = {
+            "conversation": {"summary": "Test summary"},
+            "entity": {"facts": []},
+            "process": {"attributes": []},
+        }
+
+        mock_post_async = AsyncMock(return_value=mock_response)
+        mocker.patch.object(api, "post_async", mock_post_async)
+
+        api.config.llm.provider = "openai"
+        api.config.llm.version = "gpt-4"
+        api.config.version = "1.0.0"
+        api.config.storage_config.cockroachdb = True
+
+        await api.advanced_augmentation_async(
+            "Test summary", [{"role": "user", "content": "test"}], "cockroachdb"
+        )
+
+        mock_post_async.assert_called_once()
+        call_args = mock_post_async.call_args
+        payload = call_args[1]["json"]
+
+        assert "meta" in payload
+        assert "storage" in payload["meta"]
+        assert payload["meta"]["storage"]["cockroachdb"] is True
+        assert payload["meta"]["storage"]["dialect"] == "cockroachdb"
+
+    @pytest.mark.asyncio
+    async def test_advanced_augmentation_async_mysql_dialect(self, api, mocker):
+        mock_response = {
+            "conversation": {"summary": "Test summary"},
+            "entity": {"facts": []},
+            "process": {"attributes": []},
+        }
+
+        mock_post_async = AsyncMock(return_value=mock_response)
+        mocker.patch.object(api, "post_async", mock_post_async)
+
+        api.config.storage_config.cockroachdb = False
+
+        await api.advanced_augmentation_async(
+            "Test summary", [{"role": "user", "content": "test"}], "mysql"
+        )
+
+        call_args = mock_post_async.call_args
+        payload = call_args[1]["json"]
+
+        assert payload["meta"]["storage"]["cockroachdb"] is False
+        assert payload["meta"]["storage"]["dialect"] == "mysql"
 
 
 class TestApiPostAsyncGenericException:

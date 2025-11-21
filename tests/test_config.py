@@ -32,3 +32,10 @@ def test_reset_cache():
 def test_augmentation_default():
     config = Config()
     assert config.augmentation is None
+
+
+def test_storage_initialization():
+    config = Config()
+    assert config.storage_config is not None
+    assert hasattr(config.storage_config, "cockroachdb")
+    assert config.storage_config.cockroachdb is False

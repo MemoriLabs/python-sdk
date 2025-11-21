@@ -170,7 +170,7 @@ migrations = {
                     unique key (process_id, uniq),
                     unique key (uuid),
                     constraint fk_memori_proc_attribute
-                       foreign key (process_id)
+                   foreign key (process_id)
                     references memori_process (id)
                      on delete cascade
                 )
