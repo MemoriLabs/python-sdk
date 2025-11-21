@@ -15,8 +15,11 @@ from memori.storage._base import (
     BaseConversation,
     BaseConversationMessage,
     BaseConversationMessages,
-    BaseParent,
+    BaseEntity,
+    BaseEntityFact,
+    BaseKnowledgeGraph,
     BaseProcess,
+    BaseProcessAttribute,
     BaseSchema,
     BaseSchemaVersion,
     BaseSession,
@@ -65,6 +68,44 @@ class Conversation(BaseConversation):
             .get("id", None)
         )
 
+    def update(self, id: int, summary: str):
+        if summary is None:
+            return self
+
+        self.conn.execute(
+            """
+            UPDATE memori_conversation
+               SET summary = :1
+             WHERE id = :2
+            """,
+            (
+                summary,
+                id,
+            ),
+        )
+        self.conn.flush()
+
+        return self
+
+    def read(self, id: int) -> dict | None:
+        result = (
+            self.conn.execute(
+                """
+                SELECT id, uuid, session_id, summary, date_created, date_updated
+                  FROM memori_conversation
+                 WHERE id = :1
+                """,
+                (id,),
+            )
+            .mappings()
+            .fetchone()
+        )
+
+        if result is None:
+            return None
+
+        return dict(result)
+
 
 class ConversationMessage(BaseConversationMessage):
     def create(self, conversation_id: int, role: str, type: str, content: str):
@@ -103,6 +144,7 @@ class ConversationMessages(BaseConversationMessages):
                        content
                   FROM memori_conversation_message
                  WHERE conversation_id = :1
+                 ORDER BY id
                 """,
                 (conversation_id,),
             )
@@ -117,11 +159,11 @@ class ConversationMessages(BaseConversationMessages):
         return messages
 
 
-class Parent(BaseParent):
+class Entity(BaseEntity):
     def create(self, external_id: str):
         self.conn.execute(
             """
-            MERGE INTO memori_parent dst
+            MERGE INTO memori_entity dst
             USING (SELECT :1 AS uuid, :2 AS external_id FROM DUAL) src
             ON (dst.external_id = src.external_id)
             WHEN NOT MATCHED THEN
@@ -136,7 +178,7 @@ class Parent(BaseParent):
             self.conn.execute(
                 """
                 SELECT id
-                  FROM memori_parent
+                  FROM memori_entity
                  WHERE external_id = :1
                 """,
                 (external_id,),
@@ -145,6 +187,224 @@ class Parent(BaseParent):
             .fetchone()
             .get("id", None)
         )
+
+
+class EntityFact(BaseEntityFact):
+    def create(self, entity_id: int, facts: list, fact_embeddings: list | None = None):
+        if facts is None or len(facts) == 0:
+            return self
+
+        from memori._utils import generate_uniq
+        from memori.llm._embeddings import format_embedding_for_db
+
+        dialect = self.conn.get_dialect()
+
+        for i, fact in enumerate(facts):
+            embedding = (
+                fact_embeddings[i]
+                if fact_embeddings and i < len(fact_embeddings)
+                else []
+            )
+            embedding_formatted = format_embedding_for_db(embedding, dialect)
+            uniq = generate_uniq([fact])
+
+            self.conn.execute(
+                """
+                MERGE INTO memori_entity_fact dst
+                USING (SELECT :1 AS uuid, :2 AS entity_id, :3 AS content,
+                              :4 AS content_embedding, :5 AS uniq FROM DUAL) src
+                ON (dst.entity_id = src.entity_id AND dst.uniq = src.uniq)
+                WHEN MATCHED THEN
+                    UPDATE SET num_times = dst.num_times + 1,
+                               date_last_time = SYSTIMESTAMP
+                WHEN NOT MATCHED THEN
+                    INSERT (uuid, entity_id, content, content_embedding,
+                            num_times, date_last_time, uniq)
+                    VALUES (src.uuid, src.entity_id, src.content, src.content_embedding,
+                            1, SYSTIMESTAMP, src.uniq)
+                """,
+                (
+                    str(uuid4()),
+                    entity_id,
+                    fact,
+                    embedding_formatted,
+                    uniq,
+                ),
+            )
+
+        return self
+
+    def get_embeddings(self, entity_id: int, limit: int = 1000):
+        return (
+            self.conn.execute(
+                """
+                SELECT id,
+                       content_embedding
+                  FROM memori_entity_fact
+                 WHERE entity_id = :1
+                   AND ROWNUM <= :2
+                """,
+                (entity_id, limit),
+            )
+            .mappings()
+            .fetchall()
+        )
+
+    def get_facts_by_ids(self, fact_ids: list[int]):
+        if not fact_ids:
+            return []
+
+        # Oracle doesn't support ANY, so we need to use IN with placeholders
+        placeholders = ",".join([f":{i+1}" for i in range(len(fact_ids))])
+        query = f"""
+            SELECT id,
+                   content
+              FROM memori_entity_fact
+             WHERE id IN ({placeholders})
+        """
+
+        return self.conn.execute(query, tuple(fact_ids)).mappings().fetchall()
+
+
+class KnowledgeGraph(BaseKnowledgeGraph):
+    def create(self, entity_id: int, semantic_triples: list):
+        if semantic_triples is None or len(semantic_triples) == 0:
+            return self
+
+        from memori._utils import generate_uniq
+
+        for semantic_triple in semantic_triples:
+            uniq = generate_uniq(
+                [semantic_triple.subject_name, semantic_triple.subject_type]
+            )
+
+            self.conn.execute(
+                """
+                MERGE INTO memori_subject dst
+                USING (SELECT :1 AS uuid, :2 AS name, :3 AS type, :4 AS uniq FROM DUAL) src
+                ON (dst.uniq = src.uniq)
+                WHEN NOT MATCHED THEN
+                    INSERT (uuid, name, type, uniq)
+                    VALUES (src.uuid, src.name, src.type, src.uniq)
+                """,
+                (
+                    str(uuid4()),
+                    semantic_triple.subject_name,
+                    semantic_triple.subject_type,
+                    uniq,
+                ),
+            )
+            self.conn.flush()
+
+            subject_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_subject
+                     WHERE uniq = :1
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            uniq = generate_uniq([semantic_triple.predicate])
+
+            self.conn.execute(
+                """
+                MERGE INTO memori_predicate dst
+                USING (SELECT :1 AS uuid, :2 AS content, :3 AS uniq FROM DUAL) src
+                ON (dst.uniq = src.uniq)
+                WHEN NOT MATCHED THEN
+                    INSERT (uuid, content, uniq)
+                    VALUES (src.uuid, src.content, src.uniq)
+                """,
+                (
+                    str(uuid4()),
+                    semantic_triple.predicate,
+                    uniq,
+                ),
+            )
+            self.conn.flush()
+
+            predicate_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_predicate
+                     WHERE uniq = :1
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            uniq = generate_uniq(
+                [semantic_triple.object_name, semantic_triple.object_type]
+            )
+
+            self.conn.execute(
+                """
+                MERGE INTO memori_object dst
+                USING (SELECT :1 AS uuid, :2 AS name, :3 AS type, :4 AS uniq FROM DUAL) src
+                ON (dst.uniq = src.uniq)
+                WHEN NOT MATCHED THEN
+                    INSERT (uuid, name, type, uniq)
+                    VALUES (src.uuid, src.name, src.type, src.uniq)
+                """,
+                (
+                    str(uuid4()),
+                    semantic_triple.object_name,
+                    semantic_triple.object_type,
+                    uniq,
+                ),
+            )
+            self.conn.flush()
+
+            object_id = (
+                self.conn.execute(
+                    """
+                    SELECT id
+                      FROM memori_object
+                     WHERE uniq = :1
+                    """,
+                    (uniq,),
+                )
+                .mappings()
+                .fetchone()
+                .get("id", None)
+            )
+
+            if (
+                entity_id is not None
+                and subject_id is not None
+                and predicate_id is not None
+                and object_id is not None
+            ):
+                self.conn.execute(
+                    """
+                    MERGE INTO memori_knowledge_graph dst
+                    USING (SELECT :1 AS uuid, :2 AS entity_id, :3 AS subject_id,
+                                  :4 AS predicate_id, :5 AS object_id FROM DUAL) src
+                    ON (dst.entity_id = src.entity_id AND dst.subject_id = src.subject_id
+                        AND dst.predicate_id = src.predicate_id AND dst.object_id = src.object_id)
+                    WHEN MATCHED THEN
+                        UPDATE SET num_times = dst.num_times + 1,
+                                   date_last_time = SYSTIMESTAMP
+                    WHEN NOT MATCHED THEN
+                        INSERT (uuid, entity_id, subject_id, predicate_id, object_id,
+                                num_times, date_last_time)
+                        VALUES (src.uuid, src.entity_id, src.subject_id, src.predicate_id,
+                                src.object_id, 1, SYSTIMESTAMP)
+                    """,
+                    (str(uuid4()), entity_id, subject_id, predicate_id, object_id),
+                )
+
+        return self
 
 
 class Process(BaseProcess):
@@ -177,18 +437,51 @@ class Process(BaseProcess):
         )
 
 
+class ProcessAttribute(BaseProcessAttribute):
+    def create(self, process_id: int, attributes: list):
+        if attributes is None or len(attributes) == 0:
+            return self
+
+        from memori._utils import generate_uniq
+
+        for attribute in attributes:
+            uniq = generate_uniq([attribute])
+
+            self.conn.execute(
+                """
+                MERGE INTO memori_process_attribute dst
+                USING (SELECT :1 AS uuid, :2 AS process_id, :3 AS content, :4 AS uniq FROM DUAL) src
+                ON (dst.process_id = src.process_id AND dst.uniq = src.uniq)
+                WHEN MATCHED THEN
+                    UPDATE SET num_times = dst.num_times + 1,
+                               date_last_time = SYSTIMESTAMP
+                WHEN NOT MATCHED THEN
+                    INSERT (uuid, process_id, content, num_times, date_last_time, uniq)
+                    VALUES (src.uuid, src.process_id, src.content, 1, SYSTIMESTAMP, src.uniq)
+                """,
+                (
+                    str(uuid4()),
+                    process_id,
+                    attribute,
+                    uniq,
+                ),
+            )
+
+        return self
+
+
 class Session(BaseSession):
-    def create(self, uuid: str, parent_id: int, process_id: int):
+    def create(self, uuid: str, entity_id: int, process_id: int):
         self.conn.execute(
             """
             MERGE INTO memori_session dst
-            USING (SELECT :1 AS uuid, :2 AS parent_id, :3 AS process_id FROM DUAL) src
+            USING (SELECT :1 AS uuid, :2 AS entity_id, :3 AS process_id FROM DUAL) src
             ON (dst.uuid = src.uuid)
             WHEN NOT MATCHED THEN
-                INSERT (uuid, parent_id, process_id)
-                VALUES (src.uuid, src.parent_id, src.process_id)
+                INSERT (uuid, entity_id, process_id)
+                VALUES (src.uuid, src.entity_id, src.process_id)
             """,
-            (str(uuid), parent_id, process_id),
+            (str(uuid), entity_id, process_id),
         )
         self.conn.flush()
 
@@ -262,7 +555,10 @@ class Driver:
 
     def __init__(self, conn: BaseStorageAdapter):
         self.conversation = Conversation(conn)
-        self.parent = Parent(conn)
+        self.entity = Entity(conn)
+        self.entity_fact = EntityFact(conn)
+        self.knowledge_graph = KnowledgeGraph(conn)
         self.process = Process(conn)
+        self.process_attribute = ProcessAttribute(conn)
         self.schema = Schema(conn)
         self.session = Session(conn)

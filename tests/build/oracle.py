@@ -10,8 +10,14 @@ session = OracleTestDBSession()
 for table_name in [
     "memori_conversation_message",
     "memori_conversation",
+    "memori_knowledge_graph",
+    "memori_entity_fact",
+    "memori_process_attribute",
     "memori_session",
-    "memori_parent",
+    "memori_subject",
+    "memori_predicate",
+    "memori_object",
+    "memori_entity",
     "memori_process",
     "memori_schema_version",
 ]:
