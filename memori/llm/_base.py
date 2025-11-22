@@ -217,8 +217,11 @@ class BaseInvoke:
         # Format the recalled facts content
         fact_lines = [f"- {fact['content']}" for fact in relevant_facts]
         recall_context = (
-            "\n\nOnly use the relevant context if it is relevant to the user's query. "
-            "Relevant context about the user:\n" + "\n".join(fact_lines)
+            "\n\n<memori_context>\n"
+            "Only use the relevant context if it is relevant to the user's query. "
+            "Relevant context about the user:\n"
+            + "\n".join(fact_lines)
+            + "\n</memori_context>"
         )
 
         # Check if there's already a system message
@@ -310,6 +313,51 @@ class BaseInvoke:
         self._uses_protobuf = True
         return self
 
+    def _extract_system_prompt(self, messages: list | None) -> str | None:
+        if not messages or not isinstance(messages, list):
+            return None
+
+        first_message = messages[0]
+        if not isinstance(first_message, dict) or first_message.get("role") != "system":
+            return None
+
+        content = first_message.get("content", "")
+        if not content:
+            return None
+
+        if "<memori_context>" in content:
+            parts = content.split("<memori_context>")
+            system_prompt = parts[0].strip()
+            return system_prompt if system_prompt else None
+
+        return content
+
+    def _strip_memori_context_from_messages(self, messages: list) -> list:
+        if not messages:
+            return messages
+
+        cleaned_messages = []
+        for msg in messages:
+            if not isinstance(msg, dict):
+                cleaned_messages.append(msg)
+                continue
+
+            if msg.get("role") == "system" and "<memori_context>" in msg.get(
+                "content", ""
+            ):
+                content = msg["content"]
+                parts = content.split("<memori_context>")
+                cleaned_content = parts[0].strip()
+
+                if cleaned_content:
+                    cleaned_msg = msg.copy()
+                    cleaned_msg["content"] = cleaned_content
+                    cleaned_messages.append(cleaned_msg)
+            else:
+                cleaned_messages.append(msg)
+
+        return cleaned_messages
+
     def handle_post_response(self, kwargs, start_time, raw_response):
         from memori.memory._manager import Manager as MemoryManager
 
@@ -347,11 +395,17 @@ class BaseInvoke:
                 }
             )
 
+            system_prompt = self._extract_system_prompt(messages_for_aug)
+            messages_for_aug = self._strip_memori_context_from_messages(
+                messages_for_aug
+            )
+
             augmentation_input = AugmentationInput(
                 conversation_id=self.config.cache.conversation_id,
                 entity_id=self.config.entity_id,
                 process_id=self.config.process_id,
                 conversation_messages=messages_for_aug,
+                system_prompt=system_prompt,
             )
             self.config.augmentation.enqueue(augmentation_input)
 

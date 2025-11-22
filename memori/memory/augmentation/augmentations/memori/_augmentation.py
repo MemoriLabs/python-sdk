@@ -20,143 +20,165 @@ class AdvancedAugmentation(BaseAugmentation):
     def __init__(self, config=None, enabled: bool = True):
         super().__init__(config=config, enabled=enabled)
 
-    async def process(self, ctx: AugmentationContext, driver) -> AugmentationContext:
-        if ctx.payload.entity_id is None or self.config is None:
-            return ctx
-
-        messages = ctx.payload.conversation_messages
-        summary = ""
-
-        if ctx.payload.conversation_id is None:
-            return ctx
-
+    def _get_conversation_summary(self, driver, conversation_id: str) -> str:
         try:
-            conversation = driver.conversation.read(ctx.payload.conversation_id)
+            conversation = driver.conversation.read(conversation_id)
             if conversation and conversation.get("summary"):
-                summary = conversation["summary"]
+                return conversation["summary"]
         except Exception:
-            summary = ""
-
-        api = Api(self.config)
-        dialect = driver.conversation.conn.get_dialect()
-
-        if not self.config.is_test_mode():
-            try:
-                await api.advanced_augmentation_async(summary, messages, dialect)
-            except Exception:
-                pass
-        else:
             pass
+        return ""
 
-        conversation_summary = (
-            summary
-            if summary
-            else "The user seeks ways to reduce daily commute costs, explores the benefits of carpooling, and asks where to find carpooling options."
-        )
+    def _build_api_payload(
+        self, messages: list, summary: str, system_prompt: str | None, dialect: str
+    ) -> dict:
+        conversation_data = {
+            "messages": messages,
+            "summary": summary if summary else None,
+        }
 
-        api_response = {
-            "conversation": {
-                "summary": conversation_summary,
-                "messages": messages,
-            },
-            "entity": {
-                "facts": [
-                    "user is looking for ways to reduce daily commute costs",
-                    "user is interested in carpooling",
-                    "the conversation topic is about commuting",
-                    "the conversation topic is about cost reduction",
-                    "the conversation topic is about carpooling options",
-                ],
-                "list": [
-                    {"name": "user", "type": "PERSON"},
-                    {"name": "daily commute costs", "type": "MONEY"},
-                    {"name": "carpooling", "type": "EVENT"},
-                    {"name": "commuting", "type": "EVENT"},
-                    {"name": "cost reduction", "type": "MONEY"},
-                    {"name": "carpooling options", "type": "EVENT"},
-                ],
-                "semantic_triples": [
-                    {
-                        "subject": {"name": "user", "type": "PERSON"},
-                        "predicate": "is looking for ways to reduce",
-                        "object": {
-                            "name": "daily commute costs",
-                            "type": "MONEY",
-                        },
-                    },
-                    {
-                        "subject": {"name": "user", "type": "PERSON"},
-                        "predicate": "is interested in",
-                        "object": {"name": "carpooling", "type": "EVENT"},
-                    },
-                    {
-                        "subject": {"name": "conversation topic", "type": "TOPIC"},
-                        "predicate": "is about",
-                        "object": {"name": "commuting", "type": "EVENT"},
-                    },
-                    {
-                        "subject": {"name": "conversation topic", "type": "TOPIC"},
-                        "predicate": "is about",
-                        "object": {"name": "cost reduction", "type": "MONEY"},
-                    },
-                    {
-                        "subject": {"name": "conversation topic", "type": "TOPIC"},
-                        "predicate": "is about",
-                        "object": {"name": "carpooling options", "type": "EVENT"},
-                    },
-                ],
-            },
-            "process": {
-                "attributes": [
-                    "Practical life optimization",
-                    "Cost-saving strategies",
-                    "Transportation and commuting advice",
-                    "Pros and cons explanation",
-                    "Resource and app recommendations",
-                ]
+        return {
+            "conversation": conversation_data,
+            "meta": {
+                "llm": {
+                    "model": {
+                        "provider": self.config.llm.provider,
+                        "version": self.config.llm.version,
+                    }
+                },
+                "sdk": {"lang": "python", "version": self.config.version},
+                "storage": {
+                    "cockroachdb": self.config.storage_config.cockroachdb,
+                    "dialect": dialect,
+                },
             },
         }
 
-        facts: list[str] = api_response["entity"]["facts"]  # type: ignore[assignment]
-        fact_embeddings = await embed_texts_async(facts)
-        api_response["entity"]["fact_embeddings"] = fact_embeddings
+    async def process(self, ctx: AugmentationContext, driver) -> AugmentationContext:
+        if not ctx.payload.entity_id:
+            return ctx
+        if not self.config:
+            return ctx
+        if not ctx.payload.conversation_id:
+            return ctx
 
-        memories = Memories().configure_from_advanced_augmentation(api_response)
+        api = Api(self.config)
+        dialect = driver.conversation.conn.get_dialect()
+        summary = self._get_conversation_summary(driver, ctx.payload.conversation_id)
+
+        payload = self._build_api_payload(
+            ctx.payload.conversation_messages,
+            summary,
+            ctx.payload.system_prompt,
+            dialect,
+        )
+
+        try:
+            api_response = await api.advanced_augmentation_async(payload)
+        except Exception:
+            return ctx
+
+        if not api_response:
+            return ctx
+
+        if isinstance(api_response, Memories):
+            memories = api_response
+        else:
+            memories = await self._process_api_response(api_response)
 
         ctx.data["memories"] = memories
-        ctx.data["fact_embeddings"] = fact_embeddings
 
-        if ctx.payload.entity_id and memories.entity:
-            entity_id = driver.entity.create(ctx.payload.entity_id)
-            if entity_id:
-                if memories.entity.facts and memories.entity.fact_embeddings:
-                    ctx.add_write(
-                        "entity_fact.create",
-                        entity_id,
-                        memories.entity.facts,
-                        memories.entity.fact_embeddings,
-                    )
+        await self._schedule_entity_writes(ctx, driver, memories)
+        self._schedule_process_writes(ctx, driver, memories)
+        self._schedule_conversation_writes(ctx, memories)
 
-                if memories.entity.semantic_triples:
-                    ctx.add_write(
-                        "knowledge_graph.create",
-                        entity_id,
-                        memories.entity.semantic_triples,
-                    )
+        return ctx
 
-        if ctx.payload.process_id and memories.process:
-            process_id = driver.process.create(ctx.payload.process_id)
-            if process_id and memories.process.attributes:
-                ctx.add_write(
-                    "process_attribute.create", process_id, memories.process.attributes
-                )
+    async def _process_api_response(self, api_response) -> Memories:
+        if isinstance(api_response, Memories):
+            return api_response
 
-        # Update conversation summary
-        if ctx.payload.conversation_id and conversation_summary:
+        entity_data = api_response.get("entity", {})
+        facts = entity_data.get("facts", [])
+        triples = entity_data.get("triples", [])
+
+        if not facts and triples:
+            facts = [
+                f"{t['subject']['name']} {t['predicate']} {t['object']['name']}"
+                for t in triples
+                if t.get("subject") and t.get("predicate") and t.get("object")
+            ]
+
+        if facts:
+            fact_embeddings = await embed_texts_async(facts)
+            api_response["entity"]["fact_embeddings"] = fact_embeddings
+
+        return Memories().configure_from_advanced_augmentation(api_response)
+
+    async def _schedule_entity_writes(
+        self, ctx: AugmentationContext, driver, memories: Memories
+    ):
+        if not ctx.payload.entity_id:
+            return
+
+        entity_id = driver.entity.create(ctx.payload.entity_id)
+        if not entity_id:
+            return
+
+        facts_to_write = memories.entity.facts
+        embeddings_to_write = memories.entity.fact_embeddings
+
+        if memories.entity.semantic_triples and (
+            not facts_to_write or not embeddings_to_write
+        ):
+            facts_from_triples = [
+                f"{triple.subject_name} {triple.predicate} {triple.object_name}"
+                for triple in memories.entity.semantic_triples
+            ]
+
+            if facts_from_triples:
+                embeddings_from_triples = await embed_texts_async(facts_from_triples)
+                facts_to_write = (facts_to_write or []) + facts_from_triples
+                embeddings_to_write = (
+                    embeddings_to_write or []
+                ) + embeddings_from_triples
+
+        if facts_to_write and embeddings_to_write:
+            ctx.add_write(
+                "entity_fact.create",
+                entity_id,
+                facts_to_write,
+                embeddings_to_write,
+            )
+
+        if memories.entity.semantic_triples:
+            ctx.add_write(
+                "knowledge_graph.create",
+                entity_id,
+                memories.entity.semantic_triples,
+            )
+
+    def _schedule_process_writes(
+        self, ctx: AugmentationContext, driver, memories: Memories
+    ):
+        if not ctx.payload.process_id:
+            return
+
+        process_id = driver.process.create(ctx.payload.process_id)
+        if process_id and memories.process.attributes:
+            ctx.add_write(
+                "process_attribute.create", process_id, memories.process.attributes
+            )
+
+    def _schedule_conversation_writes(
+        self, ctx: AugmentationContext, memories: Memories
+    ):
+        if not ctx.payload.conversation_id:
+            return
+
+        if memories.conversation.summary:
             ctx.add_write(
                 "conversation.update",
                 ctx.payload.conversation_id,
-                conversation_summary,
+                memories.conversation.summary,
             )
-
-        return ctx

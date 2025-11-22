@@ -38,10 +38,21 @@ class Entity:
         self.fact_embeddings.extend(entity.get("fact_embeddings", []))
 
         semantic_triples = entity.get("semantic_triples", [])
+        triples = entity.get("triples", [])
+
         for entry in semantic_triples:
             triple = self._parse_semantic_triple(entry)
             if triple is not None:
                 self.semantic_triples.append(triple)
+
+        for entry in triples:
+            triple = self._parse_semantic_triple(entry)
+            if triple is not None:
+                self.semantic_triples.append(triple)
+                fact_text = (
+                    f"{triple.subject_name} {triple.predicate} {triple.object_name}"
+                )
+                self.facts.append(fact_text)
 
         return self
 
@@ -74,9 +85,9 @@ class Entity:
 
 class Memories:
     def __init__(self):
-        self.conversation: Conversation | None = None
-        self.entity: Entity | None = None
-        self.process: Process | None = None
+        self.conversation: Conversation = Conversation()
+        self.entity: Entity = Entity()
+        self.process: Process = Process()
 
     def configure_from_advanced_augmentation(self, json_: dict) -> "Memories":
         self.conversation = Conversation().configure_from_advanced_augmentation(json_)

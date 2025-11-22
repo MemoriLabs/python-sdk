@@ -20,3 +20,4 @@ class AugmentationInput:
     entity_id: str | None
     process_id: str | None
     conversation_messages: list[dict[str, Any]]
+    system_prompt: str | None = None

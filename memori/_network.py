@@ -30,29 +30,8 @@ class Api:
 
         self.config = config
 
-    async def advanced_augmentation_async(
-        self, summary: str, messages: list, dialect: str
-    ):
-        json_ = await self.post_async(
-            "sdk/augmentation",
-            json={
-                "conversation": {"messages": messages, "summary": summary},
-                "meta": {
-                    "llm": {
-                        "model": {
-                            "provider": self.config.llm.provider,
-                            "version": self.config.llm.version,
-                        }
-                    },
-                    "sdk": {"lang": "python", "version": self.config.version},
-                    "storage": {
-                        "cockroachdb": self.config.storage_config.cockroachdb,
-                        "dialect": dialect,
-                    },
-                },
-            },
-        )
-
+    async def advanced_augmentation_async(self, payload: dict):
+        json_ = await self.post_async("sdk/augmentation", json=payload)
         return Memories().configure_from_advanced_augmentation(json_)
 
     def get(self, route):

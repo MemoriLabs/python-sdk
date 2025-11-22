@@ -49,3 +49,6 @@ google-credentials.json
 *.key
 
 tests/examples/*
+
+# Integration test files (contain credentials/connection strings)
+tests/llm/clients/oss/openai/async_integration.py

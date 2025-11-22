@@ -44,7 +44,7 @@ include = ["memori*"]
 exclude = ["tests*", "docs*", "*.egg-info"]
 
 [tool.setuptools.package-data]
-memori = ["py.typed"]
+memori = ["py.typed", "models/**/*"]
 
 [project.urls]
 Homepage = "https://memorilabs.ai"
