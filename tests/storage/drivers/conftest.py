@@ -9,6 +9,7 @@ def mock_conn():
     conn = MagicMock()
     conn.execute = MagicMock()
     conn.flush = MagicMock()
+    conn.commit = MagicMock()
     return conn
 
 

@@ -5,7 +5,6 @@ r"""
 | |  | |  __/ | | | | | (_) | |  | |
 |_|  |_|\___|_| |_| |_|\___/|_|  |_|
                   perfectam memoriam
-                         by GibsonAI
                        memorilabs.ai
 """
 
@@ -35,9 +34,36 @@ class Conversation(BaseConversation):
         self.message = ConversationMessage(conn)
         self.messages = ConversationMessages(conn)
 
-    def create(self, session_id):
-        uuid = str(uuid4())
+    def create(self, session_id, timeout_minutes: int):
+        existing = (
+            self.conn.execute(
+                """
+                SELECT c.id,
+                       COALESCE(MAX(m.date_created), c.date_created) as last_activity
+                  FROM memori_conversation c
+                  LEFT JOIN memori_conversation_message m ON m.conversation_id = c.id
+                 WHERE c.session_id = :1
+                 GROUP BY c.id, c.date_created
+                """,
+                (session_id,),
+            )
+            .mappings()
+            .fetchone()
+        )
 
+        if existing:
+            result = self.conn.execute(
+                """
+                SELECT ROUND((CAST(SYSTIMESTAMP AS DATE) - CAST(:1 AS DATE)) * 24 * 60) as minutes_since_activity
+                  FROM DUAL
+                """,
+                (existing["last_activity"],),
+            ).fetchone()
+
+            if result and result[0] is not None and result[0] <= timeout_minutes:
+                return existing["id"]
+
+        uuid = str(uuid4())
         self.conn.execute(
             """
             MERGE INTO memori_conversation dst
@@ -52,7 +78,7 @@ class Conversation(BaseConversation):
                 session_id,
             ),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -83,7 +109,7 @@ class Conversation(BaseConversation):
                 id,
             ),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return self
 
@@ -172,7 +198,7 @@ class Entity(BaseEntity):
             """,
             (str(uuid4()), external_id),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -232,6 +258,7 @@ class EntityFact(BaseEntityFact):
                 ),
             )
 
+        self.conn.commit()
         return self
 
     def get_embeddings(self, entity_id: int, limit: int = 1000):
@@ -294,7 +321,7 @@ class KnowledgeGraph(BaseKnowledgeGraph):
                     uniq,
                 ),
             )
-            self.conn.flush()
+            self.conn.commit()
 
             subject_id = (
                 self.conn.execute(
@@ -327,7 +354,7 @@ class KnowledgeGraph(BaseKnowledgeGraph):
                     uniq,
                 ),
             )
-            self.conn.flush()
+            self.conn.commit()
 
             predicate_id = (
                 self.conn.execute(
@@ -363,7 +390,7 @@ class KnowledgeGraph(BaseKnowledgeGraph):
                     uniq,
                 ),
             )
-            self.conn.flush()
+            self.conn.commit()
 
             object_id = (
                 self.conn.execute(
@@ -403,6 +430,7 @@ class KnowledgeGraph(BaseKnowledgeGraph):
                     """,
                     (str(uuid4()), entity_id, subject_id, predicate_id, object_id),
                 )
+                self.conn.commit()
 
         return self
 
@@ -420,7 +448,7 @@ class Process(BaseProcess):
             """,
             (str(uuid4()), external_id),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(
@@ -467,6 +495,7 @@ class ProcessAttribute(BaseProcessAttribute):
                 ),
             )
 
+        self.conn.commit()
         return self
 
 
@@ -483,7 +512,7 @@ class Session(BaseSession):
             """,
             (str(uuid), entity_id, process_id),
         )
-        self.conn.flush()
+        self.conn.commit()
 
         return (
             self.conn.execute(

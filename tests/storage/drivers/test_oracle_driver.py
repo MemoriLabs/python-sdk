@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock
 from uuid import UUID
 
 from memori.storage.drivers.oracle._driver import (
@@ -33,7 +34,7 @@ def test_entity_create(mock_conn, mock_single_result):
 
     assert result == 123
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify MERGE query (Oracle uses MERGE instead of INSERT...ON CONFLICT)
     merge_call = mock_conn.execute.call_args_list[0]
@@ -73,7 +74,7 @@ def test_process_create(mock_conn, mock_single_result):
 
     assert result == 456
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify MERGE query
     merge_call = mock_conn.execute.call_args_list[0]
@@ -99,7 +100,7 @@ def test_session_create(mock_conn, mock_single_result):
 
     assert result == 789
     assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.commit.call_count == 1
 
     # Verify MERGE query
     merge_call = mock_conn.execute.call_args_list[0]
@@ -125,18 +126,31 @@ def test_conversation_initialization(mock_conn):
 
 
 def test_conversation_create(mock_conn, mock_single_result):
-    """Test creating a conversation record."""
-    mock_conn.execute.return_value = mock_single_result({"id": 101})
+    """Test creating a new conversation when no existing conversation found."""
+    mock_no_existing = mock_single_result(None)
+    mock_new_id = mock_single_result({"id": 101})
+
+    mock_conn.execute.side_effect = [
+        mock_no_existing,  # No existing conversation
+        None,  # MERGE (no return value needed)
+        mock_new_id,  # SELECT returns new conversation id
+    ]
 
     conversation = Conversation(mock_conn)
-    result = conversation.create(session_id=789)
+    result = conversation.create(session_id=789, timeout_minutes=30)
 
     assert result == 101
-    assert mock_conn.execute.call_count == 2
-    assert mock_conn.flush.call_count == 1
+    assert mock_conn.execute.call_count == 3
+    assert mock_conn.commit.call_count == 1
+
+    # Verify check for existing conversation
+    existing_call = mock_conn.execute.call_args_list[0]
+    assert "SELECT c.id" in existing_call[0][0]
+    assert "COALESCE(MAX(m.date_created), c.date_created)" in existing_call[0][0]
+    assert existing_call[0][1] == (789,)
 
     # Verify MERGE query
-    merge_call = mock_conn.execute.call_args_list[0]
+    merge_call = mock_conn.execute.call_args_list[1]
     assert "MERGE INTO memori_conversation" in merge_call[0][0]
     assert "USING (SELECT :1" in merge_call[0][0]
     assert "FROM DUAL)" in merge_call[0][0]
@@ -147,10 +161,70 @@ def test_conversation_create(mock_conn, mock_single_result):
     assert session_id_arg == 789
 
     # Verify SELECT query
-    select_call = mock_conn.execute.call_args_list[1]
+    select_call = mock_conn.execute.call_args_list[2]
     assert "SELECT id" in select_call[0][0]
     assert "FROM memori_conversation" in select_call[0][0]
     assert select_call[0][1] == (789,)
+
+
+def test_conversation_create_returns_existing_within_timeout(mock_conn):
+    """Test returning existing conversation when within timeout period."""
+    from datetime import datetime, timedelta
+
+    last_activity = datetime.now() - timedelta(minutes=15)
+
+    mock_existing = MagicMock()
+    mock_existing.mappings.return_value.fetchone.return_value = {
+        "id": 101,
+        "last_activity": last_activity,
+    }
+
+    mock_timeout_check = MagicMock()
+    mock_timeout_check.fetchone.return_value = [15.0]  # 15 minutes elapsed
+
+    mock_conn.execute.side_effect = [
+        mock_existing,  # Existing conversation found
+        mock_timeout_check,  # Time check: 15 min < 30 min timeout
+    ]
+
+    conversation = Conversation(mock_conn)
+    result = conversation.create(session_id=789, timeout_minutes=30)
+
+    assert result == 101  # Returns existing conversation id
+    assert mock_conn.execute.call_count == 2  # Check existing, check timeout
+    assert mock_conn.commit.call_count == 0  # No insert, no commit
+
+
+def test_conversation_create_new_when_expired(mock_conn, mock_single_result):
+    """Test creating new conversation when existing one is expired."""
+    from datetime import datetime, timedelta
+
+    last_activity = datetime.now() - timedelta(minutes=45)
+
+    mock_existing = MagicMock()
+    mock_existing.mappings.return_value.fetchone.return_value = {
+        "id": 101,
+        "last_activity": last_activity,
+    }
+
+    mock_timeout_check = MagicMock()
+    mock_timeout_check.fetchone.return_value = [45.0]  # 45 minutes elapsed
+
+    mock_conn.execute.side_effect = [
+        mock_existing,  # Existing conversation found
+        mock_timeout_check,  # Time check: 45 min > 30 min timeout
+        None,  # MERGE (no return value needed)
+        mock_single_result({"id": 202}),  # SELECT returns new conversation id
+    ]
+
+    conversation = Conversation(mock_conn)
+    result = conversation.create(session_id=789, timeout_minutes=30)
+
+    assert result == 202  # Returns new conversation id
+    assert (
+        mock_conn.execute.call_count == 4
+    )  # Check existing, check timeout, MERGE, SELECT
+    assert mock_conn.commit.call_count == 1  # Committed new conversation
 
 
 def test_conversation_message_create(mock_conn):

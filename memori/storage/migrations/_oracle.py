@@ -5,7 +5,6 @@ r"""
 | |  | |  __/ | | | | | (_) | |  | |
 |_|  |_|\___|_| |_| |_|\___/|_|  |_|
                   perfectam memoriam
-                         by GibsonAI
                        memorilabs.ai
 """
 
@@ -200,7 +199,7 @@ migrations = {
                     ';
                 EXCEPTION
                     WHEN OTHERS THEN
-                        IF SQLCODE = -955 THEN NULL;
+                        IF SQLCODE = -955 OR SQLCODE = -1408 THEN NULL;
                         ELSE RAISE;
                         END IF;
                 END;
