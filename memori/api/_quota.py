@@ -18,8 +18,8 @@ class Manager:
 
     def execute(self):
         response = Api(self.config).get("sdk/quota")
-        print("Maximum # of Memories: " + f'{response["memories"]["max"]:,}')
-        print("Current # of Memories: " + f'{response["memories"]["num"]:,}')
+        print("Maximum # of Memories: " + f"{response['memories']['max']:,}")
+        print("Current # of Memories: " + f"{response['memories']['num']:,}")
 
         print("")
         print(response["message"])
