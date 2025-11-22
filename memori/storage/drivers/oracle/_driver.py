@@ -282,7 +282,7 @@ class EntityFact(BaseEntityFact):
             return []
 
         # Oracle doesn't support ANY, so we need to use IN with placeholders
-        placeholders = ",".join([f":{i+1}" for i in range(len(fact_ids))])
+        placeholders = ",".join([f":{i + 1}" for i in range(len(fact_ids))])
         query = f"""
             SELECT id,
                    content
