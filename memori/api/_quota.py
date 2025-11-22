@@ -8,8 +8,6 @@ r"""
                        memorilabs.ai
 """
 
-from requests.exceptions import HTTPError
-
 from memori._config import Config
 from memori._network import Api
 
@@ -18,14 +16,11 @@ class Manager:
     def __init__(self, config: Config):
         self.config = config
 
-    def execute(self, email):
-        try:
-            response = Api(self.config).post("sdk/account", {"email": email})
-            print(response.get("content", "You're all set! We sent you an email."))
-        except HTTPError as e:
-            if e.response.status_code != 422:
-                raise
+    def execute(self):
+        response = Api(self.config).get("sdk/quota")
+        print("Maximum # of Memories: " + f'{response["memories"]["max"]:,}')
+        print("Current # of Memories: " + f'{response["memories"]["num"]:,}')
 
-            print(f'The email you provided "{email}" is not valid.')
-
+        print("")
+        print(response["message"])
         print("")

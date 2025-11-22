@@ -12,21 +12,25 @@ import sys
 
 from memori._cli import Cli
 from memori._config import Config
+from memori.api._quota import Manager as ApiQuotaManager
 from memori.api._sign_up import Manager as ApiSignUpManager
 
 
 def main():
-    if len(sys.argv) == 1:
-        cli = Cli(Config())
-        cli.banner()
-        sys.exit(0)
+    cli = Cli(Config())
+    cli.banner()
 
-    if sys.argv[1] == "sign-up":
-        if len(sys.argv) != 3:
-            print("usage: python -m memori sign-up <email_address>")
-            sys.exit(1)
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "quota":
+            ApiQuotaManager(Config()).execute()
+        elif sys.argv[1] == "sign-up":
+            if len(sys.argv) != 3:
+                print("usage: python -m memori sign-up <email_address>\n")
+                sys.exit(1)
 
-        ApiSignUpManager(Config()).execute(sys.argv[2])
+            ApiSignUpManager(Config()).execute(sys.argv[2])
+
+    sys.exit(0)
 
 
 if __name__ == "__main__":
