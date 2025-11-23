@@ -29,6 +29,7 @@ class Memori:
     def __init__(self, conn=None):
         self.config = Config()
         self.config.api_key = os.environ.get("MEMORI_API_KEY", None)
+        self.config.enterprise = os.environ.get("MEMORI_ENTERPRISE", 0) == 1
         self.config.session_id = uuid4()
         self.config.storage = StorageManager(self.config).start(conn)
         self.config.augmentation = AugmentationManager(self.config).start(conn)

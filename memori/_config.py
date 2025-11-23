@@ -30,6 +30,7 @@ class Config:
         self.api_key = None
         self.augmentation = None
         self.cache = Cache()
+        self.enterprise = False
         self.llm = Llm()
         self.framework = Framework()
         self.entity_id = None

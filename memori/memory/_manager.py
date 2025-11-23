@@ -18,7 +18,7 @@ class Manager:
         self.config = config
 
     def execute(self, payload):
-        if self.config.api_key is not None:
+        if self.config.enterprise is True:
             Collector(self.config).fire_and_forget(payload)
         else:
             Writer(self.config).execute(payload)
