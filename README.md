@@ -51,6 +51,10 @@ mem = Memori().openai.register(client)
 
 ## Attribution
 
+To get the most out of Memori, you want to attribute your LLM interactions to an entity (think person, place or thing; like a user) and a process (think your agent, LLM interaction or program).
+
+If you do not provide any attribution, Memori cannot make memories for you.
+
 ```python
 mem.attribution(entity_id="12345", process_id="my-ai-bot")
 ```
