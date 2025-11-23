@@ -57,6 +57,10 @@ mem.attribution(entity_id="12345", process_id="my-ai-bot")
 
 ## Session Management
 
+Memori uses sessions to group your LLM interactions together. For example, if you have an agent that executes multiple steps you want those to be recorded in a single session.
+
+By default, Memori handles setting the session for you but you can start a new session or override the session by executing the following:
+
 ```python
 mem.new_session()
 ```
