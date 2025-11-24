@@ -57,6 +57,7 @@ pip install memori
 - Vectorized memories and in-memory semantic search for more accurate context.
 - Third normal form schema including storage of semantic triples for a knowledge graph.
 - Reduced development overhead to a single line of code.
+- Automatic schema migrations.
 
 ## Example with OpenAI
 
