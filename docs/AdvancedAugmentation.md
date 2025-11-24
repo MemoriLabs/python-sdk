@@ -81,9 +81,15 @@ Tables involved in Semantic Triples:
 
 ## Context Recall
 
-Intercept message, embed their query, pull all the entity facts, perform semantic search in FAISS to get the most relevant facts.  Returns the 5 most relevant facts and adds them to the system prompt and the query is then sent to the LLM.
+When a query is being sent to an LLM, we intercept the call and use semantic search to match the best entity facts to the query. Memori will extract the facts attributed to the entity and pass the vector embeddings to FAISS. The N most relevant facts are then added to the system prompt to provide enhanced context to the exchange.
 
 ## Attribution
+
+In order for Memori to provide all of the capabilities it's designed for, attribution is critical. You can create attribution by executing the following:
+
+```python
+mem.attribution(entity_id="12345", process_id="my-ai-bot")
+```
 
 ## ERD
 
