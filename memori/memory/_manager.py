@@ -1,15 +1,16 @@
 r"""
  __  __                           _
 |  \/  | ___ _ __ ___   ___  _ __(_)
-| |\/| |/ _ \ '_ ` _ \ / _ \| '__| |
-| |  | |  __/ | | | | | (_) | |  | |
-|_|  |_|\___|_| |_| |_|\___/|_|  |_|
-                  perfectam memoriam
-                       memorilabs.ai
+|| |\/| |/ _ \ '_ ` _ \ / _ \| '__| |
+|| |  | |  __/ | | | | | (_) | |  | |
+||_|  |_|\___|_| |_| |_|\___/|_|  |_|
+                 perfectam memoriam
+                      memorilabs.ai
 """
 
+import warnings
+
 from memori._config import Config
-from memori.memory._collector import Collector
 from memori.memory._writer import Writer
 
 
@@ -19,8 +20,16 @@ class Manager:
 
     def execute(self, payload):
         if self.config.enterprise is True:
-            Collector(self.config).fire_and_forget(payload)
-        else:
-            Writer(self.config).execute(payload)
+            warnings.warn(
+                "Enterprise mode is not fully implemented yet. "
+                "Falling back to open source mode.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            # TODO: Implement enterprise mode
+            # from memori.memory._collector import Collector
+            # Collector(self.config).fire_and_forget(payload)
+
+        Writer(self.config).execute(payload)
 
         return self

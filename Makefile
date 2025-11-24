@@ -50,6 +50,10 @@ run-integration: ## Run integration test scripts directly (e.g., make run-integr
 	@echo "Running integration test: $(FILE) $(ARGS)"
 	docker compose exec -e PYTHONPATH=/app dev python $(FILE) $(ARGS)
 
+run-integration-enterprise: ## Run integration test in enterprise mode (e.g., make run-integration-enterprise FILE=tests/llm/clients/oss/openai/sync.py)
+	@echo "Running integration test in ENTERPRISE mode: $(FILE) $(ARGS)"
+	docker compose exec -e PYTHONPATH=/app -e MEMORI_ENTERPRISE=1 dev python $(FILE) $(ARGS)
+
 lint: ## Run linting (format check)
 	docker compose exec dev uv run ruff check .
 
