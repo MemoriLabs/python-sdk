@@ -223,10 +223,31 @@ Or by checking your account at [https://memorilabs.ai/](https://memorilabs.ai/).
 
 If your API key exceeds its quota limits we will email you and let you know.
 
-## Running Memori Advanced Augmentation
+## Contributing
 
-The process of augmenting memories is technically complex and requires time for processing. Your application should benefit from the power of augmentation without the latency. In order to achieve this we have designed the system to use a background thread after your call to an LLM returns.
+We welcome contributions from the community! Please see our [Contributing Guidelines](./CONTRIBUTING.md) for details on:
 
-Upon return from the LLM, we automatically trigger a call to Memori Advanced Augmentation, wait for the response and write all of the newly created memories directly into your database.
+- Setting up your development environment
+- Code style and standards
+- Submitting pull requests
+- Reporting issues
 
-Our team of engineers and AI researchers are always working to make sure that Memori creates the best, more relevant memories for you. We will continue to improve both all of the SDK's we support as well as the Memori Advanced Augmentation system.
+---
+
+## Support
+
+- **Documentation**: [https://memorilabs.ai/docs](https://memorilabs.ai/docs)
+- **Discord**: [https://discord.gg/abD4eGym6v](https://discord.gg/abD4eGym6v)
+- **Issues**: [GitHub Issues](https://github.com/GibsonAI/memori/issues)
+
+---
+
+## License
+
+Apache 2.0 - see [LICENSE](./LICENSE)
+
+---
+
+**Star us on GitHub** to support the project
+
+[![Star History](https://api.star-history.com/svg?repos=GibsonAI/memori&type=date)](https://star-history.com/#GibsonAI/memori)
