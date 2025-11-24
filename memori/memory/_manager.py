@@ -21,8 +21,7 @@ class Manager:
     def execute(self, payload):
         if self.config.enterprise is True:
             warnings.warn(
-                "Enterprise mode is not fully implemented yet. "
-                "Falling back to open source mode.",
+                "Memori Enterprise is not available yet.",
                 RuntimeWarning,
                 stacklevel=2,
             )
