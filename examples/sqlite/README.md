@@ -21,7 +21,6 @@ Example showing how to use Memori with SQLite.
 
 ## What This Example Demonstrates
 
-- **Zero setup**: No database server needed - SQLite stores everything in a local file
 - **Automatic persistence**: All conversation messages are automatically stored in the SQLite database
 - **Context preservation**: Memori injects relevant conversation history into each LLM call
 - **Interactive chat**: Type messages and see how Memori maintains context across the conversation
