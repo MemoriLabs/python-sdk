@@ -99,7 +99,7 @@ session_id = mem.config.session_id
 mem.set_session(session_id)
 ```
 
-## Suggested Setup Steps
+## Suggested Setup
 
 To make sure everything is installed in the most efficient manner, we suggest you execute the following once:
 
