@@ -34,7 +34,7 @@ Tables involved in Conversations:
 
 ## Sessions
 
-The back and forth exchanges with the LLM are automatically grouped together into a session. This ensures you can recall entire conversations that were related to a particular conversation between the user and the LLM.
+The back and forth exchanges with the LLM are automatically grouped together into a session. This ensures you can recall entire conversations that were related to a particular exchange (or agentic workflow) between the user and the LLM.
 
 Tables involved in Sessions:
 - memori_session
