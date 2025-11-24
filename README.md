@@ -47,6 +47,15 @@ Install Memori:
 pip install memori
 ```
 
+## What's New In v3?
+
+- Significant performance improvements using Advanced Augmentation and threading.
+- LLM agnostic with support for all of the major foundational models.
+- Datastore agnostic with support for all major databases and document stores.
+- Adapter/driver architecture to make contributions easier.
+- Vectorized memories and in-memory semantic search for more accurate context.
+- Third normal form schema including storage of semantic triples.
+
 ## Example with OpenAI
 
 ```python
