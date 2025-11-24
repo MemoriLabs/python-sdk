@@ -15,10 +15,10 @@
 
 <p align="center">
   <a href="https://badge.fury.io/py/memori">
-    <img src="https://badge.fury.io/py/memorisdk.svg" alt="PyPI version">
+    <img src="https://badge.fury.io/py/memori.svg" alt="PyPI version">
   </a>
   <a href="https://pepy.tech/projects/memori">
-    <img src="https://static.pepy.tech/badge/memorisdk" alt="Downloads">
+    <img src="https://static.pepy.tech/badge/memori" alt="Downloads">
   </a>
   <a href="https://opensource.org/license/apache-2-0">
     <img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License">
