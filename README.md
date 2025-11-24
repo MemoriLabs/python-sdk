@@ -225,7 +225,7 @@ If your API key exceeds its quota limits we will email you and let you know.
 
 ## Contributing
 
-We welcome contributions from the community! Please see our [Contributing Guidelines](./CONTRIBUTING.md) for details on:
+We welcome contributions from the community! Please see our [Contributing Guidelines](./docs/CONTRIBUTING.md) for details on:
 
 - Setting up your development environment
 - Code style and standards
