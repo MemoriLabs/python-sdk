@@ -9,10 +9,13 @@ r"""
 """
 
 import asyncio
+import os
 import struct
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import Any
+
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 from sentence_transformers import SentenceTransformer
 
