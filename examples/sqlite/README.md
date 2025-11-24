@@ -19,10 +19,10 @@ Example showing how to use Memori with SQLite.
    uv run python main.py
    ```
 
-## How Memori is Used
+## What This Example Demonstrates
 
-1. Registers OpenAI client with Memori
-2. Configures attribution with `entity_id` (user) and `process_id` (bot/session)
-3. Builds Memori schema using `build()` to create necessary database tables
-4. Runs interactive chat loop where all messages are automatically persisted to SQLite
-5. Commits after each interaction to save conversation history
+- **Zero setup**: No database server needed - SQLite stores everything in a local file
+- **Automatic persistence**: All conversation messages are automatically stored in the SQLite database
+- **Context preservation**: Memori injects relevant conversation history into each LLM call
+- **Interactive chat**: Type messages and see how Memori maintains context across the conversation
+- **Portable**: The database file can be copied, backed up, or shared easily

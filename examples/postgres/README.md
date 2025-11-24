@@ -20,10 +20,9 @@ Example showing how to use Memori with PostgreSQL.
    uv run python main.py
    ```
 
-## How Memori is Used
+## What This Example Demonstrates
 
-1. Registers OpenAI client with Memori
-2. Configures attribution with `entity_id` (user) and `process_id` (bot/session)
-3. Builds Memori schema using `build()` to create necessary database tables
-4. Runs interactive chat loop where all messages are automatically persisted to PostgreSQL
-5. Commits after each interaction to save conversation history
+- **PostgreSQL integration**: Connect to any PostgreSQL database (local, AWS RDS, or other managed database services)
+- **Automatic persistence**: All conversation messages are automatically stored in your database
+- **Context preservation**: Memori injects relevant conversation history into each LLM call
+- **Interactive chat**: Type messages and see how Memori maintains context across the conversation
