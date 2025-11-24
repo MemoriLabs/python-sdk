@@ -52,6 +52,7 @@ This will:
 - Build the Docker container with Python 3.12
 - Install all dependencies with uv
 - Start PostgreSQL, MySQL, and MongoDB for integration tests
+- Start Mongo Express (web UI for MongoDB at http://localhost:8081)
 
 ### Development Commands
 
@@ -68,6 +69,10 @@ uv run ruff check .
 
 # Run with coverage
 uv run pytest --cov=memori
+
+# Run security scans
+uv run bandit -r memori -ll -ii
+uv run pip-audit --require-hashes --disable-pip || true
 ```
 
 #### Docker Development
@@ -84,9 +89,6 @@ make init-mysql     # MySQL
 make init-mongodb   # MongoDB
 make init-sqlite    # SQLite
 
-# Run integration tests (requires API keys and database)
-make test-integration
-
 # Run a specific integration test script
 make run-integration FILE=tests/llm/clients/oss/openai/async.py
 
@@ -95,6 +97,9 @@ make format
 
 # Check linting
 make lint
+
+# Run security scans
+make security
 
 # Stop the environment
 make dev-down
@@ -131,8 +136,8 @@ Integration tests require:
 # Initialize database schema
 make init-postgres  # or init-mysql, init-mongodb, init-sqlite
 
-# Run integration tests
-make test-integration
+# Run integration test scripts
+make run-integration FILE=tests/llm/clients/oss/openai/sync.py
 ```
 
 ### Test Coverage
@@ -182,6 +187,10 @@ uv run ruff check .      # or: make lint
 
 # Auto-fix issues
 uv run ruff check --fix .
+
+# Run security scans (Bandit + pip-audit)
+uv run bandit -r memori -ll -ii
+uv run pip-audit --require-hashes --disable-pip || true
 ```
 
 ### Pre-commit Hooks
@@ -235,6 +244,23 @@ uv run pre-commit run --all-files
 - Neon, Supabase (PostgreSQL-compatible)
 - Django ORM
 - DB-API 2.0 compatible connections
+
+## CLI Commands
+
+Memori provides CLI commands for managing your account and quota:
+
+```bash
+# Check your API quota
+python3 -m memori quota
+
+# Sign up for Memori Advanced Augmentation
+python3 -m memori sign-up <email_address>
+```
+
+These commands help you:
+- Monitor your memory quota and usage
+- Sign up for increased limits (always free for developers)
+- Obtain API keys for Advanced Augmentation features
 
 ## Development Notes
 

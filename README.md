@@ -166,14 +166,14 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 
 ## Supported Datastores
 
-- CockroachDB
+- [CockroachDB](./docs/examples/cockroachdb) - Full example with setup instructions
 - MariaDB
-- MongoDB
+- [MongoDB](./docs/examples/mongodb) - Full example with setup instructions
 - MySQL
-- Neon
+- [Neon](./docs/examples/neon) - Full example with setup instructions
 - Oracle
-- PostgreSQL
-- SQLite
+- [PostgreSQL](./docs/examples/postgres) - Full example with setup instructions
+- [SQLite](./docs/examples/sqlite) - Full example with setup instructions
 - Supabase
 
 ## Memori Advanced Augmentation
