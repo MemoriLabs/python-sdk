@@ -215,6 +215,7 @@ def test_handle_post_response_without_augmentation():
 def test_handle_post_response_with_augmentation_no_conversation():
     config = Config()
     config.augmentation = Mock()
+    config.entity_id = "test-entity"
     invoke = BaseInvoke(config, "test_method")
     invoke.set_client("test_provider", "test_title", "1.0.0")
 
@@ -238,6 +239,7 @@ def test_handle_post_response_with_augmentation_no_conversation():
 def test_handle_post_response_with_augmentation_and_conversation():
     config = Config()
     config.augmentation = Mock()
+    config.entity_id = "test-entity"
     config.cache.conversation_id = 123
     invoke = BaseInvoke(config, "test_method")
     invoke.set_client("test_provider", "test_title", "1.0.0")

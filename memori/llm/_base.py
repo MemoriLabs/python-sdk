@@ -400,6 +400,9 @@ class BaseInvoke:
                 messages_for_aug
             )
 
+            if not self.config.entity_id and not self.config.process_id:
+                return
+
             augmentation_input = AugmentationInput(
                 conversation_id=self.config.cache.conversation_id,
                 entity_id=self.config.entity_id,
