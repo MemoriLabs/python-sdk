@@ -255,14 +255,14 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 
 ## Supported Datastores
 
-- [CockroachDB](./examples/cockroachdb) - Full example with setup instructions
+- [CockroachDB](https://github.com/MemoriLabs/memori-examples/tree/main/supported-databases/cockroachdb) - Full example with setup instructions
 - MariaDB
-- [MongoDB](./examples/mongodb) - Full example with setup instructions
+- [MongoDB](https://github.com/MemoriLabs/memori-examples/tree/main/supported-databases/mongodb) - Full example with setup instructions
 - MySQL
-- [Neon](./examples/neon) - Full example with setup instructions
+- [Neon](https://github.com/MemoriLabs/memori-examples/tree/main/supported-databases/neon) - Full example with setup instructions
 - Oracle
-- [PostgreSQL](./examples/postgres) - Full example with setup instructions
-- [SQLite](./examples/sqlite) - Full example with setup instructions
+- [PostgreSQL](https://github.com/MemoriLabs/memori-examples/tree/main/supported-databases/postgres) - Full example with setup instructions
+- [SQLite](https://github.com/MemoriLabs/memori-examples/tree/main/supported-databases/sqlite) - Full example with setup instructions
 - Supabase
 
 ## Memori Advanced Augmentation
