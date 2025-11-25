@@ -15,8 +15,6 @@ import numpy as np
 import pytest
 
 from memori.llm._embeddings import (
-    _EMBEDDING_EXECUTOR_MAX_WORKERS,
-    _get_embedding_executor,
     _get_model,
     embed_texts,
     embed_texts_async,
@@ -312,30 +310,3 @@ async def test_embed_texts_async_custom_model():
 
         assert len(result) == 1
         assert result[0] == pytest.approx([0.1, 0.2, 0.3])
-
-
-def test_get_embedding_executor_singleton():
-    executor1 = _get_embedding_executor()
-    executor2 = _get_embedding_executor()
-
-    assert executor1 is executor2
-
-
-def test_get_embedding_executor_max_workers():
-    with patch("memori.llm._embeddings.ProcessPoolExecutor") as mock_executor:
-        mock_instance = Mock()
-        mock_executor.return_value = mock_instance
-
-        from memori.llm import _embeddings
-
-        _embeddings._EMBEDDING_EXECUTOR = None
-
-        _get_embedding_executor()
-
-        mock_executor.assert_called_once_with(
-            max_workers=_EMBEDDING_EXECUTOR_MAX_WORKERS
-        )
-
-
-def test_embedding_executor_max_workers_constant():
-    assert _EMBEDDING_EXECUTOR_MAX_WORKERS == 4

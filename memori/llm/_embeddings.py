@@ -11,7 +11,6 @@ r"""
 import asyncio
 import os
 import struct
-from concurrent.futures import ProcessPoolExecutor
 from typing import Any
 
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
@@ -20,8 +19,6 @@ from sentence_transformers import SentenceTransformer
 
 _MODEL_CACHE: dict[str, SentenceTransformer] = {}
 _DEFAULT_DIMENSION = 768
-_EMBEDDING_EXECUTOR: ProcessPoolExecutor | None = None
-_EMBEDDING_EXECUTOR_MAX_WORKERS = 4
 
 
 def _get_model(model_name: str) -> SentenceTransformer:
@@ -55,15 +52,6 @@ def format_embedding_for_db(embedding: list[float], dialect: str) -> Any:
         return binary_data
 
 
-def _get_embedding_executor() -> ProcessPoolExecutor:
-    global _EMBEDDING_EXECUTOR
-    if _EMBEDDING_EXECUTOR is None:
-        _EMBEDDING_EXECUTOR = ProcessPoolExecutor(
-            max_workers=_EMBEDDING_EXECUTOR_MAX_WORKERS
-        )
-    return _EMBEDDING_EXECUTOR
-
-
 def embed_texts(
     texts: str | list[str], model: str = "all-mpnet-base-v2"
 ) -> list[list[float]]:
@@ -91,5 +79,4 @@ async def embed_texts_async(
     texts: str | list[str], model: str = "all-mpnet-base-v2"
 ) -> list[list[float]]:
     loop = asyncio.get_event_loop()
-    executor = _get_embedding_executor()
-    return await loop.run_in_executor(executor, embed_texts, texts, model)
+    return await loop.run_in_executor(None, embed_texts, texts, model)
