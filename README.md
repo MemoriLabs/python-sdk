@@ -255,14 +255,14 @@ _(unstreamed, streamed, synchronous and asynchronous)_
 
 ## Supported Datastores
 
-- [CockroachDB](./examples/cockroachdb) - Full example with setup instructions
+- [CockroachDB](https://github.com/MemoriLabs/python-sdk/tree/main/examples/cockroachdb) - Full example with setup instructions
 - MariaDB
-- [MongoDB](./examples/mongodb) - Full example with setup instructions
+- [MongoDB](https://github.com/MemoriLabs/python-sdk/tree/main/examples/mongodb) - Full example with setup instructions
 - MySQL
-- [Neon](./examples/neon) - Full example with setup instructions
+- [Neon](https://github.com/MemoriLabs/python-sdk/tree/main/examples/neon) - Full example with setup instructions
 - Oracle
-- [PostgreSQL](./examples/postgres) - Full example with setup instructions
-- [SQLite](./examples/sqlite) - Full example with setup instructions
+- [PostgreSQL](https://github.com/MemoriLabs/python-sdk/tree/main/examples/postgres) - Full example with setup instructions
+- [SQLite](https://github.com/MemoriLabs/python-sdk/tree/main/examples/sqlite) - Full example with setup instructions
 - Supabase
 
 ## Memori Advanced Augmentation
@@ -273,7 +273,7 @@ Memories are tracked at several different levels:
 - process: think your agent, LLM interaction or program
 - session: the current interactions between the entity, process and the LLM
 
-[Memori's Advanced Augmentation](./docs/AdvancedAugmentation.md) enhances memories at each of these levels with:
+[Memori's Advanced Augmentation](https://github.com/MemoriLabs/python-sdk/blob/main/docs/AdvancedAugmentation.md) enhances memories at each of these levels with:
 
 - attributes
 - events
@@ -314,7 +314,7 @@ If your API key exceeds its quota limits we will email you and let you know.
 
 ## Contributing
 
-We welcome contributions from the community! Please see our [Contributing Guidelines](./docs/CONTRIBUTING.md) for details on:
+We welcome contributions from the community! Please see our [Contributing Guidelines](https://github.com/MemoriLabs/python-sdk/blob/main/docs/CONTRIBUTING.md) for details on:
 
 - Setting up your development environment
 - Code style and standards
@@ -333,7 +333,7 @@ We welcome contributions from the community! Please see our [Contributing Guidel
 
 ## License
 
-Apache 2.0 - see [LICENSE](./LICENSE)
+Apache 2.0 - see [LICENSE](https://github.com/MemoriLabs/python-sdk/blob/main/LICENSE)
 
 ---
 
