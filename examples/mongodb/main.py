@@ -22,6 +22,7 @@ Behavior:
 
 import os
 
+import certifi
 from dotenv import load_dotenv
 from openai import OpenAI
 from pymongo import MongoClient
@@ -40,33 +41,39 @@ if not mongo_url:
     raise RuntimeError("MONGODB_CONNECTION_STRING is not set")
 
 client = OpenAI(api_key=api_key)
-mongo_client = MongoClient(mongo_url, server_api=ServerApi("1"))
+mongo_client = MongoClient(
+    mongo_url, server_api=ServerApi("1"), tlsCAFile=certifi.where()
+)
 db_name = os.getenv("MONGODB_DATABASE", "memori")
+db = mongo_client[db_name]
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# FIX FOR PYMONGO + MEMORI ADAPTER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PyMongo Database objects treat any attribute access as a Collection.
+# Memori's adapter checks hasattr(conn, "get_default_database") which returns
+# a Collection object (interpreting it as True), then tries to call it.
+# This monkeypatch ensures get_default_database returns the database itself.
+db.get_default_database = lambda: db
 
-def get_db():
-    """Return the MongoDB database connection."""
-    return mongo_client[db_name]
-
+mongo_client.admin.command("ping")
+print("Database connection OK: ping=1")
 
 if __name__ == "__main__":
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # MEMORI SETUP
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    # Register OpenAI client with Memori for automatic persistence
+    # Pass the database object - Memori will wrap it in a factory internally
+    mem = Memori(conn=db).openai.register(client)
+
     try:
-        mongo_client.admin.command("ping")
-        print("Database connection OK: ping=1")
-
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        # MEMORI SETUP
-        # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        # Register OpenAI client with Memori for automatic persistence
-        # Pass a function that returns the database when needed
-        mem = Memori(conn=get_db).openai.register(client)
-
         # Track conversations by user (entity_id) and session (process_id)
         mem.attribution(entity_id="12345", process_id="my-ai-bot")
 
         # Build database schema (creates MongoDB collections)
-        mem.storage.build()
+        mem.config.storage.build()
 
         print("\nType 'exit' to quit.\n")
         while True:
@@ -91,6 +98,7 @@ if __name__ == "__main__":
             )
             assistant_reply = response.choices[0].message.content
             print(f"AI: {assistant_reply}")
-            # MongoDB writes are immediate - no commit needed
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
         mongo_client.close()
