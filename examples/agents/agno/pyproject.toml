@@ -1,0 +1,16 @@
+[project]
+name = "memori-agno-example"
+version = "0.1.0"
+description = "Memori SDK example with Agno agents"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "memori",
+    "agno>=0.0.30",
+    "openai>=2.6.1",
+    "SQLAlchemy>=2.0.0",
+    "python-dotenv>=1.2.1",
+]
+
+[tool.uv.sources]
+memori = { path = "../../..", editable = true }
